@@ -1,9 +1,10 @@
-
 import asyncio
+import json
 import logging
 import os
 import re
 import time
+from datetime import datetime
 from aiohttp import web
 
 from telethon import TelegramClient, events, Button
@@ -19,10 +20,53 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "8808156804:AAEaw2NqVi7wQXiP_TqMsGxnNTwyR2yIC
 GROUP_ID = int(os.getenv("GROUP_ID", "-1004409849262"))
 PORT = int(os.getenv("PORT", "8080"))
 
+# YOUR PERSONAL TELEGRAM USER ID
+ADMIN_ID = int(os.getenv("ADMIN_ID", "8417145295"))
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+# ============================================================
+# DATABASE & PERSISTENCE
+# ============================================================
+
+DB_FILE = "bot_database.json"
+
+def load_db():
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            logging.exception("Failed to read database file")
+    return {"users": {}, "banned": []}
+
+def save_db(data):
+    try:
+        with open(DB_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        logging.exception("Failed to write database file")
+
+db = load_db()
+
+def track_user(user):
+    if not user:
+        return
+    uid = str(user.id)
+    if uid not in db["users"]:
+        db["users"][uid] = {
+            "first_name": user.first_name or "",
+            "last_name": user.last_name or "",
+            "username": user.username or "",
+            "joined_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        save_db(db)
+
+def is_banned(user_id):
+    return int(user_id) in db.get("banned", [])
 
 # ============================================================
 # TELEGRAM TOPICS
@@ -61,6 +105,7 @@ bot = TelegramClient("mbbs_lecture_bot", API_ID, API_HASH)
 USER_CLIENT_ID = None
 BOT_USER_ID = None
 BOT_ENTITY_FOR_USER = None
+START_TIME = time.time()
 
 user_subjects = {}
 user_units = {}
@@ -71,7 +116,7 @@ relay_lock = asyncio.Lock()
 active_relay_future = None
 
 # ============================================================
-# HEALTH-CHECK WEB SERVER FOR RENDER (KEEPS BOT ALIVE)
+# HEALTH-CHECK WEB SERVER FOR RENDER
 # ============================================================
 
 async def health_check(request):
@@ -88,7 +133,7 @@ async def start_web_server():
     logging.info("Web server listening on port %s", PORT)
 
 # ============================================================
-# MENUS
+# MENUS & HELPERS
 # ============================================================
 
 def main_menu_buttons():
@@ -269,11 +314,138 @@ async def deliver_lecture_instant(chat_id, message, status_msg=None):
             return False
 
 # ============================================================
-# BOT HANDLERS
+# ADMIN COMMANDS
+# ============================================================
+
+@bot.on(events.NewMessage(pattern=r"^/stats$"))
+async def admin_stats(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    total_users = len(db.get("users", {}))
+    banned_count = len(db.get("banned", []))
+    uptime_sec = int(time.time() - START_TIME)
+    uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m {uptime_sec % 60}s"
+
+    text = (
+        "📊 **Bot Analytics & Health**\n\n"
+        f"👥 **Total Registered Users:** `{total_users}`\n"
+        f"🚫 **Blocked Users:** `{banned_count}`\n"
+        f"⏱️ **Uptime:** `{uptime_str}`\n"
+        f"🟢 **Server Status:** Running 24/7 on Render"
+    )
+    await event.respond(text)
+
+@bot.on(events.NewMessage(pattern=r"^/users$"))
+async def admin_users(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    users = db.get("users", {})
+    if not users:
+        await event.respond("No users have interacted with the bot yet.")
+        return
+
+    msg = f"👥 **Recent Users ({len(users)} total):**\n\n"
+    # Show last 20 users
+    recent_users = list(users.items())[-20:]
+    for uid, udata in reversed(recent_users):
+        name = udata.get("first_name", "Unknown")
+        uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
+        joined = udata.get("joined_at", "N/A")
+        status = " [⛔ BANNED]" if is_banned(uid) else ""
+        msg += f"• `{uid}`: **{name}** ({uname}){status}\n  _Joined: {joined}_\n\n"
+
+    await event.respond(msg)
+
+@bot.on(events.NewMessage(pattern=r"^/ban (\d+)$"))
+async def admin_ban(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    target_id = int(event.pattern_match.group(1))
+    if target_id == ADMIN_ID:
+        await event.respond("⚠️ You cannot ban yourself.")
+        return
+
+    if target_id not in db["banned"]:
+        db["banned"].append(target_id)
+        save_db(db)
+        await event.respond(f"✅ User `{target_id}` has been **banned**. They can no longer access lectures.")
+    else:
+        await event.respond(f"ℹ️ User `{target_id}` is already banned.")
+
+@bot.on(events.NewMessage(pattern=r"^/unban (\d+)$"))
+async def admin_unban(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    target_id = int(event.pattern_match.group(1))
+    if target_id in db.get("banned", []):
+        db["banned"].remove(target_id)
+        save_db(db)
+        await event.respond(f"✅ User `{target_id}` has been **unbanned**.")
+    else:
+        await event.respond(f"ℹ️ User `{target_id}` is not in the ban list.")
+
+@bot.on(events.NewMessage(pattern=r"^/banned$"))
+async def admin_banned_list(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    banned = db.get("banned", [])
+    if not banned:
+        await event.respond("✅ No users are currently banned.")
+        return
+
+    b_text = f"🚫 **Blocked Users ({len(banned)}):**\n\n"
+    for b_id in banned:
+        user_info = db.get("users", {}).get(str(b_id), {})
+        name = user_info.get("first_name", "Unknown")
+        b_text += f"• `{b_id}`: **{name}**\n"
+
+    await event.respond(b_text)
+
+@bot.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
+async def admin_broadcast(event):
+    if event.sender_id != ADMIN_ID:
+        return
+
+    broadcast_text = event.pattern_match.group(1).strip()
+    users = db.get("users", {})
+    if not users:
+        await event.respond("No users to broadcast to.")
+        return
+
+    sent = 0
+    failed = 0
+    status_msg = await event.respond(f"📢 Sending announcement to {len(users)} users...")
+
+    for uid in list(users.keys()):
+        if is_banned(uid):
+            continue
+        try:
+            await bot.send_message(int(uid), f"📢 **Notice from Admin:**\n\n{broadcast_text}")
+            sent += 1
+            await asyncio.sleep(0.05)
+        except Exception:
+            failed += 1
+
+    await status_msg.edit(f"✅ **Broadcast Completed!**\n\n• Delivered: `{sent}`\n• Failed: `{failed}`")
+
+# ============================================================
+# BOT USER HANDLERS
 # ============================================================
 
 @bot.on(events.NewMessage(pattern=r"^/start$"))
 async def start_handler(event):
+    sender = await event.get_sender()
+    track_user(sender)
+
+    if is_banned(event.sender_id):
+        await event.respond("⛔ You are restricted from using this bot.")
+        return
+
     await event.respond(
         "🎓 **MBBS Lecture Library**\n\nSelect a subject to get started:",
         buttons=main_menu_buttons()
@@ -281,6 +453,10 @@ async def start_handler(event):
 
 @bot.on(events.CallbackQuery(data=b"home"))
 async def home_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     await event.edit(
         "🎓 **MBBS Lecture Library**\n\nSelect a subject:",
         buttons=main_menu_buttons()
@@ -288,6 +464,10 @@ async def home_handler(event):
 
 @bot.on(events.CallbackQuery(pattern=rb"^subject:(\d+)$"))
 async def subject_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     try:
         index = int(event.pattern_match.group(1))
         subjects = list(TOPICS.keys())
@@ -308,6 +488,10 @@ async def subject_handler(event):
 
 @bot.on(events.CallbackQuery(data=b"lectures"))
 async def lectures_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     try:
         user_id = event.sender_id
         subject = user_subjects.get(user_id)
@@ -354,6 +538,10 @@ async def lectures_handler(event):
 
 @bot.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
 async def unit_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     try:
         user_id = event.sender_id
         data = user_units.get(user_id)
@@ -395,6 +583,10 @@ async def unit_handler(event):
 
 @bot.on(events.CallbackQuery(data=b"back_units"))
 async def back_units_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     try:
         user_id = event.sender_id
         data = user_units.get(user_id)
@@ -420,6 +612,10 @@ async def back_units_handler(event):
 
 @bot.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
 async def file_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     message_id = int(event.pattern_match.group(1))
     await event.answer("⚡ Sending lecture...")
     status_msg = await bot.send_message(event.chat_id, "⚡ **Sending lecture directly...**")
@@ -439,6 +635,10 @@ async def file_handler(event):
 
 @bot.on(events.CallbackQuery(data=b"notes"))
 async def notes_handler(event):
+    if is_banned(event.sender_id):
+        await event.answer("⛔ You are restricted.", alert=True)
+        return
+
     user_id = event.sender_id
     subject = user_subjects.get(user_id)
     if not subject:
@@ -484,7 +684,6 @@ async def main():
     global USER_CLIENT_ID, BOT_USER_ID, BOT_ENTITY_FOR_USER
     os.makedirs("downloads", exist_ok=True)
 
-    # Start the web server for Render health checks
     await start_web_server()
 
     logging.info("Starting user client...")
@@ -506,7 +705,7 @@ async def main():
     except Exception:
         logging.warning("Please verify your user account is in GROUP_ID.")
 
-    logging.info("MBBS Bot is live and running 24/7 on Render.")
+    logging.info("MBBS Bot with Admin Panel is live and running 24/7 on Render.")
 
     await asyncio.gather(
         user_client.run_until_disconnected(),
