@@ -16,12 +16,100 @@ from telethon.errors import RPCError, FloodWaitError, ChatForwardsRestrictedErro
 
 API_ID = int(os.getenv("API_ID", "37864520"))
 API_HASH = os.getenv("API_HASH", "d92bf252ab0a7835d2639d49920f714a")
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8808156804:AAEaw2NqVi7wQXiP_TqMsGxnNTwyR2yICrs")
 GROUP_ID = int(os.getenv("GROUP_ID", "-1004409849262"))
 PORT = int(os.getenv("PORT", "8080"))
-
-# YOUR PERSONAL TELEGRAM USER ID
 ADMIN_ID = int(os.getenv("ADMIN_ID", "8417145295"))
+
+# ============================================================
+# BOT TOKENS
+# ============================================================
+
+BOT_TOKENS = {
+    "all": os.getenv("BOT_TOKEN_ALL", "8808156804:AAEaw2NqVi7wQXiP_TqMsGxnNTwyR2yICrs"),
+    "year_1": os.getenv("BOT_TOKEN_Y1", "8729883373:AAESg2VRUY0K1zNYEcz-7IgRuCSEodgSvK4"),
+    "year_2": os.getenv("BOT_TOKEN_Y2", "8365220049:AAGRyQ9lsUinESVJYfLa9tR-51sqskQ3ghs"),
+    "year_3": os.getenv("BOT_TOKEN_Y3", "8727281228:AAHFt-YI9wBWwIU-UgdoQK4HZVw-wzsyVRk"),
+    "final_year": os.getenv("BOT_TOKEN_FINAL", "8796883834:AAEDRuBWPunG-Ip7tuS2ctQEIPrmtViFhxE"),
+}
+
+# ============================================================
+# SUBJECT DICTIONARIES PER YEAR
+# ============================================================
+
+TOPICS_ALL = {
+    "Anatomy": 2,
+    "Physiology": 3,
+    "Biochemistry": 4,
+    "Microbiology": 5,
+    "Notes": 33,
+    "Pathology": 49,
+    "Pharmacology": 50,
+    "Forensic Medicine and Toxicology": 51,
+    "Community Medicine": 52,
+    "General Medicine": 53,
+    "General Surgery": 54,
+    "Obstetrics and Gynecology": 55,
+    "Pediatrics": 56,
+    "Ophthalmology": 57,
+    "Otorhinolaryngology (ENT)": 58,
+    "Orthopedics": 59,
+    "Anesthesiology": 60,
+    "Radiology": 61,
+    "Dermatology": 62,
+    "Psychiatry": 63,
+}
+
+TOPICS_Y1 = {
+    "Anatomy": 2,
+    "Physiology": 3,
+    "Biochemistry": 4,
+    "Notes": 33,
+}
+
+TOPICS_Y2 = {
+    "Pathology": 49,
+    "Pharmacology": 50,
+    "Microbiology": 5,
+    "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
+}
+
+TOPICS_Y3 = {
+    "Community Medicine": 52,
+    "Ophthalmology": 57,
+    "Otorhinolaryngology (ENT)": 58,
+    "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
+}
+
+TOPICS_FINAL = {
+    "General Medicine": 53,
+    "General Surgery": 54,
+    "Obstetrics and Gynecology": 55,
+    "Pediatrics": 56,
+    "Orthopedics": 59,
+    "Anesthesiology": 60,
+    "Radiology": 61,
+    "Dermatology": 62,
+    "Psychiatry": 63,
+    "Notes": 33,
+}
+
+BOT_SUBJECTS_MAP = {
+    "all": TOPICS_ALL,
+    "year_1": TOPICS_Y1,
+    "year_2": TOPICS_Y2,
+    "year_3": TOPICS_Y3,
+    "final_year": TOPICS_FINAL,
+}
+
+BOT_TITLES_MAP = {
+    "all": "MBBS Full Library (All Subjects)",
+    "year_1": "MBBS 1st Year Library",
+    "year_2": "MBBS 2nd Year Library",
+    "year_3": "MBBS 3rd Year Library",
+    "final_year": "MBBS 4th / Final Year Library",
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,7 +140,7 @@ def save_db(data):
 
 db = load_db()
 
-def track_user(user):
+def track_user(user, bot_type):
     if not user:
         return
     uid = str(user.id)
@@ -61,6 +149,7 @@ def track_user(user):
             "first_name": user.first_name or "",
             "last_name": user.last_name or "",
             "username": user.username or "",
+            "bot_used": bot_type,
             "joined_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         save_db(db)
@@ -69,42 +158,13 @@ def is_banned(user_id):
     return int(user_id) in db.get("banned", [])
 
 # ============================================================
-# TELEGRAM TOPICS
-# ============================================================
-
-TOPICS = {
-    "Anatomy": 2,
-    "Physiology": 3,
-    "Biochemistry": 4,
-    "Microbiology": 5,
-    "Notes": 33,
-    "Pathology": 49,
-    "Pharmacology": 50,
-    "Forensic Medicine and Toxicology": 51,
-    "Community Medicine": 52,
-    "General Medicine": 53,
-    "General Surgery": 54,
-    "Obstetrics and Gynecology": 55,
-    "Pediatrics": 56,
-    "Ophthalmology": 57,
-    "Otorhinolaryngology (ENT)": 58,
-    "Orthopedics": 59,
-    "Anesthesiology": 60,
-    "Radiology": 61,
-    "Dermatology": 62,
-    "Psychiatry": 63,
-}
-
-# ============================================================
 # CLIENTS & GLOBALS
 # ============================================================
 
 user_client = TelegramClient("session", API_ID, API_HASH)
-bot = TelegramClient("mbbs_lecture_bot", API_ID, API_HASH)
+active_bots = {}
 
 USER_CLIENT_ID = None
-BOT_USER_ID = None
-BOT_ENTITY_FOR_USER = None
 START_TIME = time.time()
 
 user_subjects = {}
@@ -120,7 +180,7 @@ active_relay_future = None
 # ============================================================
 
 async def health_check(request):
-    return web.Response(text="MBBS Telegram Bot is live and healthy!")
+    return web.Response(text="MBBS Multi-Bot Engine is live and healthy!")
 
 async def start_web_server():
     app = web.Application()
@@ -136,17 +196,17 @@ async def start_web_server():
 # MENUS & HELPERS
 # ============================================================
 
-def main_menu_buttons():
-    subjects = list(TOPICS.keys())
+def make_main_menu(topics):
+    subjects = list(topics.keys())
     buttons = []
     for i in range(0, len(subjects), 2):
-        row = [Button.inline(subjects[i], data=f"subject:{i}".encode())]
+        row = [Button.inline(subjects[i], data=f"sub:{i}".encode())]
         if i + 1 < len(subjects):
-            row.append(Button.inline(subjects[i + 1], data=f"subject:{i + 1}".encode()))
+            row.append(Button.inline(subjects[i + 1], data=f"sub:{i + 1}".encode()))
         buttons.append(row)
     return buttons
 
-def subject_menu_buttons():
+def make_subject_menu():
     return [
         [
             Button.inline("📚 Lectures", data=b"lectures"),
@@ -156,9 +216,6 @@ def subject_menu_buttons():
             Button.inline("⬅️ Back", data=b"home"),
         ]
     ]
-
-def subject_index(subject):
-    return list(TOPICS.keys()).index(subject)
 
 def extract_hashtag(text):
     if not text:
@@ -228,21 +285,10 @@ async def get_topic_units(topic_id):
     return units
 
 # ============================================================
-# RELAY LISTENER
-# ============================================================
-
-@bot.on(events.NewMessage)
-async def bot_pm_relay_listener(event):
-    global active_relay_future
-    if event.is_private and event.sender_id == USER_CLIENT_ID:
-        if active_relay_future and not active_relay_future.done():
-            active_relay_future.set_result(event.message)
-
-# ============================================================
 # INSTANT CLOUD DELIVERY ENGINE
 # ============================================================
 
-async def deliver_lecture_instant(chat_id, message, status_msg=None):
+async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=None):
     global active_relay_future
 
     async with relay_lock:
@@ -252,19 +298,19 @@ async def deliver_lecture_instant(chat_id, message, status_msg=None):
 
         relayed_msg = None
         try:
-            await user_client.forward_messages(BOT_ENTITY_FOR_USER, message)
+            await user_client.forward_messages(bot_entity, message)
             relayed_msg = await asyncio.wait_for(future, timeout=10.0)
 
             caption = message.text or ""
             try:
-                await bot.send_file(
+                await bot_client.send_file(
                     entity=chat_id,
                     file=relayed_msg.media,
                     caption=caption,
                     supports_streaming=True
                 )
             except Exception as e:
-                logging.info("send_file cloud fallback to forward: %s", e)
+                logging.info("send_file fallback to forward: %s", e)
                 await relayed_msg.forward_to(chat_id)
 
             if status_msg:
@@ -273,15 +319,14 @@ async def deliver_lecture_instant(chat_id, message, status_msg=None):
                 except Exception:
                     pass
 
-            logging.info("Instant cloud delivery succeeded.")
             return True
 
         except ChatForwardsRestrictedError:
-            logging.warning("Source group has protected content. Falling back.")
+            logging.warning("Source group has protected content. Falling back to stream.")
         except asyncio.TimeoutError:
-            logging.warning("Relay timeout.")
+            logging.warning("Relay timeout. Falling back to stream.")
         except Exception:
-            logging.exception("Relay error.")
+            logging.exception("Relay error. Falling back to stream.")
         finally:
             active_relay_future = None
             if relayed_msg:
@@ -296,7 +341,7 @@ async def deliver_lecture_instant(chat_id, message, status_msg=None):
                 await status_msg.edit("⚡ **Streaming lecture...**")
             file_path = await user_client.download_media(message, file="downloads/")
             if file_path:
-                await bot.send_file(
+                await bot_client.send_file(
                     entity=chat_id,
                     file=file_path,
                     caption=message.text or "",
@@ -314,408 +359,288 @@ async def deliver_lecture_instant(chat_id, message, status_msg=None):
             return False
 
 # ============================================================
-# ADMIN COMMANDS
+# BOT HANDLERS GENERATOR
 # ============================================================
 
-@bot.on(events.NewMessage(pattern=r"^/stats$"))
-async def admin_stats(event):
-    if event.sender_id != ADMIN_ID:
-        return
+def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
+    bot_entity_box = {}
 
-    total_users = len(db.get("users", {}))
-    banned_count = len(db.get("banned", []))
-    uptime_sec = int(time.time() - START_TIME)
-    uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m {uptime_sec % 60}s"
+    @bot_client.on(events.NewMessage)
+    async def relay_listener(event):
+        global active_relay_future
+        if event.is_private and event.sender_id == USER_CLIENT_ID:
+            if active_relay_future and not active_relay_future.done():
+                active_relay_future.set_result(event.message)
 
-    text = (
-        "📊 **Bot Analytics & Health**\n\n"
-        f"👥 **Total Registered Users:** `{total_users}`\n"
-        f"🚫 **Blocked Users:** `{banned_count}`\n"
-        f"⏱️ **Uptime:** `{uptime_str}`\n"
-        f"🟢 **Server Status:** Running 24/7 on Render"
-    )
-    await event.respond(text)
-
-@bot.on(events.NewMessage(pattern=r"^/users$"))
-async def admin_users(event):
-    if event.sender_id != ADMIN_ID:
-        return
-
-    users = db.get("users", {})
-    if not users:
-        await event.respond("No users have interacted with the bot yet.")
-        return
-
-    msg = f"👥 **Recent Users ({len(users)} total):**\n\n"
-    # Show last 20 users
-    recent_users = list(users.items())[-20:]
-    for uid, udata in reversed(recent_users):
-        name = udata.get("first_name", "Unknown")
-        uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
-        joined = udata.get("joined_at", "N/A")
-        status = " [⛔ BANNED]" if is_banned(uid) else ""
-        msg += f"• `{uid}`: **{name}** ({uname}){status}\n  _Joined: {joined}_\n\n"
-
-    await event.respond(msg)
-
-@bot.on(events.NewMessage(pattern=r"^/ban (\d+)$"))
-async def admin_ban(event):
-    if event.sender_id != ADMIN_ID:
-        return
-
-    target_id = int(event.pattern_match.group(1))
-    if target_id == ADMIN_ID:
-        await event.respond("⚠️ You cannot ban yourself.")
-        return
-
-    if target_id not in db["banned"]:
-        db["banned"].append(target_id)
-        save_db(db)
-        await event.respond(f"✅ User `{target_id}` has been **banned**. They can no longer access lectures.")
-    else:
-        await event.respond(f"ℹ️ User `{target_id}` is already banned.")
-
-@bot.on(events.NewMessage(pattern=r"^/unban (\d+)$"))
-async def admin_unban(event):
-    if event.sender_id != ADMIN_ID:
-        return
-
-    target_id = int(event.pattern_match.group(1))
-    if target_id in db.get("banned", []):
-        db["banned"].remove(target_id)
-        save_db(db)
-        await event.respond(f"✅ User `{target_id}` has been **unbanned**.")
-    else:
-        await event.respond(f"ℹ️ User `{target_id}` is not in the ban list.")
-
-@bot.on(events.NewMessage(pattern=r"^/banned$"))
-async def admin_banned_list(event):
-    if event.sender_id != ADMIN_ID:
-        return
-
-    banned = db.get("banned", [])
-    if not banned:
-        await event.respond("✅ No users are currently banned.")
-        return
-
-    b_text = f"🚫 **Blocked Users ({len(banned)}):**\n\n"
-    for b_id in banned:
-        user_info = db.get("users", {}).get(str(b_id), {})
-        name = user_info.get("first_name", "Unknown")
-        b_text += f"• `{b_id}`: **{name}**\n"
-
-    await event.respond(b_text)
-
-@bot.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
-async def admin_broadcast(event):
-    if event.sender_id != ADMIN_ID:
-        return
-
-    broadcast_text = event.pattern_match.group(1).strip()
-    users = db.get("users", {})
-    if not users:
-        await event.respond("No users to broadcast to.")
-        return
-
-    sent = 0
-    failed = 0
-    status_msg = await event.respond(f"📢 Sending announcement to {len(users)} users...")
-
-    for uid in list(users.keys()):
-        if is_banned(uid):
-            continue
-        try:
-            await bot.send_message(int(uid), f"📢 **Notice from Admin:**\n\n{broadcast_text}")
-            sent += 1
-            await asyncio.sleep(0.05)
-        except Exception:
-            failed += 1
-
-    await status_msg.edit(f"✅ **Broadcast Completed!**\n\n• Delivered: `{sent}`\n• Failed: `{failed}`")
-
-# ============================================================
-# BOT USER HANDLERS
-# ============================================================
-
-@bot.on(events.NewMessage(pattern=r"^/start$"))
-async def start_handler(event):
-    sender = await event.get_sender()
-    track_user(sender)
-
-    if is_banned(event.sender_id):
-        await event.respond("⛔ You are restricted from using this bot.")
-        return
-
-    await event.respond(
-        "🎓 **MBBS Lecture Library**\n\nSelect a subject to get started:",
-        buttons=main_menu_buttons()
-    )
-
-@bot.on(events.CallbackQuery(data=b"home"))
-async def home_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    await event.edit(
-        "🎓 **MBBS Lecture Library**\n\nSelect a subject:",
-        buttons=main_menu_buttons()
-    )
-
-@bot.on(events.CallbackQuery(pattern=rb"^subject:(\d+)$"))
-async def subject_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    try:
-        index = int(event.pattern_match.group(1))
-        subjects = list(TOPICS.keys())
-        if index < 0 or index >= len(subjects):
-            await event.answer("Invalid subject.")
+    # --- Admin Commands ---
+    @bot_client.on(events.NewMessage(pattern=r"^/stats$"))
+    async def admin_stats(event):
+        if event.sender_id != ADMIN_ID:
             return
+        total_users = len(db.get("users", {}))
+        banned_count = len(db.get("banned", []))
+        uptime_sec = int(time.time() - START_TIME)
+        uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m {uptime_sec % 60}s"
 
-        subject = subjects[index]
-        user_subjects[event.sender_id] = subject
-
-        await event.edit(
-            f"📚 **{subject}**\n\nChoose an option below:",
-            buttons=subject_menu_buttons()
+        text = (
+            f"📊 **{bot_title} — Admin Panel**\n\n"
+            f"👥 **Total Registered Users:** `{total_users}`\n"
+            f"🚫 **Blocked Users:** `{banned_count}`\n"
+            f"⏱️ **Uptime:** `{uptime_str}`\n"
+            f"🤖 **Active Bots Online:** `{len(active_bots)}` bots\n"
+            f"🟢 **Server Status:** Running 24/7 on Render"
         )
-    except Exception:
-        logging.exception("Subject handler error")
-        await event.answer("Could not open subject.")
+        await event.respond(text)
 
-@bot.on(events.CallbackQuery(data=b"lectures"))
-async def lectures_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    try:
-        user_id = event.sender_id
-        subject = user_subjects.get(user_id)
-        if not subject:
-            await event.answer("Please select a subject again.")
+    @bot_client.on(events.NewMessage(pattern=r"^/users$"))
+    async def admin_users(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        users = db.get("users", {})
+        if not users:
+            await event.respond("No users recorded yet.")
             return
 
-        topic_id = TOPICS.get(subject)
-        if not topic_id:
-            await event.answer("Subject topic not found.")
+        msg = f"👥 **Recent Users ({len(users)} total across all bots):**\n\n"
+        recent_users = list(users.items())[-20:]
+        for uid, udata in reversed(recent_users):
+            name = udata.get("first_name", "Unknown")
+            uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
+            bot_tag = udata.get("bot_used", "all")
+            status = " [⛔ BANNED]" if is_banned(uid) else ""
+            msg += f"• `{uid}`: **{name}** ({uname}) [{bot_tag}]{status}\n"
+        await event.respond(msg)
+
+    @bot_client.on(events.NewMessage(pattern=r"^/ban (\d+)$"))
+    async def admin_ban(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        target_id = int(event.pattern_match.group(1))
+        if target_id == ADMIN_ID:
+            await event.respond("⚠️ You cannot ban yourself.")
+            return
+        if target_id not in db["banned"]:
+            db["banned"].append(target_id)
+            save_db(db)
+            await event.respond(f"✅ User `{target_id}` banned across all year bots.")
+        else:
+            await event.respond(f"ℹ️ User `{target_id}` is already banned.")
+
+    @bot_client.on(events.NewMessage(pattern=r"^/unban (\d+)$"))
+    async def admin_unban(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        target_id = int(event.pattern_match.group(1))
+        if target_id in db.get("banned", []):
+            db["banned"].remove(target_id)
+            save_db(db)
+            await event.respond(f"✅ User `{target_id}` unbanned.")
+        else:
+            await event.respond(f"ℹ️ User `{target_id}` is not in ban list.")
+
+    @bot_client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
+    async def admin_broadcast(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        text = event.pattern_match.group(1).strip()
+        users = db.get("users", {})
+        status = await event.respond(f"📢 Broadcasting to {len(users)} students...")
+        sent, failed = 0, 0
+        for uid in list(users.keys()):
+            if is_banned(uid):
+                continue
+            try:
+                await bot_client.send_message(int(uid), f"📢 **Announcement:**\n\n{text}")
+                sent += 1
+                await asyncio.sleep(0.05)
+            except Exception:
+                failed += 1
+        await status.edit(f"✅ Broadcast done! Delivered: `{sent}` | Failed: `{failed}`")
+
+    # --- Student User Handlers ---
+    @bot_client.on(events.NewMessage(pattern=r"^/start$"))
+    async def start_handler(event):
+        sender = await event.get_sender()
+        track_user(sender, bot_key)
+
+        if is_banned(event.sender_id):
+            await event.respond("⛔ You are restricted from using this service.")
             return
 
+        await event.respond(
+            f"🎓 **{bot_title}**\n\nSelect a subject to begin:",
+            buttons=make_main_menu(bot_topics)
+        )
+
+    @bot_client.on(events.CallbackQuery(data=b"home"))
+    async def home_handler(event):
+        if is_banned(event.sender_id):
+            await event.answer("⛔ Restricted.", alert=True)
+            return
+        await event.edit(
+            f"🎓 **{bot_title}**\n\nSelect a subject:",
+            buttons=make_main_menu(bot_topics)
+        )
+
+    @bot_client.on(events.CallbackQuery(pattern=rb"^sub:(\d+)$"))
+    async def sub_handler(event):
+        if is_banned(event.sender_id):
+            await event.answer("⛔ Restricted.", alert=True)
+            return
+        idx = int(event.pattern_match.group(1))
+        subjects = list(bot_topics.keys())
+        if 0 <= idx < len(subjects):
+            subj = subjects[idx]
+            user_subjects[event.sender_id] = subj
+            await event.edit(f"📚 **{subj}**\n\nChoose an option:", buttons=make_subject_menu())
+
+    @bot_client.on(events.CallbackQuery(data=b"lectures"))
+    async def lectures_handler(event):
+        if is_banned(event.sender_id):
+            return
+        uid = event.sender_id
+        subj = user_subjects.get(uid)
+        if not subj or subj not in bot_topics:
+            await event.answer("Select subject again.")
+            return
+
+        topic_id = bot_topics[subj]
         await event.answer("Loading lectures...")
         units = await get_topic_units(topic_id)
 
         if not units:
             await event.edit(
-                f"📚 **{subject}**\n\nNo lecture units found.",
-                buttons=[[Button.inline("⬅️ Back", data=f"subject:{subject_index(subject)}".encode())]]
+                f"📚 **{subj}**\n\nNo lecture units found.",
+                buttons=[[Button.inline("⬅️ Back", data=b"home")]]
             )
             return
 
         unit_names = list(units.keys())
-        user_units[user_id] = {
-            "subject": subject,
-            "units": units,
-            "unit_names": unit_names
-        }
+        user_units[uid] = {"subject": subj, "units": units, "unit_names": unit_names}
 
         buttons = []
-        for index, unit in enumerate(unit_names):
-            count = len(units[unit])
-            buttons.append([Button.inline(f"📂 #{unit} ({count})", data=f"unit:{index}".encode())])
+        for i, u in enumerate(unit_names):
+            buttons.append([Button.inline(f"📂 #{u} ({len(units[u])})", data=f"unit:{i}".encode())])
+        buttons.append([Button.inline("⬅️ Back", data=b"home")])
 
-        buttons.append([Button.inline("⬅️ Back", data=f"subject:{subject_index(subject)}".encode())])
+        await event.edit(f"📚 **{subj} Lectures**\n\nSelect a unit:", buttons=buttons)
 
-        await event.edit(
-            f"📚 **{subject} Lectures**\n\nSelect a unit:",
-            buttons=buttons
-        )
-    except Exception:
-        logging.exception("Lecture menu error")
-        await event.answer("Could not load lectures.")
-
-@bot.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
-async def unit_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    try:
-        user_id = event.sender_id
-        data = user_units.get(user_id)
+    @bot_client.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
+    async def unit_handler(event):
+        if is_banned(event.sender_id):
+            return
+        uid = event.sender_id
+        data = user_units.get(uid)
         if not data:
-            await event.answer("Please open the subject again.")
+            await event.answer("Reopen subject.")
             return
 
-        unit_index = int(event.pattern_match.group(1))
-        unit_names = data["unit_names"]
-        units = data["units"]
+        idx = int(event.pattern_match.group(1))
+        if 0 <= idx < len(data["unit_names"]):
+            unit_name = data["unit_names"][idx]
+            lectures = data["units"].get(unit_name, [])
+            buttons = []
+            for i, lec in enumerate(lectures):
+                fname = get_filename(lec, i + 1)
+                if len(fname) > 42:
+                    fname = fname[:39] + "..."
+                buttons.append([Button.inline(f"📄 {fname}", data=f"file:{lec.id}".encode())])
+            buttons.append([Button.inline("⬅️ Units", data=b"lectures")])
 
-        if unit_index < 0 or unit_index >= len(unit_names):
-            await event.answer("Invalid unit.")
+            await event.edit(f"📂 **#{unit_name}** ({len(lectures)} lectures):\n\nSelect a lecture:", buttons=buttons)
+
+    @bot_client.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
+    async def file_handler(event):
+        if is_banned(event.sender_id):
+            return
+        mid = int(event.pattern_match.group(1))
+        await event.answer("⚡ Sending lecture...")
+        status = await bot_client.send_message(event.chat_id, "⚡ **Sending lecture directly...**")
+
+        try:
+            msg = await user_client.get_messages(GROUP_ID, ids=mid)
+            if msg and msg.media:
+                await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, msg, status)
+            else:
+                await status.edit("❌ Lecture file not found.")
+        except Exception:
+            logging.exception("File deliver error")
+            await status.edit("❌ Delivery failed.")
+
+    @bot_client.on(events.CallbackQuery(data=b"notes"))
+    async def notes_handler(event):
+        if is_banned(event.sender_id):
+            return
+        uid = event.sender_id
+        subj = user_subjects.get(uid)
+        if not subj:
+            await event.answer("Select subject again.")
             return
 
-        unit_name = unit_names[unit_index]
-        lectures = units.get(unit_name, [])
+        status = await bot_client.send_message(event.chat_id, f"🔍 Searching notes for **{subj}**...")
+        try:
+            notes = await get_topic_messages(bot_topics.get("Notes", 33))
+            clean_subj = re.sub(r"[^a-zA-Z0-9]", "", subj).lower()
+            found = [m for m in notes if m.media and (clean_subj in (m.text or "").lower() or clean_subj in get_filename(m).lower())]
 
-        if not lectures:
-            await event.answer("No lectures found.")
-            return
+            if not found:
+                await status.edit(f"❌ No notes found for **{subj}**.")
+                return
 
-        buttons = []
-        for index, lecture in enumerate(lectures):
-            filename = get_filename(lecture, index + 1)
-            if len(filename) > 42:
-                filename = filename[:39] + "..."
-            buttons.append([Button.inline(f"📄 {filename}", data=f"file:{lecture.id}".encode())])
+            await status.edit(f"⚡ Delivering note(s)...")
+            for m in found:
+                await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, m, status)
+        except Exception:
+            logging.exception("Notes deliver error")
+            await status.edit("❌ Could not deliver notes.")
 
-        buttons.append([Button.inline("⬅️ Units", data=b"back_units")])
-
-        await event.edit(
-            f"📂 **#{unit_name}**\n\nFound **{len(lectures)}** lecture(s).\n\nSelect a lecture:",
-            buttons=buttons
-        )
-    except Exception:
-        logging.exception("Unit handler error")
-        await event.answer("Could not load this unit.")
-
-@bot.on(events.CallbackQuery(data=b"back_units"))
-async def back_units_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    try:
-        user_id = event.sender_id
-        data = user_units.get(user_id)
-        if not data:
-            await event.answer("Please open the subject again.")
-            return
-
-        subject = data["subject"]
-        units = data["units"]
-        unit_names = data["unit_names"]
-
-        buttons = []
-        for index, unit in enumerate(unit_names):
-            count = len(units[unit])
-            buttons.append([Button.inline(f"📂 #{unit} ({count})", data=f"unit:{index}".encode())])
-
-        buttons.append([Button.inline("⬅️ Back", data=f"subject:{subject_index(subject)}".encode())])
-
-        await event.edit(f"📚 **{subject} Lectures**\n\nSelect a unit:", buttons=buttons)
-    except Exception:
-        logging.exception("Back units error")
-        await event.answer("Something went wrong.")
-
-@bot.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
-async def file_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    message_id = int(event.pattern_match.group(1))
-    await event.answer("⚡ Sending lecture...")
-    status_msg = await bot.send_message(event.chat_id, "⚡ **Sending lecture directly...**")
-
-    try:
-        message = await user_client.get_messages(GROUP_ID, ids=message_id)
-        if not message or not message.media:
-            await status_msg.edit("❌ Lecture file not found.")
-            return
-
-        await deliver_lecture_instant(event.chat_id, message, status_msg)
-    except FloodWaitError as e:
-        await status_msg.edit(f"⚠️ Telegram flood wait. Retry in {e.seconds}s.")
-    except Exception:
-        logging.exception("File deliver error")
-        await status_msg.edit("❌ Failed to deliver lecture.")
-
-@bot.on(events.CallbackQuery(data=b"notes"))
-async def notes_handler(event):
-    if is_banned(event.sender_id):
-        await event.answer("⛔ You are restricted.", alert=True)
-        return
-
-    user_id = event.sender_id
-    subject = user_subjects.get(user_id)
-    if not subject:
-        await event.answer("Please select a subject again.")
-        return
-
-    await event.answer("Finding notes...")
-    status_msg = await bot.send_message(event.chat_id, f"🔍 **Searching notes for {subject}...**")
-
-    try:
-        notes = await get_topic_messages(TOPICS["Notes"])
-        subject_clean = re.sub(r"[^a-zA-Z0-9]", "", subject).lower()
-        found_notes = []
-
-        for message in notes:
-            if not message.media:
-                continue
-            text = (message.text or "").lower()
-            fname = get_filename(message).lower()
-            clean_text = re.sub(r"[^a-zA-Z0-9]", "", text)
-            clean_fname = re.sub(r"[^a-zA-Z0-9]", "", fname)
-
-            if subject_clean in clean_text or subject_clean in clean_fname:
-                found_notes.append(message)
-
-        if not found_notes:
-            await status_msg.edit(f"❌ No notes found for **{subject}**.")
-            return
-
-        await status_msg.edit(f"⚡ **Delivering note(s) for {subject}...**")
-        for note_msg in found_notes:
-            await deliver_lecture_instant(event.chat_id, note_msg, status_msg)
-
-    except Exception:
-        logging.exception("Notes deliver error")
-        await status_msg.edit("❌ Could not deliver notes.")
+    return bot_entity_box
 
 # ============================================================
-# START ENGINE
+# ENGINE ENTRYPOINT
 # ============================================================
 
 async def main():
-    global USER_CLIENT_ID, BOT_USER_ID, BOT_ENTITY_FOR_USER
+    global USER_CLIENT_ID
     os.makedirs("downloads", exist_ok=True)
-
     await start_web_server()
 
-    logging.info("Starting user client...")
+    logging.info("Connecting Telegram user client...")
     await user_client.start()
-
-    logging.info("Starting bot...")
-    await bot.start(bot_token=BOT_TOKEN)
-
-    bot_me = await bot.get_me()
     user_me = await user_client.get_me()
-
-    BOT_USER_ID = bot_me.id
     USER_CLIENT_ID = user_me.id
-    BOT_ENTITY_FOR_USER = await user_client.get_entity(bot_me.username)
 
-    try:
-        await user_client.get_entity(GROUP_ID)
-        logging.info("Group access verified.")
-    except Exception:
-        logging.warning("Please verify your user account is in GROUP_ID.")
+    runners = [user_client.run_until_disconnected()]
 
-    logging.info("MBBS Bot with Admin Panel is live and running 24/7 on Render.")
+    for key, token in BOT_TOKENS.items():
+        if not token or not token.strip():
+            continue
+        try:
+            client = TelegramClient(f"bot_session_{key}", API_ID, API_HASH)
+            await client.start(bot_token=token.strip())
+            bot_me = await client.get_me()
+            bot_entity = await user_client.get_entity(bot_me.username)
 
-    await asyncio.gather(
-        user_client.run_until_disconnected(),
-        bot.run_until_disconnected()
-    )
+            box = setup_bot_handlers(
+                bot_client=client,
+                bot_key=key,
+                bot_topics=BOT_SUBJECTS_MAP[key],
+                bot_title=BOT_TITLES_MAP[key]
+            )
+            box["entity"] = bot_entity
+            active_bots[key] = client
+            runners.append(client.run_until_disconnected())
+            logging.info("Started [%s] -> @%s", BOT_TITLES_MAP[key], bot_me.username)
+        except Exception:
+            logging.exception("Failed to start bot key: %s", key)
+
+    logging.info("All MBBS bots online and sharing the same storage group.")
+    await asyncio.gather(*runners)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Bot stopped.")
+        logging.info("Shutting down.")
     except Exception:
-        logging.exception("Fatal error")
+        logging.exception("Fatal engine crash")
