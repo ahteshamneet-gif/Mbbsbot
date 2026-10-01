@@ -1,10 +1,11 @@
+
 import asyncio
 import json
 import logging
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from aiohttp import web
 
 from telethon import TelegramClient, events, Button
@@ -113,26 +114,58 @@ logging.basicConfig(
 )
 
 # ============================================================
-# DATABASE & ACCESS CONTROL
+# DATABASE, MIGRATION & SETTINGS
 # ============================================================
 
 DB_FILE = "bot_database.json"
 
+DEFAULT_SETTINGS = {
+    "expiry_enabled": False,       # Toggle 1: Subscriptions with expiry date
+    "tier_access_enabled": False,  # Toggle 2: Year-specific bot locking
+    "daily_limit_enabled": False,  # Toggle 3: Anti-Leech download limiter
+    "daily_limit_max": 30,         # Maximum downloads per day per user
+    "cloud_backup_enabled": True   # Toggle 4: Telegram cloud auto-sync
+}
+
 def load_db():
+    data = {"users": {}, "banned": [], "approved": [], "approved_details": {}, "settings": DEFAULT_SETTINGS.copy(), "daily_downloads": {}}
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r") as f:
-                data = json.load(f)
-                if "approved" not in data:
-                    data["approved"] = []
-                if "users" not in data:
-                    data["users"] = {}
-                if "banned" not in data:
-                    data["banned"] = []
-                return data
+                loaded = json.load(f)
+                data.update(loaded)
         except Exception:
             logging.exception("Failed to read database file")
-    return {"users": {}, "banned": [], "approved": []}
+
+    if "settings" not in data:
+        data["settings"] = DEFAULT_SETTINGS.copy()
+    else:
+        for k, v in DEFAULT_SETTINGS.items():
+            if k not in data["settings"]:
+                data["settings"][k] = v
+
+    if "approved" not in data:
+        data["approved"] = []
+    if "approved_details" not in data:
+        data["approved_details"] = {}
+    if "users" not in data:
+        data["users"] = {}
+    if "banned" not in data:
+        data["banned"] = []
+    if "daily_downloads" not in data:
+        data["daily_downloads"] = {}
+
+    # Backward compatibility: automatically migrate existing approved users to Lifetime All-Year
+    for uid in data["approved"]:
+        s_uid = str(uid)
+        if s_uid not in data["approved_details"]:
+            data["approved_details"][s_uid] = {
+                "tier": "all",
+                "expiry": None,  # None means Lifetime
+                "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+    return data
 
 def save_db(data):
     try:
@@ -146,6 +179,7 @@ db = load_db()
 # Auto-add admin to approved list
 if ADMIN_ID not in db["approved"]:
     db["approved"].append(ADMIN_ID)
+    db["approved_details"][str(ADMIN_ID)] = {"tier": "all", "expiry": None, "added_at": "SYSTEM"}
     save_db(db)
 
 def track_user(user, bot_type):
@@ -165,11 +199,74 @@ def track_user(user, bot_type):
 def is_banned(user_id):
     return int(user_id) in db.get("banned", [])
 
-def is_approved(user_id):
+def check_access(user_id, bot_type):
+    """
+    Evaluates student access based on active toggles:
+    - Expiry check (if enabled)
+    - Year tier check (if enabled)
+    Returns: (is_allowed: bool, reason: str)
+    """
     uid = int(user_id)
     if uid == ADMIN_ID:
-        return True
-    return uid in db.get("approved", [])
+        return True, "admin"
+
+    if uid not in db.get("approved", []):
+        return False, "not_approved"
+
+    details = db.get("approved_details", {}).get(str(uid), {})
+
+    # 1. Check Expiry if toggle is ON
+    if db["settings"].get("expiry_enabled", False):
+        expiry_str = details.get("expiry")
+        if expiry_str:
+            try:
+                exp_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
+                if datetime.now().date() > exp_date:
+                    # Auto-revoke expired user
+                    db["approved"].remove(uid)
+                    save_db(db)
+                    return False, "expired"
+            except Exception:
+                pass
+
+    # 2. Check Year Tier if toggle is ON
+    if db["settings"].get("tier_access_enabled", False):
+        user_tier = details.get("tier", "all")
+        if user_tier != "all" and user_tier != bot_type:
+            return False, f"tier_mismatch:{user_tier}"
+
+    return True, "allowed"
+
+def check_daily_limit(user_id):
+    """
+    Checks if Anti-Leech limit is enabled and validates downloads for today.
+    Returns: (allowed: bool, current: int, max_limit: int)
+    """
+    uid = int(user_id)
+    if uid == ADMIN_ID:
+        return True, 0, 9999
+
+    if not db["settings"].get("daily_limit_enabled", False):
+        return True, 0, 0
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    downloads = db["daily_downloads"].setdefault(today, {})
+    user_count = downloads.get(str(uid), 0)
+    max_limit = db["settings"].get("daily_limit_max", 30)
+
+    if user_count >= max_limit:
+        return False, user_count, max_limit
+
+    return True, user_count, max_limit
+
+def record_download(user_id):
+    """Increments the student's daily download count"""
+    if int(user_id) == ADMIN_ID:
+        return
+    today = datetime.now().strftime("%Y-%m-%d")
+    downloads = db["daily_downloads"].setdefault(today, {})
+    downloads[str(user_id)] = downloads.get(str(user_id), 0) + 1
+    save_db(db)
 
 LOCKED_MESSAGE = (
     "🔒 **Access Restricted**\n\n"
@@ -197,8 +294,45 @@ TOPIC_CACHE_TTL = 600
 relay_lock = asyncio.Lock()
 active_relay_future = None
 
+# ============================================================
+# CLOUD BACKUP & NOTIFICATION ENGINE
+# ============================================================
+
+async def trigger_cloud_backup():
+    """Sends a copy of bot_database.json to the admin chat to protect against Render disk resets"""
+    if not manager_bot_client or not db["settings"].get("cloud_backup_enabled", True):
+        return
+    try:
+        if os.path.exists(DB_FILE):
+            await manager_bot_client.send_file(
+                ADMIN_ID,
+                DB_FILE,
+                caption=f"☁️ **Auto-Sync Cloud Backup**\n📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n👥 Users: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`"
+            )
+    except Exception:
+        logging.exception("Cloud backup dispatch failed")
+
+async def auto_restore_from_telegram():
+    """If bot_database.json is missing or wiped on Render, auto-restores the newest backup from Telegram"""
+    global db
+    if not manager_bot_client:
+        return
+    try:
+        # Check if local DB is empty
+        if len(db.get("users", {})) <= 1:
+            logging.info("Checking Telegram chat for cloud database backups...")
+            async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=15):
+                if msg.file and (msg.file.name == "bot_database.json" or (msg.text and "Auto-Sync Cloud Backup" in msg.text)):
+                    await msg.download_media(file=DB_FILE)
+                    db = load_db()
+                    logging.info("Successfully restored database from Telegram cloud backup!")
+                    await manager_bot_client.send_message(ADMIN_ID, "🔄 **Database Restored!** Loaded your backup from Telegram.")
+                    break
+    except Exception:
+        logging.exception("Failed to auto-restore database")
+
 async def notify_manager_new_request(user, bot_type):
-    """Sends an instant notification with an Approve button to the Management Bot"""
+    """Sends an instant notification with 1-click Quick Approval to the Management Bot"""
     if not manager_bot_client:
         return
     try:
@@ -208,12 +342,15 @@ async def notify_manager_new_request(user, bot_type):
             f"🔔 **New Access Request!**\n\n"
             f"👤 **Student:** {name} ({username})\n"
             f"🆔 **User ID:** `{user.id}`\n"
-            f"🤖 **Bot:** `{bot_type}`\n"
+            f"🤖 **Bot Requested:** `{bot_type}`\n"
             f"🕒 **Time:** `{datetime.now().strftime('%H:%M:%S')}`"
         )
         buttons = [
             [
-                Button.inline("✅ Approve Access", data=f"adm_app:{user.id}".encode()),
+                Button.inline("⚡ Quick Approve (Full)", data=f"adm_app:{user.id}".encode()),
+                Button.inline("⚙️ Choose Tier / Expiry", data=f"adm_tier_opt:{user.id}".encode())
+            ],
+            [
                 Button.inline("⛔ Ban", data=f"adm_ban:{user.id}".encode())
             ]
         ]
@@ -405,7 +542,7 @@ async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=N
             return False
 
 # ============================================================
-# BOT HANDLERS GENERATOR
+# BOT HANDLERS GENERATOR (FOR ALL YEAR BOTS)
 # ============================================================
 
 def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
@@ -418,138 +555,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             if active_relay_future and not active_relay_future.done():
                 active_relay_future.set_result(event.message)
 
-    # --- Admin Commands ---
-    @bot_client.on(events.NewMessage(pattern=r"^/stats$"))
-    async def admin_stats(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        total_users = len(db.get("users", {}))
-        approved_users = len(db.get("approved", []))
-        banned_count = len(db.get("banned", []))
-        uptime_sec = int(time.time() - START_TIME)
-        uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m {uptime_sec % 60}s"
-
-        text = (
-            f"📊 **{bot_title} — Admin Panel**\n\n"
-            f"👥 **Total Registered Users:** `{total_users}`\n"
-            f"💎 **Verified Paid Users:** `{approved_users}`\n"
-            f"🚫 **Blocked Users:** `{banned_count}`\n"
-            f"⏱️ **Uptime:** `{uptime_str}`\n"
-            f"🤖 **Active Bots Online:** `{len(active_bots)}` bots\n"
-            f"🟢 **Server Status:** Running 24/7 on Render"
-        )
-        await event.respond(text)
-
-    @bot_client.on(events.NewMessage(pattern=r"^/users$"))
-    async def admin_users(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        users = db.get("users", {})
-        if not users:
-            await event.respond("No users recorded yet.")
-            return
-
-        msg = f"👥 **Recent Users ({len(users)} total):**\n\n"
-        recent_users = list(users.items())[-20:]
-        for uid, udata in reversed(recent_users):
-            name = udata.get("first_name", "Unknown")
-            uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
-            bot_tag = udata.get("bot_used", "all")
-            status = " [💎 VERIFIED]" if is_approved(uid) else " [🔒 LOCKED]"
-            if is_banned(uid):
-                status = " [⛔ BANNED]"
-            msg += f"• `{uid}`: **{name}** ({uname}) [{bot_tag}]{status}\n"
-        await event.respond(msg)
-
-    @bot_client.on(events.NewMessage(pattern=r"^/approve (\d+)$"))
-    async def admin_approve(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id not in db["approved"]:
-            db["approved"].append(target_id)
-            save_db(db)
-            await event.respond(f"✅ User `{target_id}` approved! They now have full access to all year bots.")
-            try:
-                await bot_client.send_message(
-                    target_id,
-                    "🎉 **Access Granted!**\n\nYour account is now verified. Send /start to access all your MBBS lectures and notes!"
-                )
-            except Exception:
-                pass
-        else:
-            await event.respond(f"ℹ️ User `{target_id}` is already approved.")
-
-    @bot_client.on(events.NewMessage(pattern=r"^/remove (\d+)$"))
-    async def admin_remove(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id == ADMIN_ID:
-            await event.respond("⚠️ You cannot revoke admin access.")
-            return
-        if target_id in db.get("approved", []):
-            db["approved"].remove(target_id)
-            save_db(db)
-            await event.respond(f"🔒 Access revoked for user `{target_id}`.")
-            try:
-                await bot_client.send_message(
-                    target_id,
-                    "⚠️ Your subscription/access has expired or been removed. Please contact @Nothing_0786 to renew."
-                )
-            except Exception:
-                pass
-        else:
-            await event.respond(f"ℹ️ User `{target_id}` was not in the approved list.")
-
-    @bot_client.on(events.NewMessage(pattern=r"^/ban (\d+)$"))
-    async def admin_ban(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id == ADMIN_ID:
-            await event.respond("⚠️ You cannot ban yourself.")
-            return
-        if target_id not in db["banned"]:
-            db["banned"].append(target_id)
-            if target_id in db["approved"]:
-                db["approved"].remove(target_id)
-            save_db(db)
-            await event.respond(f"✅ User `{target_id}` banned across all year bots.")
-        else:
-            await event.respond(f"ℹ️ User `{target_id}` is already banned.")
-
-    @bot_client.on(events.NewMessage(pattern=r"^/unban (\d+)$"))
-    async def admin_unban(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id in db.get("banned", []):
-            db["banned"].remove(target_id)
-            save_db(db)
-            await event.respond(f"✅ User `{target_id}` unbanned.")
-        else:
-            await event.respond(f"ℹ️ User `{target_id}` is not in ban list.")
-
-    @bot_client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
-    async def admin_broadcast(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        text = event.pattern_match.group(1).strip()
-        users = db.get("users", {})
-        status = await event.respond(f"📢 Broadcasting to {len(users)} students...")
-        sent, failed = 0, 0
-        for uid in list(users.keys()):
-            if is_banned(uid):
-                continue
-            try:
-                await bot_client.send_message(int(uid), f"📢 **Announcement:**\n\n{text}")
-                sent += 1
-                await asyncio.sleep(0.05)
-            except Exception:
-                failed += 1
-        await status.edit(f"✅ Broadcast done! Delivered: `{sent}` | Failed: `{failed}`")
-
     # --- Student User Handlers ---
     @bot_client.on(events.NewMessage(pattern=r"^/start$"))
     async def start_handler(event):
@@ -560,15 +565,34 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.respond("⛔ You are restricted from using this service.")
             return
 
-        # Check paid approval
-        if not is_approved(event.sender_id):
-            await event.respond(LOCKED_MESSAGE.format(user_id=event.sender_id))
-            # Dispatch instant alert with 1-click approve button to Management Bot
-            await notify_manager_new_request(sender, bot_key)
-            return
+        # Check access with toggles
+        allowed, reason = check_access(event.sender_id, bot_key)
+        if not allowed:
+            if reason.startswith("tier_mismatch"):
+                user_tier = reason.split(":")[1]
+                await event.respond(
+                    f"⚠️ **Year Access Restricted**\n\nYour subscription is activated for **{user_tier.replace('_', ' ').title()}**, but this is the **{bot_title}**.\n\n"
+                    f"To upgrade or change your enrolled year, contact {OWNER_CONTACT}."
+                )
+                return
+            elif reason == "expired":
+                await event.respond(
+                    f"⚠️ **Subscription Expired!**\n\nYour access period has ended. Please contact {OWNER_CONTACT} to renew your subscription."
+                )
+                return
+            else:
+                await event.respond(LOCKED_MESSAGE.format(user_id=event.sender_id))
+                await notify_manager_new_request(sender, bot_key)
+                return
+
+        # Show remaining daily download limit if anti-leech enabled
+        limit_note = ""
+        if db["settings"].get("daily_limit_enabled", False) and event.sender_id != ADMIN_ID:
+            _, curr, mlimit = check_daily_limit(event.sender_id)
+            limit_note = f"\n⚡ Daily Limit: `{curr}/{mlimit}` downloads used"
 
         await event.respond(
-            f"🎓 **{bot_title}**\n\nSelect a subject to begin:",
+            f"🎓 **{bot_title}**{limit_note}\n\nSelect a subject to begin:",
             buttons=make_main_menu(bot_topics)
         )
 
@@ -577,7 +601,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         if is_banned(event.sender_id):
             await event.answer("⛔ Restricted.", alert=True)
             return
-        if not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             await event.edit(LOCKED_MESSAGE.format(user_id=event.sender_id))
             return
@@ -592,7 +617,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         if is_banned(event.sender_id):
             await event.answer("⛔ Restricted.", alert=True)
             return
-        if not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             await event.edit(LOCKED_MESSAGE.format(user_id=event.sender_id))
             return
@@ -606,7 +632,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(data=b"lectures"))
     async def lectures_handler(event):
-        if is_banned(event.sender_id) or not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if is_banned(event.sender_id) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
         uid = event.sender_id
@@ -638,7 +665,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
     async def unit_handler(event):
-        if is_banned(event.sender_id) or not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if is_banned(event.sender_id) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
         uid = event.sender_id
@@ -663,9 +691,18 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
     async def file_handler(event):
-        if is_banned(event.sender_id) or not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if is_banned(event.sender_id) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
+
+        # Check Anti-Leech Daily Limit
+        can_download, count, max_dl = check_daily_limit(event.sender_id)
+        if not can_download:
+            await event.answer("⚠️ Daily limit reached!", alert=True)
+            await event.respond(f"⚠️️ **Daily Download Limit Reached!**\n\nYou have used your daily limit of `{max_dl}` lectures today. Your limit will reset at midnight.")
+            return
+
         mid = int(event.pattern_match.group(1))
         await event.answer("⚡ Sending lecture...")
         status = await bot_client.send_message(event.chat_id, "⚡ **Sending lecture directly...**")
@@ -673,7 +710,9 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         try:
             msg = await user_client.get_messages(GROUP_ID, ids=mid)
             if msg and msg.media:
-                await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, msg, status)
+                success = await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, msg, status)
+                if success:
+                    record_download(event.sender_id)
             else:
                 await status.edit("❌ Lecture file not found.")
         except Exception:
@@ -682,7 +721,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(data=b"notes"))
     async def notes_handler(event):
-        if is_banned(event.sender_id) or not is_approved(event.sender_id):
+        allowed, _ = check_access(event.sender_id, bot_key)
+        if is_banned(event.sender_id) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
         uid = event.sender_id
@@ -718,16 +758,35 @@ def make_manager_menu():
     return [
         [
             Button.inline("📊 System Stats", data=b"mgmt_stats"),
-            Button.inline("⏳ Pending Requests", data=b"mgmt_pending"),
+            Button.inline("⚙️ Feature Toggles", data=b"mgmt_toggles"),
         ],
         [
-            Button.inline("👥 Recent Users", data=b"mgmt_users"),
+            Button.inline("⏳ Pending Requests", data=b"mgmt_pending"),
             Button.inline("💎 Verified Members", data=b"mgmt_approved"),
         ],
         [
+            Button.inline("👥 Recent Users", data=b"mgmt_users"),
             Button.inline("🚫 Banned Users", data=b"mgmt_banned"),
+        ],
+        [
+            Button.inline("☁️ Cloud Backup Now", data=b"mgmt_do_backup"),
             Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home"),
         ]
+    ]
+
+def make_toggles_menu():
+    settings = db["settings"]
+    btn_exp = "🟢 ON" if settings.get("expiry_enabled") else "🔴 OFF"
+    btn_tier = "🟢 ON" if settings.get("tier_access_enabled") else "🔴 OFF"
+    btn_limit = f"🟢 ON ({settings.get('daily_limit_max', 30)}/d)" if settings.get("daily_limit_enabled") else "🔴 OFF"
+    btn_sync = "🟢 ON" if settings.get("cloud_backup_enabled") else "🔴 OFF"
+
+    return [
+        [Button.inline(f"⏳ Sub Expiry: {btn_exp}", data=b"tog:expiry_enabled")],
+        [Button.inline(f"🎓 Year-Lock Tier: {btn_tier}", data=b"tog:tier_access_enabled")],
+        [Button.inline(f"🛡️ Anti-Leech Limit: {btn_limit}", data=b"tog:daily_limit_enabled")],
+        [Button.inline(f"☁️ Cloud Auto-Sync: {btn_sync}", data=b"tog:cloud_backup_enabled")],
+        [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
     ]
 
 def setup_manager_bot_handlers(client):
@@ -750,7 +809,7 @@ def setup_manager_bot_handlers(client):
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
             f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Select an action below to manage your bots in real time:"
+            "Use the controls below to configure your features, manage users, or backup your system:"
         )
         await event.respond(text, buttons=make_manager_menu())
 
@@ -769,9 +828,43 @@ def setup_manager_bot_handlers(client):
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
             f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Select an action below to manage your bots in real time:"
+            "Use the controls below to configure your features, manage users, or backup your system:"
         )
         await event.edit(text, buttons=make_manager_menu())
+
+    @client.on(events.CallbackQuery(data=b"mgmt_toggles"))
+    async def cb_manager_toggles(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        text = (
+            "⚙️ **System Feature Controls (ON / OFF)**\n\n"
+            "Tap any toggle below to turn it ON or OFF instantly:\n\n"
+            "• **Sub Expiry:** When OFF, approvals are permanent Lifetime. When ON, access expires automatically.\n"
+            "• **Year-Lock Tier:** When OFF, students can use all bots. When ON, only the year bot they bought.\n"
+            "• **Anti-Leech Limit:** Limits lectures per student per day to stop spam/account sharing.\n"
+            "• **Cloud Auto-Sync:** Backs up database to Telegram automatically."
+        )
+        await event.edit(text, buttons=make_toggles_menu())
+
+    @client.on(events.CallbackQuery(pattern=rb"^tog:(.+)$"))
+    async def cb_toggle_switch(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        key = event.pattern_match.group(1).decode()
+        if key in db["settings"]:
+            db["settings"][key] = not db["settings"][key]
+            save_db(db)
+            state_str = "ENABLED (ON)" if db["settings"][key] else "DISABLED (OFF)"
+            await event.answer(f"Feature {key} is now {state_str}!", alert=True)
+            await cb_manager_toggles(event)
+
+    @client.on(events.CallbackQuery(data=b"mgmt_do_backup"))
+    async def cb_do_backup(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        await event.answer("Dispatching cloud backup to chat...")
+        await trigger_cloud_backup()
+        await event.edit("✅ **Cloud backup dispatched!** A secure copy of `bot_database.json` has been sent directly to this chat.", buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
 
     @client.on(events.CallbackQuery(data=b"mgmt_stats"))
     async def cb_stats(event):
@@ -783,15 +876,23 @@ def setup_manager_bot_handlers(client):
         uptime = int(time.time() - START_TIME)
         up_str = f"{uptime // 3600}h {(uptime % 3600) // 60}m {uptime % 60}s"
 
+        settings = db["settings"]
+        t_exp = "🟢 ON" if settings.get("expiry_enabled") else "🔴 OFF"
+        t_tier = "🟢 ON" if settings.get("tier_access_enabled") else "🔴 OFF"
+        t_limit = "🟢 ON" if settings.get("daily_limit_enabled") else "🔴 OFF"
+
         bot_list = "\n".join([f"• `{k}`: Online" for k in active_bots.keys()])
         text = (
             "📊 **Live System Analytics**\n\n"
             f"👥 **Total Students:** `{total}`\n"
             f"💎 **Paid Verified:** `{approved}`\n"
             f"🚫 **Blocked:** `{banned}`\n"
-            f"⏱️ **Uptime:** `{up_str}`\n"
-            f"🟢 **Server:** Render Production Cloud\n\n"
-            f"🤖 **Active Bots:**\n{bot_list}"
+            f"⏱️ **Uptime:** `{up_str}`\n\n"
+            f"⚙️ **Active Toggles:**\n"
+            f"• Sub Expiry: {t_exp}\n"
+            f"• Year-Lock: {t_tier}\n"
+            f"• Anti-Leech: {t_limit}\n\n"
+            f"🤖 **Connected Bots:**\n{bot_list}"
         )
         await event.edit(text, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
 
@@ -802,11 +903,11 @@ def setup_manager_bot_handlers(client):
         users = db.get("users", {})
         pending = [
             (uid, udata) for uid, udata in users.items()
-            if not is_approved(uid) and not is_banned(uid)
+            if not is_banned(uid) and int(uid) not in db.get("approved", [])
         ]
         if not pending:
             await event.edit(
-                "✅ **No pending access requests!** All registered students are either verified or dealt with.",
+                "✅ **No pending access requests!** All registered students are verified or dealt with.",
                 buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]]
             )
             return
@@ -814,10 +915,85 @@ def setup_manager_bot_handlers(client):
         buttons = []
         for uid, udata in pending[-8:]:
             name = udata.get("first_name", "Student")
-            buttons.append([Button.inline(f"✅ Approve {name} ({uid})", data=f"adm_app:{uid}".encode())])
+            buttons.append([
+                Button.inline(f"⚡ Approve {name} ({uid})", data=f"adm_app:{uid}".encode()),
+                Button.inline(f"⚙️ Tier/Exp", data=f"adm_tier_opt:{uid}".encode())
+            ])
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
 
-        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**\nTap to approve instantly:", buttons=buttons)
+        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**\nTap to approve:", buttons=buttons)
+
+    # Specific Tier & Expiry selection menu for a user
+    @client.on(events.CallbackQuery(pattern=rb"^adm_tier_opt:(\d+)$"))
+    async def cb_tier_options(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        uid = int(event.pattern_match.group(1))
+        buttons = [
+            [
+                Button.inline("👑 All Years (Lifetime)", data=f"adm_gr:{uid}:all:0".encode()),
+                Button.inline("📅 All Years (30 Days)", data=f"adm_gr:{uid}:all:30".encode()),
+            ],
+            [
+                Button.inline("🎓 1st Year (30 Days)", data=f"adm_gr:{uid}:year_1:30".encode()),
+                Button.inline("🎓 1st Year (1 Year)", data=f"adm_gr:{uid}:year_1:365".encode()),
+            ],
+            [
+                Button.inline("🎓 2nd Year (30 Days)", data=f"adm_gr:{uid}:year_2:30".encode()),
+                Button.inline("🎓 2nd Year (1 Year)", data=f"adm_gr:{uid}:year_2:365".encode()),
+            ],
+            [
+                Button.inline("🎓 3rd Year (1 Year)", data=f"adm_gr:{uid}:year_3:365".encode()),
+                Button.inline("🎓 Final Year (1 Year)", data=f"adm_gr:{uid}:final_year:365".encode()),
+            ],
+            [
+                Button.inline("⬅️ Cancel", data=b"mgmt_home")
+            ]
+        ]
+        await event.edit(f"⚙️ **Select Enrolled Tier & Duration for User `{uid}`:**", buttons=buttons)
+
+    @client.on(events.CallbackQuery(pattern=rb"^adm_gr:(\d+):([a-z0-9_]+):(\d+)$"))
+    async def cb_grant_custom(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        uid = int(event.pattern_match.group(1))
+        tier = event.pattern_match.group(2).decode()
+        days = int(event.pattern_match.group(3))
+
+        expiry_date = None
+        exp_text = "Permanent Lifetime"
+        if days > 0:
+            expiry_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
+            exp_text = f"Valid until `{expiry_date}` ({days} days)"
+
+        if uid not in db["approved"]:
+            db["approved"].append(uid)
+
+        db["approved_details"][str(uid)] = {
+            "tier": tier,
+            "expiry": expiry_date,
+            "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        save_db(db)
+        await trigger_cloud_backup()
+
+        await event.answer("✅ Enrolled Successfully!", alert=True)
+        tier_title = BOT_TITLES_MAP.get(tier, tier.title())
+        await event.edit(
+            f"✅ **Access Granted!**\n\n👤 User: `{uid}`\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Expiry: {exp_text}",
+            buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]]
+        )
+
+        # Notify student
+        for bot in active_bots.values():
+            try:
+                await bot.send_message(
+                    uid,
+                    f"🎉 **Your account has been verified!**\n\n🎓 Enrolled: **{tier_title}**\n⏳ Duration: {exp_text}\n\nSend /start to begin studying!"
+                )
+                break
+            except Exception:
+                pass
 
     @client.on(events.CallbackQuery(data=b"mgmt_users"))
     async def cb_users(event):
@@ -832,8 +1008,9 @@ def setup_manager_bot_handlers(client):
         for uid, udata in list(users.items())[-15:]:
             name = udata.get("first_name", "Unknown")
             uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
-            status = "💎" if is_approved(uid) else ("⛔" if is_banned(uid) else "🔒")
-            msg += f"{status} `{uid}`: **{name}** ({uname})\n"
+            status = "💎" if int(uid) in db.get("approved", []) else ("⛔" if is_banned(uid) else "🔒")
+            tier = db.get("approved_details", {}).get(str(uid), {}).get("tier", "all")
+            msg += f"{status} `{uid}`: **{name}** ({uname}) [{tier}]\n"
 
         await event.edit(msg, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
 
@@ -849,7 +1026,9 @@ def setup_manager_bot_handlers(client):
                 continue
             udata = db.get("users", {}).get(str(uid), {})
             name = udata.get("first_name", f"User {uid}")
-            buttons.append([Button.inline(f"❌ Revoke {name} ({uid})", data=f"adm_rev:{uid}".encode())])
+            det = db.get("approved_details", {}).get(str(uid), {})
+            t_name = det.get("tier", "all")
+            buttons.append([Button.inline(f"❌ Revoke {name} ({t_name})", data=f"adm_rev:{uid}".encode())])
 
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
         await event.edit(msg + "Tap any user below to revoke their access:", buttons=buttons)
@@ -876,10 +1055,15 @@ def setup_manager_bot_handlers(client):
         target_id = int(event.pattern_match.group(1))
         if target_id not in db["approved"]:
             db["approved"].append(target_id)
+            db["approved_details"][str(target_id)] = {
+                "tier": "all",
+                "expiry": None,
+                "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
             save_db(db)
-            await event.answer("✅ Access Granted!", alert=True)
-            await event.edit(f"✅ User `{target_id}` has been approved and granted full access!", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
-            # Notify the student on active bots
+            await trigger_cloud_backup()
+            await event.answer("✅ Access Granted (All Years Lifetime)!", alert=True)
+            await event.edit(f"✅ User `{target_id}` approved with Full Access!", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
             for bot in active_bots.values():
                 try:
                     await bot.send_message(
@@ -900,6 +1084,7 @@ def setup_manager_bot_handlers(client):
         if target_id in db.get("approved", []):
             db["approved"].remove(target_id)
             save_db(db)
+            await trigger_cloud_backup()
             await event.answer("🔒 Access Revoked!", alert=True)
             await event.edit(f"🔒 Access revoked for user `{target_id}`.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
         else:
@@ -915,6 +1100,7 @@ def setup_manager_bot_handlers(client):
             if target_id in db["approved"]:
                 db["approved"].remove(target_id)
             save_db(db)
+            await trigger_cloud_backup()
             await event.answer("⛔ User Banned!", alert=True)
             await event.edit(f"⛔ User `{target_id}` banned across all bots.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
@@ -926,6 +1112,7 @@ def setup_manager_bot_handlers(client):
         if target_id in db.get("banned", []):
             db["banned"].remove(target_id)
             save_db(db)
+            await trigger_cloud_backup()
             await event.answer("✅ User Unbanned!", alert=True)
             await event.edit(f"✅ User `{target_id}` unbanned.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
@@ -939,7 +1126,6 @@ def setup_manager_bot_handlers(client):
         status = await event.respond(f"📢 Broadcasting to {len(users)} students across all bots...")
         sent, failed = 0, 0
 
-        # Choose the first active bot client to send
         sender_bot = list(active_bots.values())[0] if active_bots else client
         for uid in list(users.keys()):
             if is_banned(uid):
@@ -959,10 +1145,12 @@ def setup_manager_bot_handlers(client):
         target_id = int(event.pattern_match.group(1))
         if target_id not in db["approved"]:
             db["approved"].append(target_id)
+            db["approved_details"][str(target_id)] = {"tier": "all", "expiry": None, "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             save_db(db)
-            await event.respond(f"✅ User `{target_id}` approved!")
+            await trigger_cloud_backup()
+            await event.respond(f"✅ User `{target_id}` approved (All Years Lifetime)!")
         else:
-            await event.respond(f"ℹ️ User `{target_id}` is already approved.")
+            await event.respond(f"ℹ️️ User `{target_id}` is already approved.")
 
     @client.on(events.NewMessage(pattern=r"^/remove (\d+)$"))
     async def manager_cmd_remove(event):
@@ -972,6 +1160,7 @@ def setup_manager_bot_handlers(client):
         if target_id in db.get("approved", []):
             db["approved"].remove(target_id)
             save_db(db)
+            await trigger_cloud_backup()
             await event.respond(f"🔒 Access revoked for `{target_id}`.")
         else:
             await event.respond(f"ℹ️ User `{target_id}` was not in the approved list.")
@@ -1000,7 +1189,6 @@ async def main():
             await client.start(bot_token=token.strip())
             bot_me = await client.get_me()
 
-            # If this is the dedicated Management Bot
             if key == "manager":
                 manager_bot_client = client
                 setup_manager_bot_handlers(client)
@@ -1021,6 +1209,10 @@ async def main():
             logging.info("Started [%s] -> @%s", BOT_TITLES_MAP[key], bot_me.username)
         except Exception:
             logging.exception("Failed to start bot key: %s", key)
+
+    # Cloud Auto-Restore Check
+    if manager_bot_client:
+        await auto_restore_from_telegram()
 
     logging.info("All MBBS bots and Management Control Bot online.")
     await asyncio.gather(*runners)
