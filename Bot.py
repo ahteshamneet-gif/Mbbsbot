@@ -222,7 +222,6 @@ def check_access(user_id, bot_type):
             try:
                 exp_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
                 if datetime.now().date() > exp_date:
-                    # Auto-revoke expired user
                     db["approved"].remove(uid)
                     save_db(db)
                     return False, "expired"
@@ -318,7 +317,6 @@ async def auto_restore_from_telegram():
     if not manager_bot_client:
         return
     try:
-        # Check if local DB is empty
         if len(db.get("users", {})) <= 1:
             logging.info("Checking Telegram chat for cloud database backups...")
             async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=15):
@@ -570,8 +568,9 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         if not allowed:
             if reason.startswith("tier_mismatch"):
                 user_tier = reason.split(":")[1]
+                tier_label = BOT_TITLES_MAP.get(user_tier, user_tier.replace('_', ' ').title())
                 await event.respond(
-                    f"⚠️ **Year Access Restricted**\n\nYour subscription is activated for **{user_tier.replace('_', ' ').title()}**, but this is the **{bot_title}**.\n\n"
+                    f"⚠️ **Year Access Restricted**\n\nYour subscription is activated for **{tier_label}**, but this is the **{bot_title}**.\n\n"
                     f"To upgrade or change your enrolled year, contact {OWNER_CONTACT}."
                 )
                 return
@@ -585,7 +584,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 await notify_manager_new_request(sender, bot_key)
                 return
 
-        # Show remaining daily download limit if anti-leech enabled
         limit_note = ""
         if db["settings"].get("daily_limit_enabled", False) and event.sender_id != ADMIN_ID:
             _, curr, mlimit = check_daily_limit(event.sender_id)
@@ -696,11 +694,10 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.answer("🔒 Paid access only.", alert=True)
             return
 
-        # Check Anti-Leech Daily Limit
         can_download, count, max_dl = check_daily_limit(event.sender_id)
         if not can_download:
             await event.answer("⚠️ Daily limit reached!", alert=True)
-            await event.respond(f"⚠️️ **Daily Download Limit Reached!**\n\nYou have used your daily limit of `{max_dl}` lectures today. Your limit will reset at midnight.")
+            await event.respond(f"⚠️ **Daily Download Limit Reached!**\n\nYou have used your daily limit of `{max_dl}` lectures today. Your limit will reset at midnight.")
             return
 
         mid = int(event.pattern_match.group(1))
@@ -765,11 +762,14 @@ def make_manager_menu():
             Button.inline("💎 Verified Members", data=b"mgmt_approved"),
         ],
         [
+            Button.inline("📢 Announcements", data=b"mgmt_announce"),
             Button.inline("👥 Recent Users", data=b"mgmt_users"),
-            Button.inline("🚫 Banned Users", data=b"mgmt_banned"),
         ],
         [
+            Button.inline("🚫 Banned Users", data=b"mgmt_banned"),
             Button.inline("☁️ Cloud Backup Now", data=b"mgmt_do_backup"),
+        ],
+        [
             Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home"),
         ]
     ]
@@ -809,7 +809,7 @@ def setup_manager_bot_handlers(client):
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
             f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Use the controls below to configure your features, manage users, or backup your system:"
+            "Use the controls below to configure your features, manage users, modify permissions, or broadcast announcements:"
         )
         await event.respond(text, buttons=make_manager_menu())
 
@@ -828,7 +828,7 @@ def setup_manager_bot_handlers(client):
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
             f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Use the controls below to configure your features, manage users, or backup your system:"
+            "Use the controls below to configure your features, manage users, modify permissions, or broadcast announcements:"
         )
         await event.edit(text, buttons=make_manager_menu())
 
@@ -921,14 +921,18 @@ def setup_manager_bot_handlers(client):
             ])
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
 
-        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**\nTap to approve:", buttons=buttons)
+        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**\nTap to approve or assign tier:", buttons=buttons)
 
-    # Specific Tier & Expiry selection menu for a user
+    # Specific Tier & Expiry selection menu for a user (Used for both initial granting and changing permissions)
     @client.on(events.CallbackQuery(pattern=rb"^adm_tier_opt:(\d+)$"))
     async def cb_tier_options(event):
         if event.sender_id != ADMIN_ID:
             return
         uid = int(event.pattern_match.group(1))
+        curr_det = db.get("approved_details", {}).get(str(uid), {})
+        curr_tier = curr_det.get("tier", "Not Set")
+        curr_exp = curr_det.get("expiry") or "Lifetime"
+
         buttons = [
             [
                 Button.inline("👑 All Years (Lifetime)", data=f"adm_gr:{uid}:all:0".encode()),
@@ -943,14 +947,24 @@ def setup_manager_bot_handlers(client):
                 Button.inline("🎓 2nd Year (1 Year)", data=f"adm_gr:{uid}:year_2:365".encode()),
             ],
             [
+                Button.inline("🎓 3rd Year (30 Days)", data=f"adm_gr:{uid}:year_3:30".encode()),
                 Button.inline("🎓 3rd Year (1 Year)", data=f"adm_gr:{uid}:year_3:365".encode()),
+            ],
+            [
+                Button.inline("🎓 Final Year (30 Days)", data=f"adm_gr:{uid}:final_year:30".encode()),
                 Button.inline("🎓 Final Year (1 Year)", data=f"adm_gr:{uid}:final_year:365".encode()),
             ],
             [
-                Button.inline("⬅️ Cancel", data=b"mgmt_home")
+                Button.inline("⬅️ Cancel", data=b"mgmt_approved")
             ]
         ]
-        await event.edit(f"⚙️ **Select Enrolled Tier & Duration for User `{uid}`:**", buttons=buttons)
+        await event.edit(
+            f"⚙️ **Modify Plan & Tier for User `{uid}`:**\n\n"
+            f"• Current Enrolled Tier: `{curr_tier}`\n"
+            f"• Current Expiry: `{curr_exp}`\n\n"
+            f"Select a new enrollment tier and duration below to update immediately:",
+            buttons=buttons
+        )
 
     @client.on(events.CallbackQuery(pattern=rb"^adm_gr:(\d+):([a-z0-9_]+):(\d+)$"))
     async def cb_grant_custom(event):
@@ -966,6 +980,7 @@ def setup_manager_bot_handlers(client):
             expiry_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
             exp_text = f"Valid until `{expiry_date}` ({days} days)"
 
+        is_already_approved = uid in db["approved"]
         if uid not in db["approved"]:
             db["approved"].append(uid)
 
@@ -977,19 +992,25 @@ def setup_manager_bot_handlers(client):
         save_db(db)
         await trigger_cloud_backup()
 
-        await event.answer("✅ Enrolled Successfully!", alert=True)
+        action_title = "Subscription Plan Updated" if is_already_approved else "Access Granted"
         tier_title = BOT_TITLES_MAP.get(tier, tier.title())
+
+        await event.answer("✅ Updated Successfully!", alert=True)
         await event.edit(
-            f"✅ **Access Granted!**\n\n👤 User: `{uid}`\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Expiry: {exp_text}",
-            buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]]
+            f"✅ **{action_title}!**\n\n👤 User: `{uid}`\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Expiry: {exp_text}",
+            buttons=[
+                [Button.inline("💎 Back to Verified Members", data=b"mgmt_approved")],
+                [Button.inline("⬅️ Main Menu", data=b"mgmt_home")]
+            ]
         )
 
-        # Notify student
+        # Notify student about the update or new grant
+        msg_header = "🔄 **Your subscription plan was updated!**" if is_already_approved else "🎉 **Your account has been verified!**"
         for bot in active_bots.values():
             try:
                 await bot.send_message(
                     uid,
-                    f"🎉 **Your account has been verified!**\n\n🎓 Enrolled: **{tier_title}**\n⏳ Duration: {exp_text}\n\nSend /start to begin studying!"
+                    f"{msg_header}\n\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Duration: {exp_text}\n\nSend /start to continue studying!"
                 )
                 break
             except Exception:
@@ -1016,22 +1037,26 @@ def setup_manager_bot_handlers(client):
 
     @client.on(events.CallbackQuery(data=b"mgmt_approved"))
     async def cb_approved(event):
+        """Displays verified members with options to Edit Tier or Revoke Access"""
         if event.sender_id != ADMIN_ID:
             return
         approved_list = db.get("approved", [])
-        msg = f"💎 **Verified Paid Students ({len(approved_list)}):**\n\n"
+        msg = f"💎 **Verified Paid Students ({len(approved_list)}):**\n\nTap **✏️ Edit** on any student to change their year tier or duration:\n\n"
         buttons = []
-        for uid in approved_list[-10:]:
+        for uid in approved_list[-8:]:
             if uid == ADMIN_ID:
                 continue
             udata = db.get("users", {}).get(str(uid), {})
             name = udata.get("first_name", f"User {uid}")
             det = db.get("approved_details", {}).get(str(uid), {})
             t_name = det.get("tier", "all")
-            buttons.append([Button.inline(f"❌ Revoke {name} ({t_name})", data=f"adm_rev:{uid}".encode())])
+            buttons.append([
+                Button.inline(f"✏️ {name} ({t_name})", data=f"adm_tier_opt:{uid}".encode()),
+                Button.inline(f"❌ Revoke", data=f"adm_rev:{uid}".encode())
+            ])
 
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
-        await event.edit(msg + "Tap any user below to revoke their access:", buttons=buttons)
+        await event.edit(msg, buttons=buttons)
 
     @client.on(events.CallbackQuery(data=b"mgmt_banned"))
     async def cb_banned(event):
@@ -1114,29 +1139,120 @@ def setup_manager_bot_handlers(client):
             save_db(db)
             await trigger_cloud_backup()
             await event.answer("✅ User Unbanned!", alert=True)
-            await event.edit(f"✅ User `{target_id}` unbanned.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
+            await event.edit(f"✅ User `{target_id}` unbanned.", buttons=[[Button.inline("⬅️️ Menu", data=b"mgmt_home")]])
 
-    # Text commands in Management Bot
-    @client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
+    # Announcements Hub Menu
+    @client.on(events.CallbackQuery(data=b"mgmt_announce"))
+    async def cb_announcements_menu(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        total_students = len(db.get("users", {}))
+        approved_count = len(db.get("approved", []))
+
+        text = (
+            "📢 **Announcements & Broadcast Hub**\n\n"
+            f"👥 Reaching `{total_students}` students (`{approved_count}` paid members).\n\n"
+            "You can send an announcement to all students or target a specific year simply by sending a message here in this format:\n\n"
+            "• **To Everyone:**\n"
+            "`/broadcast <your message>`\n\n"
+            "• **To 1st Year Students Only:**\n"
+            "`/broadcast_y1 <your message>`\n\n"
+            "• **To 2nd Year Students Only:**\n"
+            "`/broadcast_y2 <your message>`\n\n"
+            "• **To 3rd Year Students Only:**\n"
+            "`/broadcast_y3 <your message>`\n\n"
+            "• **To Final Year Students Only:**\n"
+            "`/broadcast_final <your message>`\n\n"
+            "*Example: `/broadcast Hello everyone! New pathology lectures have been uploaded.`*"
+        )
+        await event.edit(text, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
+
+    # Text command: Direct Tier / Expiry edit by ID
+    @client.on(events.NewMessage(pattern=r"^/(?:tier|edit|modify|grant) (\d+)$"))
+    async def manager_cmd_edit_tier(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        uid = int(event.pattern_match.group(1))
+        curr_det = db.get("approved_details", {}).get(str(uid), {})
+        curr_tier = curr_det.get("tier", "Not Set")
+        curr_exp = curr_det.get("expiry") or "Lifetime"
+
+        buttons = [
+            [
+                Button.inline("👑 All Years (Lifetime)", data=f"adm_gr:{uid}:all:0".encode()),
+                Button.inline("📅 All Years (30 Days)", data=f"adm_gr:{uid}:all:30".encode()),
+            ],
+            [
+                Button.inline("🎓 1st Year (30 Days)", data=f"adm_gr:{uid}:year_1:30".encode()),
+                Button.inline("🎓 1st Year (1 Year)", data=f"adm_gr:{uid}:year_1:365".encode()),
+            ],
+            [
+                Button.inline("🎓 2nd Year (30 Days)", data=f"adm_gr:{uid}:year_2:30".encode()),
+                Button.inline("🎓 2nd Year (1 Year)", data=f"adm_gr:{uid}:year_2:365".encode()),
+            ],
+            [
+                Button.inline("🎓 3rd Year (30 Days)", data=f"adm_gr:{uid}:year_3:30".encode()),
+                Button.inline("🎓 3rd Year (1 Year)", data=f"adm_gr:{uid}:year_3:365".encode()),
+            ],
+            [
+                Button.inline("🎓 Final Year (30 Days)", data=f"adm_gr:{uid}:final_year:30".encode()),
+                Button.inline("🎓 Final Year (1 Year)", data=f"adm_gr:{uid}:final_year:365".encode()),
+            ],
+            [
+                Button.inline("⬅️ Cancel", data=b"mgmt_home")
+            ]
+        ]
+        await event.respond(
+            f"⚙️ **Modify Plan & Tier for User `{uid}`:**\n\n"
+            f"• Current Enrolled Tier: `{curr_tier}`\n"
+            f"• Current Expiry: `{curr_exp}`\n\n"
+            f"Select the new enrollment tier and duration below:",
+            buttons=buttons
+        )
+
+    # Universal & Year-Targeted Broadcast Command
+    @client.on(events.NewMessage(pattern=r"^/broadcast(?:_([a-z0-9_]+))? (.+)"))
     async def manager_broadcast(event):
         if event.sender_id != ADMIN_ID:
             return
-        text = event.pattern_match.group(1).strip()
+        target_group = event.pattern_match.group(1)
+        text = event.pattern_match.group(2).strip()
+
+        tier_map = {
+            "y1": "year_1",
+            "y2": "year_2",
+            "y3": "year_3",
+            "final": "final_year",
+        }
+        filter_tier = tier_map.get(target_group, target_group)
+
         users = db.get("users", {})
-        status = await event.respond(f"📢 Broadcasting to {len(users)} students across all bots...")
+        status = await event.respond("📢 Preparing announcement broadcast...")
         sent, failed = 0, 0
 
         sender_bot = list(active_bots.values())[0] if active_bots else client
-        for uid in list(users.keys()):
-            if is_banned(uid):
+
+        target_title = f"{filter_tier.replace('_', ' ').title()}" if filter_tier else "All Students"
+        await status.edit(f"📢 Broadcasting to **{target_title}**...")
+
+        for uid_str in list(users.keys()):
+            if is_banned(uid_str):
                 continue
+
+            # If targeting a specific year tier, verify the student's enrollment
+            if filter_tier:
+                user_tier = db.get("approved_details", {}).get(uid_str, {}).get("tier", "all")
+                if user_tier != filter_tier and user_tier != "all":
+                    continue
+
             try:
-                await sender_bot.send_message(int(uid), f"📢 **Announcement:**\n\n{text}")
+                await sender_bot.send_message(int(uid_str), f"📢 **MBBS Announcement:**\n\n{text}")
                 sent += 1
                 await asyncio.sleep(0.05)
             except Exception:
                 failed += 1
-        await status.edit(f"✅ Broadcast complete!\n\nDelivered: `{sent}` | Failed: `{failed}`")
+
+        await status.edit(f"✅ **Broadcast complete!**\n\n🎯 Target: `{target_title}`\n📬 Delivered: `{sent}`\n❌ Failed: `{failed}`")
 
     @client.on(events.NewMessage(pattern=r"^/approve (\d+)$"))
     async def manager_cmd_approve(event):
@@ -1150,7 +1266,7 @@ def setup_manager_bot_handlers(client):
             await trigger_cloud_backup()
             await event.respond(f"✅ User `{target_id}` approved (All Years Lifetime)!")
         else:
-            await event.respond(f"ℹ️️ User `{target_id}` is already approved.")
+            await event.respond(f"ℹ️ User `{target_id}` is already approved.")
 
     @client.on(events.NewMessage(pattern=r"^/remove (\d+)$"))
     async def manager_cmd_remove(event):
@@ -1163,7 +1279,7 @@ def setup_manager_bot_handlers(client):
             await trigger_cloud_backup()
             await event.respond(f"🔒 Access revoked for `{target_id}`.")
         else:
-            await event.respond(f"ℹ️ User `{target_id}` was not in the approved list.")
+            await event.respond(f"ℹ️️ User `{target_id}` was not in the approved list.")
 
 # ============================================================
 # ENGINE ENTRYPOINT
@@ -1210,7 +1326,6 @@ async def main():
         except Exception:
             logging.exception("Failed to start bot key: %s", key)
 
-    # Cloud Auto-Restore Check
     if manager_bot_client:
         await auto_restore_from_telegram()
 
