@@ -43,7 +43,6 @@ TOPICS_ALL = {
     "Physiology": 3,
     "Biochemistry": 4,
     "Microbiology": 5,
-    "Notes": 33,
     "Pathology": 49,
     "Pharmacology": 50,
     "Forensic Medicine and Toxicology": 51,
@@ -65,15 +64,12 @@ TOPICS_Y1 = {
     "Anatomy": 2,
     "Physiology": 3,
     "Biochemistry": 4,
-    "Notes": 33,
 }
 
 TOPICS_Y2 = {
     "Pathology": 49,
     "Pharmacology": 50,
     "Microbiology": 5,
-    "Forensic Medicine and Toxicology": 51,
-    "Notes": 33,
 }
 
 TOPICS_Y3 = {
@@ -81,7 +77,6 @@ TOPICS_Y3 = {
     "Ophthalmology": 57,
     "Otorhinolaryngology (ENT)": 58,
     "Forensic Medicine and Toxicology": 51,
-    "Notes": 33,
 }
 
 TOPICS_FINAL = {
@@ -94,7 +89,6 @@ TOPICS_FINAL = {
     "Radiology": 61,
     "Dermatology": 62,
     "Psychiatry": 63,
-    "Notes": 33,
 }
 
 BOT_SUBJECTS_MAP = {
