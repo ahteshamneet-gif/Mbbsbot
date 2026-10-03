@@ -1,0 +1,228 @@
+{
+  "users": {
+    "8886695885": {
+      "first_name": "Kuch Nahi",
+      "last_name": "",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-01 20:54:00"
+    },
+    "8417145295": {
+      "first_name": "Nothing",
+      "last_name": "",
+      "username": "Nothing_0786",
+      "bot_used": "year_1",
+      "joined_at": "2026-10-01 21:00:12"
+    },
+    "5801161441": {
+      "first_name": "Faizan",
+      "last_name": "Hasan",
+      "username": "Faizan7866666",
+      "bot_used": "all",
+      "joined_at": "2026-10-02 02:43:05"
+    },
+    "2058738292": {
+      "first_name": "Telegram",
+      "last_name": "",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-02 05:26:49"
+    },
+    "1715203567": {
+      "first_name": "Aatir",
+      "last_name": "Mansuri",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-02 06:45:40"
+    },
+    "5166776938": {
+      "first_name": "Tanyaaa",
+      "last_name": "Sharma",
+      "username": "tanyassharma",
+      "bot_used": "all",
+      "joined_at": "2026-10-02 07:26:37"
+    },
+    "6810482857": {
+      "first_name": "Uma",
+      "last_name": "Maheswari",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-02 11:39:41"
+    },
+    "8922662585": {
+      "first_name": "Yogesh",
+      "last_name": "Gurjar",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-02 17:20:30"
+    },
+    "5430536021": {
+      "first_name": "Dr.Shams",
+      "last_name": "Sagar",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-02 17:20:35"
+    },
+    "8196100218": {
+      "first_name": "Black bird",
+      "last_name": "",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-03 01:03:14"
+    },
+    "6777386053": {
+      "first_name": "Ram Mohan Reddy",
+      "last_name": "Dwarampudi",
+      "username": "",
+      "bot_used": "all",
+      "joined_at": "2026-10-03 02:00:27"
+    },
+    "8756890184": {
+      "first_name": "Sahil",
+      "last_name": "Kumar",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-03 07:03:46"
+    },
+    "6610041737": {
+      "first_name": "Heyo",
+      "last_name": "",
+      "username": "",
+      "bot_used": "year_2",
+      "joined_at": "2026-10-03 09:36:48"
+    },
+    "7904639676": {
+      "first_name": "Uvais",
+      "last_name": "Khan",
+      "username": "MBBSKSMA",
+      "bot_used": "all",
+      "joined_at": "2026-10-03 12:01:03"
+    },
+    "1835856623": {
+      "first_name": "P",
+      "last_name": "K",
+      "username": "",
+      "bot_used": "all",
+      "joined_at": "2026-10-03 16:20:28"
+    },
+    "5867018055": {
+      "first_name": "Mohd",
+      "last_name": "Faham",
+      "username": "Faham1001",
+      "bot_used": "all",
+      "joined_at": "2026-10-03 17:35:12"
+    }
+  },
+  "banned": [],
+  "approved": [
+    8417145295,
+    8886695885,
+    5801161441,
+    2058738292,
+    5166776938,
+    6810482857,
+    8922662585,
+    5430536021,
+    8196100218,
+    6777386053,
+    8756890184,
+    7904639676,
+    1835856623,
+    5867018055
+  ],
+  "approved_details": {
+    "8417145295": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "SYSTEM"
+    },
+    "8886695885": {
+      "tier": "year_2",
+      "expiry": "2027-10-01",
+      "added_at": "2026-10-01 20:57:25"
+    },
+    "5801161441": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-02 03:04:29"
+    },
+    "2058738292": {
+      "tier": "year_2",
+      "expiry": "2027-10-02",
+      "added_at": "2026-10-02 05:27:43"
+    },
+    "5166776938": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-02 07:26:51"
+    },
+    "6810482857": {
+      "tier": "year_2",
+      "expiry": "2027-10-02",
+      "added_at": "2026-10-02 11:39:56"
+    },
+    "8922662585": {
+      "tier": "year_2",
+      "expiry": "2027-10-02",
+      "added_at": "2026-10-02 17:20:49"
+    },
+    "5430536021": {
+      "tier": "year_2",
+      "expiry": "2027-10-02",
+      "added_at": "2026-10-02 17:20:56"
+    },
+    "8196100218": {
+      "tier": "year_2",
+      "expiry": "2027-10-03",
+      "added_at": "2026-10-03 01:03:25"
+    },
+    "6777386053": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-03 02:02:01"
+    },
+    "8756890184": {
+      "tier": "year_2",
+      "expiry": "2027-10-03",
+      "added_at": "2026-10-03 07:04:01"
+    },
+    "7904639676": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-03 12:01:22"
+    },
+    "1835856623": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-03 16:20:35"
+    },
+    "5867018055": {
+      "tier": "all",
+      "expiry": null,
+      "added_at": "2026-10-03 17:35:34"
+    }
+  },
+  "settings": {
+    "expiry_enabled": false,
+    "tier_access_enabled": false,
+    "daily_limit_enabled": true,
+    "daily_limit_max": 30,
+    "cloud_backup_enabled": true
+  },
+  "daily_downloads": {
+    "2026-10-01": {},
+    "2026-10-02": {
+      "5801161441": 1,
+      "2058738292": 4,
+      "5166776938": 1,
+      "6810482857": 1,
+      "5430536021": 5,
+      "8922662585": 6
+    },
+    "2026-10-03": {
+      "6777386053": 2,
+      "8922662585": 4,
+      "8196100218": 1
+    }
+  }
+}
