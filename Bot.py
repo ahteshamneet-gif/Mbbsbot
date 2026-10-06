@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 import re
 import time
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ from telethon import TelegramClient, events, Button
 from telethon.errors import RPCError, FloodWaitError, ChatForwardsRestrictedError
 
 # ============================================================
-# CONFIGURATION
+# CONFIGURATION & ENVIRONMENT
 # ============================================================
 
 API_ID = int(os.getenv("API_ID", "37864520"))
@@ -21,6 +22,9 @@ GROUP_ID = int(os.getenv("GROUP_ID", "-1004409849262"))
 PORT = int(os.getenv("PORT", "8080"))
 ADMIN_ID = int(os.getenv("ADMIN_ID", "8417145295"))
 OWNER_CONTACT = os.getenv("OWNER_CONTACT", "@Nothing_0786")
+
+# Live GitHub Pages CBT Web App URL
+CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/index.html")
 
 # ============================================================
 # BOT TOKENS
@@ -44,6 +48,7 @@ TOPICS_ALL = {
     "Physiology": 3,
     "Biochemistry": 4,
     "Microbiology": 5,
+    "Notes": 33,
     "Pathology": 49,
     "Pharmacology": 50,
     "Forensic Medicine and Toxicology": 51,
@@ -65,12 +70,15 @@ TOPICS_Y1 = {
     "Anatomy": 2,
     "Physiology": 3,
     "Biochemistry": 4,
+    "Notes": 33,
 }
 
 TOPICS_Y2 = {
     "Pathology": 49,
     "Pharmacology": 50,
     "Microbiology": 5,
+    "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
 }
 
 TOPICS_Y3 = {
@@ -78,6 +86,7 @@ TOPICS_Y3 = {
     "Ophthalmology": 57,
     "Otorhinolaryngology (ENT)": 58,
     "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
 }
 
 TOPICS_FINAL = {
@@ -90,6 +99,7 @@ TOPICS_FINAL = {
     "Radiology": 61,
     "Dermatology": 62,
     "Psychiatry": 63,
+    "Notes": 33,
 }
 
 BOT_SUBJECTS_MAP = {
@@ -114,21 +124,28 @@ logging.basicConfig(
 )
 
 # ============================================================
-# DATABASE, MIGRATION & SETTINGS
+# DATABASE & ACCESS CONTROL
 # ============================================================
 
 DB_FILE = "bot_database.json"
 
 DEFAULT_SETTINGS = {
-    "expiry_enabled": False,       # Toggle 1: Subscriptions with expiry date
-    "tier_access_enabled": False,  # Toggle 2: Year-specific bot locking
-    "daily_limit_enabled": False,  # Toggle 3: Anti-Leech download limiter
-    "daily_limit_max": 30,         # Maximum downloads per day per user
-    "cloud_backup_enabled": True   # Toggle 4: Telegram cloud auto-sync
+    "expiry_enabled": False,
+    "tier_access_enabled": False,
+    "daily_limit_enabled": False,
+    "daily_limit_max": 30,
+    "cloud_backup_enabled": True
 }
 
 def load_db():
-    data = {"users": {}, "banned": [], "approved": [], "approved_details": {}, "settings": DEFAULT_SETTINGS.copy(), "daily_downloads": {}}
+    data = {
+        "users": {},
+        "banned": [],
+        "approved": [],
+        "approved_details": {},
+        "settings": DEFAULT_SETTINGS.copy(),
+        "daily_downloads": {}
+    }
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r") as f:
@@ -155,13 +172,14 @@ def load_db():
     if "daily_downloads" not in data:
         data["daily_downloads"] = {}
 
-    # Backward compatibility: automatically migrate existing approved users to Lifetime All-Year
+    # Backward compatibility: automatically migrate legacy approved users to Full Access
     for uid in data["approved"]:
         s_uid = str(uid)
         if s_uid not in data["approved_details"]:
             data["approved_details"][s_uid] = {
                 "tier": "all",
-                "expiry": None,  # None means Lifetime
+                "content_tier": "full",
+                "expiry": None,
                 "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
 
@@ -179,8 +197,43 @@ db = load_db()
 # Auto-add admin to approved list
 if ADMIN_ID not in db["approved"]:
     db["approved"].append(ADMIN_ID)
-    db["approved_details"][str(ADMIN_ID)] = {"tier": "all", "expiry": None, "added_at": "SYSTEM"}
+    db["approved_details"][str(ADMIN_ID)] = {
+        "tier": "all",
+        "content_tier": "full",
+        "expiry": None,
+        "added_at": "SYSTEM"
+    }
     save_db(db)
+
+def get_or_create_qbank_creds(user_id):
+    """Generates and retrieves clean student Q-Bank credentials"""
+    s_uid = str(user_id)
+    if s_uid not in db["approved_details"]:
+        db["approved_details"][s_uid] = {}
+
+    details = db["approved_details"][s_uid]
+    if "qbank_id" not in details or not details["qbank_id"]:
+        suffix = s_uid[-4:] if len(s_uid) >= 4 else str(random.randint(1000, 9999))
+        details["qbank_id"] = f"STU-{suffix}"
+        details["qbank_pass"] = f"mbbs{random.randint(1000, 9999)}"
+        save_db(db)
+
+    return details["qbank_id"], details["qbank_pass"]
+
+def get_user_content_tier(user_id):
+    """Returns 'full' (Lectures + QBank), 'lectures_only', or None"""
+    if int(user_id) == ADMIN_ID:
+        return "full"
+    s_uid = str(user_id)
+    if int(user_id) not in db.get("approved", []):
+        return None
+    return db.get("approved_details", {}).get(s_uid, {}).get("content_tier", "full")
+
+def generate_webapp_launch_url(user_id):
+    if int(user_id) == ADMIN_ID:
+        return CBT_WEBAPP_BASE_URL
+    qid, qpass = get_or_create_qbank_creds(user_id)
+    return f"{CBT_WEBAPP_BASE_URL}?uid={qid}&key={qpass}"
 
 def track_user(user, bot_type):
     if not user:
@@ -200,12 +253,6 @@ def is_banned(user_id):
     return int(user_id) in db.get("banned", [])
 
 def check_access(user_id, bot_type):
-    """
-    Evaluates student access based on active toggles:
-    - Expiry check (if enabled)
-    - Year tier check (if enabled)
-    Returns: (is_allowed: bool, reason: str)
-    """
     uid = int(user_id)
     if uid == ADMIN_ID:
         return True, "admin"
@@ -215,7 +262,7 @@ def check_access(user_id, bot_type):
 
     details = db.get("approved_details", {}).get(str(uid), {})
 
-    # 1. Check Expiry if toggle is ON
+    # Check Expiry if enabled
     if db["settings"].get("expiry_enabled", False):
         expiry_str = details.get("expiry")
         if expiry_str:
@@ -228,7 +275,7 @@ def check_access(user_id, bot_type):
             except Exception:
                 pass
 
-    # 2. Check Year Tier if toggle is ON
+    # Check Year Tier if enabled
     if db["settings"].get("tier_access_enabled", False):
         user_tier = details.get("tier", "all")
         if user_tier != "all" and user_tier != bot_type:
@@ -237,10 +284,6 @@ def check_access(user_id, bot_type):
     return True, "allowed"
 
 def check_daily_limit(user_id):
-    """
-    Checks if Anti-Leech limit is enabled and validates downloads for today.
-    Returns: (allowed: bool, current: int, max_limit: int)
-    """
     uid = int(user_id)
     if uid == ADMIN_ID:
         return True, 0, 9999
@@ -259,7 +302,6 @@ def check_daily_limit(user_id):
     return True, user_count, max_limit
 
 def record_download(user_id):
-    """Increments the student's daily download count"""
     if int(user_id) == ADMIN_ID:
         return
     today = datetime.now().strftime("%Y-%m-%d")
@@ -269,13 +311,14 @@ def record_download(user_id):
 
 LOCKED_MESSAGE = (
     "🔒 **Access Restricted**\n\n"
-    "Heyy this is paid bot only limited users can have accese only this bot if you want the access then contact @Nothing_0786\n\n"
+    "This is a verified educational bot. Limited users have access to these resources.\n"
+    f"To enroll or activate your subscription, contact {OWNER_CONTACT}\n\n"
     "Send your **User ID** to get verified:\n"
     "`{user_id}`"
 )
 
 # ============================================================
-# CLIENTS & GLOBALS
+# CLIENTS & RUNTIME GLOBALS
 # ============================================================
 
 user_client = TelegramClient("session", API_ID, API_HASH)
@@ -298,7 +341,7 @@ active_relay_future = None
 # ============================================================
 
 async def trigger_cloud_backup():
-    """Sends a copy of bot_database.json to the admin chat to protect against Render disk resets"""
+    """Backs up bot_database.json directly to the admin's Telegram chat"""
     if not manager_bot_client or not db["settings"].get("cloud_backup_enabled", True):
         return
     try:
@@ -306,49 +349,54 @@ async def trigger_cloud_backup():
             await manager_bot_client.send_file(
                 ADMIN_ID,
                 DB_FILE,
-                caption=f"☁️ **Auto-Sync Cloud Backup**\n📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n👥 Users: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`"
+                caption=(
+                    "☁️ **Auto-Sync Cloud Backup**\n"
+                    f"📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
+                    f"👥 Registered: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`"
+                )
             )
     except Exception:
-        logging.exception("Cloud backup dispatch failed")
+        logging.exception("Cloud backup failed")
 
 async def auto_restore_from_telegram():
-    """If bot_database.json is missing or wiped on Render, auto-restores the newest backup from Telegram"""
+    """Restores bot_database.json from Telegram if Render wipes the local disk"""
     global db
     if not manager_bot_client:
         return
     try:
         if len(db.get("users", {})) <= 1:
-            logging.info("Checking Telegram chat for cloud database backups...")
+            logging.info("Checking Telegram chat for existing database backups...")
             async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=15):
                 if msg.file and (msg.file.name == "bot_database.json" or (msg.text and "Auto-Sync Cloud Backup" in msg.text)):
                     await msg.download_media(file=DB_FILE)
                     db = load_db()
-                    logging.info("Successfully restored database from Telegram cloud backup!")
-                    await manager_bot_client.send_message(ADMIN_ID, "🔄 **Database Restored!** Loaded your backup from Telegram.")
+                    logging.info("Successfully restored database from Telegram backup.")
+                    await manager_bot_client.send_message(ADMIN_ID, "🔄 **Cloud Database Auto-Restored Successfully!**")
                     break
     except Exception:
-        logging.exception("Failed to auto-restore database")
+        logging.exception("Auto-restore failed")
 
 async def notify_manager_new_request(user, bot_type):
-    """Sends an instant notification with 1-click Quick Approval to the Management Bot"""
+    """Sends an approval card to the Management Bot for new student signups"""
     if not manager_bot_client:
         return
     try:
-        name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Unknown"
+        name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Student"
         username = f"@{user.username}" if user.username else "No username"
         text = (
-            f"🔔 **New Access Request!**\n\n"
+            f"🔔 **New Student Access Request!**\n\n"
             f"👤 **Student:** {name} ({username})\n"
             f"🆔 **User ID:** `{user.id}`\n"
-            f"🤖 **Bot Requested:** `{bot_type}`\n"
+            f"🤖 **Bot Selected:** `{bot_type}`\n"
             f"🕒 **Time:** `{datetime.now().strftime('%H:%M:%S')}`"
         )
         buttons = [
             [
-                Button.inline("⚡ Quick Approve (Full)", data=f"adm_app:{user.id}".encode()),
-                Button.inline("⚙️ Choose Tier / Expiry", data=f"adm_tier_opt:{user.id}".encode())
+                Button.inline("⚡ Full (Lec + Q-Bank)", data=f"adm_app_full:{user.id}".encode()),
+                Button.inline("📚 Lectures Only", data=f"adm_app_lec:{user.id}".encode())
             ],
             [
+                Button.inline("⚙️ Choose Year / Duration", data=f"adm_tier_opt:{user.id}".encode()),
                 Button.inline("⛔ Ban", data=f"adm_ban:{user.id}".encode())
             ]
         ]
@@ -357,11 +405,11 @@ async def notify_manager_new_request(user, bot_type):
         logging.exception("Failed to dispatch manager alert")
 
 # ============================================================
-# HEALTH-CHECK WEB SERVER FOR RENDER
+# WEB SERVER FOR RENDER HEALTH CHECKS
 # ============================================================
 
 async def health_check(request):
-    return web.Response(text="MBBS Multi-Bot Engine is live and healthy!")
+    return web.Response(text="MBBS Multi-Bot Production Engine is Online 24/7.")
 
 async def start_web_server():
     app = web.Application()
@@ -371,10 +419,10 @@ async def start_web_server():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)
     await site.start()
-    logging.info("Web server listening on port %s", PORT)
+    logging.info("Render health-check web server listening on port %s", PORT)
 
 # ============================================================
-# MENUS & HELPERS
+# UI MENUS
 # ============================================================
 
 def make_main_menu(topics):
@@ -390,12 +438,33 @@ def make_main_menu(topics):
 def make_subject_menu():
     return [
         [
-            Button.inline("📚 Lectures", data=b"lectures"),
-            Button.inline("📝 Notes", data=b"notes"),
+            Button.inline("📚 Video Lectures", data=b"lectures"),
+            Button.inline("📝 Notes & PDFs", data=b"notes"),
         ],
         [
-            Button.inline("⬅️ Back", data=b"home"),
+            Button.inline("🎯 High-Yield MCQ Hub", data=b"mcq_hub"),
+        ],
+        [
+            Button.inline("⬅️ All Subjects", data=b"home"),
         ]
+    ]
+
+def make_mcq_hub_menu(user_id):
+    content_tier = get_user_content_tier(user_id)
+    has_qbank = content_tier == "full"
+
+    if has_qbank:
+        launch_url = generate_webapp_launch_url(user_id)
+        cbt_btn = Button.url("🌐 Launch MBBS CBT Q-Bank App", launch_url)
+    else:
+        cbt_btn = Button.inline("🔒 CBT Q-Bank (Upgrade Required)", data=b"mcq_upgrade_info")
+
+    return [
+        [cbt_btn],
+        [Button.inline("📂 Topic-Wise Q-Bank PDFs", data=b"mcq_p:topic_wise")],
+        [Button.inline("🏛️ Previous Year Questions (PYQs)", data=b"mcq_p:pyqs")],
+        [Button.inline("🎲 Random / Mock Test MCQs", data=b"mcq_p:random")],
+        [Button.inline("⬅️ Back to Subject", data=b"sub_back")],
     ]
 
 def extract_hashtag(text):
@@ -423,7 +492,7 @@ def get_filename(message, number=1):
     return f"Lecture {number}"
 
 # ============================================================
-# TOPIC MESSAGES FETCHING
+# TOPIC FETCHER & CLOUD RELAY
 # ============================================================
 
 async def get_topic_messages(topic_id):
@@ -433,7 +502,6 @@ async def get_topic_messages(topic_id):
             messages.append(message)
         messages.reverse()
     except FloodWaitError as e:
-        logging.warning("Flood wait: %s seconds", e.seconds)
         await asyncio.sleep(e.seconds)
     except Exception:
         logging.exception("Error while reading topic messages")
@@ -465,10 +533,6 @@ async def get_topic_units(topic_id):
     TOPIC_CACHE[topic_id] = (now, units)
     return units
 
-# ============================================================
-# INSTANT CLOUD DELIVERY ENGINE
-# ============================================================
-
 async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=None):
     global active_relay_future
 
@@ -476,8 +540,8 @@ async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=N
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         active_relay_future = future
-
         relayed_msg = None
+
         try:
             await user_client.forward_messages(bot_entity, message)
             relayed_msg = await asyncio.wait_for(future, timeout=10.0)
@@ -490,8 +554,7 @@ async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=N
                     caption=caption,
                     supports_streaming=True
                 )
-            except Exception as e:
-                logging.info("send_file fallback to forward: %s", e)
+            except Exception:
                 await relayed_msg.forward_to(chat_id)
 
             if status_msg:
@@ -499,15 +562,10 @@ async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=N
                     await status_msg.delete()
                 except Exception:
                     pass
-
             return True
 
-        except ChatForwardsRestrictedError:
-            logging.warning("Source group has protected content. Falling back to stream.")
-        except asyncio.TimeoutError:
-            logging.warning("Relay timeout. Falling back to stream.")
         except Exception:
-            logging.exception("Relay error. Falling back to stream.")
+            logging.warning("Relay fallback triggered.")
         finally:
             active_relay_future = None
             if relayed_msg:
@@ -540,7 +598,7 @@ async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=N
             return False
 
 # ============================================================
-# BOT HANDLERS GENERATOR (FOR ALL YEAR BOTS)
+# STUDENT BOT GENERATOR
 # ============================================================
 
 def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
@@ -553,72 +611,86 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             if active_relay_future and not active_relay_future.done():
                 active_relay_future.set_result(event.message)
 
-    # --- Student User Handlers ---
     @bot_client.on(events.NewMessage(pattern=r"^/start$"))
     async def start_handler(event):
         sender = await event.get_sender()
         track_user(sender, bot_key)
 
-        if is_banned(event.sender_id):
+        uid = event.sender_id
+        if is_banned(uid):
             await event.respond("⛔ You are restricted from using this service.")
             return
 
-        # Check access with toggles
-        allowed, reason = check_access(event.sender_id, bot_key)
+        allowed, reason = check_access(uid, bot_key)
         if not allowed:
             if reason.startswith("tier_mismatch"):
                 user_tier = reason.split(":")[1]
                 tier_label = BOT_TITLES_MAP.get(user_tier, user_tier.replace('_', ' ').title())
                 await event.respond(
                     f"⚠️ **Year Access Restricted**\n\nYour subscription is activated for **{tier_label}**, but this is the **{bot_title}**.\n\n"
-                    f"To upgrade or change your enrolled year, contact {OWNER_CONTACT}."
+                    f"To upgrade or switch years, contact {OWNER_CONTACT}."
                 )
                 return
             elif reason == "expired":
                 await event.respond(
-                    f"⚠️ **Subscription Expired!**\n\nYour access period has ended. Please contact {OWNER_CONTACT} to renew your subscription."
+                    f"⚠️ **Subscription Expired!**\n\nYour access period has ended. Contact {OWNER_CONTACT} to renew your enrollment."
                 )
                 return
             else:
-                await event.respond(LOCKED_MESSAGE.format(user_id=event.sender_id))
+                await event.respond(LOCKED_MESSAGE.format(user_id=uid))
                 await notify_manager_new_request(sender, bot_key)
                 return
 
+        # Build Credentials / Plan Banner for verified students
+        content_tier = get_user_content_tier(uid)
+        cred_banner = ""
+        if content_tier == "full":
+            qid, qpass = get_or_create_qbank_creds(uid)
+            cred_banner = (
+                "\n\n━━━━━━━━━━━━━━━━━━━━━━\n"
+                "🩺 **YOUR CBT Q-BANK CREDENTIALS:**\n"
+                f"🆔 **Student ID:** `{qid}`\n"
+                f"🔑 **Password:** `{qpass}`\n"
+                "*(Auto-logs you in when tapping Launch Q-Bank)*\n"
+                "━━━━━━━━━━━━━━━━━━━━━━"
+            )
+        elif content_tier == "lectures_only":
+            cred_banner = (
+                "\n\n━━━━━━━━━━━━━━━━━━━━━━\n"
+                "📚 **ENROLLED PLAN:** Video Lectures & Notes Only\n"
+                f"💡 *To unlock the interactive CBT Q-Bank app, contact {OWNER_CONTACT}*\n"
+                "━━━━━━━━━━━━━━━━━━━━━━"
+            )
+
         limit_note = ""
-        if db["settings"].get("daily_limit_enabled", False) and event.sender_id != ADMIN_ID:
-            _, curr, mlimit = check_daily_limit(event.sender_id)
+        if db["settings"].get("daily_limit_enabled", False) and uid != ADMIN_ID:
+            _, curr, mlimit = check_daily_limit(uid)
             limit_note = f"\n⚡ Daily Limit: `{curr}/{mlimit}` downloads used"
 
-        await event.respond(
-            f"🎓 **{bot_title}**{limit_note}\n\nSelect a subject to begin:",
-            buttons=make_main_menu(bot_topics)
+        welcome_text = (
+            f"🎓 **{bot_title}**{limit_note}"
+            f"{cred_banner}\n\n"
+            "Select a subject below to begin:"
         )
+        await event.respond(welcome_text, buttons=make_main_menu(bot_topics))
 
     @bot_client.on(events.CallbackQuery(data=b"home"))
-    async def home_handler(event):
+    async def cb_home(event):
         if is_banned(event.sender_id):
-            await event.answer("⛔ Restricted.", alert=True)
             return
         allowed, _ = check_access(event.sender_id, bot_key)
         if not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
-            await event.edit(LOCKED_MESSAGE.format(user_id=event.sender_id))
             return
-
-        await event.edit(
-            f"🎓 **{bot_title}**\n\nSelect a subject:",
-            buttons=make_main_menu(bot_topics)
-        )
+        await event.edit(f"🎓 **{bot_title}**\n\nSelect a subject below:", buttons=make_main_menu(bot_topics))
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^sub:(\d+)$"))
-    async def sub_handler(event):
+    async def cb_sub(event):
         if is_banned(event.sender_id):
-            await event.answer("⛔ Restricted.", alert=True)
             return
         allowed, _ = check_access(event.sender_id, bot_key)
         if not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
-            await event.edit(LOCKED_MESSAGE.format(user_id=event.sender_id))
             return
 
         idx = int(event.pattern_match.group(1))
@@ -626,15 +698,22 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         if 0 <= idx < len(subjects):
             subj = subjects[idx]
             user_subjects[event.sender_id] = subj
-            await event.edit(f"📚 **{subj}**\n\nChoose an option:", buttons=make_subject_menu())
+            await event.edit(f"📚 **{subj}**\n\nChoose an option below:", buttons=make_subject_menu())
+
+    @bot_client.on(events.CallbackQuery(data=b"sub_back"))
+    async def cb_sub_back(event):
+        uid = event.sender_id
+        subj = user_subjects.get(uid, "Anatomy")
+        await event.edit(f"📚 **{subj}**\n\nChoose an option below:", buttons=make_subject_menu())
 
     @bot_client.on(events.CallbackQuery(data=b"lectures"))
-    async def lectures_handler(event):
-        allowed, _ = check_access(event.sender_id, bot_key)
-        if is_banned(event.sender_id) or not allowed:
+    async def cb_lectures(event):
+        uid = event.sender_id
+        allowed, _ = check_access(uid, bot_key)
+        if is_banned(uid) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
-        uid = event.sender_id
+
         subj = user_subjects.get(uid)
         if not subj or subj not in bot_topics:
             await event.answer("Select subject again.")
@@ -645,10 +724,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         units = await get_topic_units(topic_id)
 
         if not units:
-            await event.edit(
-                f"📚 **{subj}**\n\nNo lecture units found.",
-                buttons=[[Button.inline("⬅️ Back", data=b"home")]]
-            )
+            await event.edit(f"📚 **{subj}**\n\nNo lecture units found.", buttons=[[Button.inline("⬅️ Back", data=b"home")]])
             return
 
         unit_names = list(units.keys())
@@ -657,16 +733,12 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         buttons = []
         for i, u in enumerate(unit_names):
             buttons.append([Button.inline(f"📂 #{u} ({len(units[u])})", data=f"unit:{i}".encode())])
-        buttons.append([Button.inline("⬅️ Back", data=b"home")])
+        buttons.append([Button.inline("⬅️ Back to Subject", data=b"sub_back")])
 
         await event.edit(f"📚 **{subj} Lectures**\n\nSelect a unit:", buttons=buttons)
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
-    async def unit_handler(event):
-        allowed, _ = check_access(event.sender_id, bot_key)
-        if is_banned(event.sender_id) or not allowed:
-            await event.answer("🔒 Paid access only.", alert=True)
-            return
+    async def cb_unit(event):
         uid = event.sender_id
         data = user_units.get(uid)
         if not data:
@@ -688,16 +760,16 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.edit(f"📂 **#{unit_name}** ({len(lectures)} lectures):\n\nSelect a lecture:", buttons=buttons)
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
-    async def file_handler(event):
-        allowed, _ = check_access(event.sender_id, bot_key)
-        if is_banned(event.sender_id) or not allowed:
+    async def cb_file(event):
+        uid = event.sender_id
+        allowed, _ = check_access(uid, bot_key)
+        if is_banned(uid) or not allowed:
             await event.answer("🔒 Paid access only.", alert=True)
             return
 
-        can_download, count, max_dl = check_daily_limit(event.sender_id)
-        if not can_download:
-            await event.answer("⚠️ Daily limit reached!", alert=True)
-            await event.respond(f"⚠️ **Daily Download Limit Reached!**\n\nYou have used your daily limit of `{max_dl}` lectures today. Your limit will reset at midnight.")
+        can_dl, _, max_dl = check_daily_limit(uid)
+        if not can_dl:
+            await event.answer("⚠️ Daily download limit reached!", alert=True)
             return
 
         mid = int(event.pattern_match.group(1))
@@ -709,7 +781,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             if msg and msg.media:
                 success = await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, msg, status)
                 if success:
-                    record_download(event.sender_id)
+                    record_download(uid)
             else:
                 await status.edit("❌ Lecture file not found.")
         except Exception:
@@ -717,11 +789,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await status.edit("❌ Delivery failed.")
 
     @bot_client.on(events.CallbackQuery(data=b"notes"))
-    async def notes_handler(event):
-        allowed, _ = check_access(event.sender_id, bot_key)
-        if is_banned(event.sender_id) or not allowed:
-            await event.answer("🔒 Paid access only.", alert=True)
-            return
+    async def cb_notes(event):
         uid = event.sender_id
         subj = user_subjects.get(uid)
         if not subj:
@@ -738,17 +806,55 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 await status.edit(f"❌ No notes found for **{subj}**.")
                 return
 
-            await status.edit(f"⚡ Delivering note(s)...")
+            await status.edit("⚡ Delivering note(s)...")
             for m in found:
                 await deliver_lecture(bot_client, bot_entity_box.get("entity"), event.chat_id, m, status)
         except Exception:
             logging.exception("Notes deliver error")
             await status.edit("❌ Could not deliver notes.")
 
+    # MCQ Hub Handlers
+    @bot_client.on(events.CallbackQuery(data=b"mcq_hub"))
+    async def cb_mcq_hub(event):
+        uid = event.sender_id
+        subj = user_subjects.get(uid, "Anatomy")
+        await event.edit(
+            f"🎯 **{subj} MCQ & Question Bank Hub**\n\n"
+            "Select your practice material:\n\n"
+            "• 🌐 **Interactive CBT App**: Full browser CBT exam simulator with timers & rationales.\n"
+            "• 📂 **Topic-Wise Q-Bank**: Unit-wise question papers & PDFs.\n"
+            "• 🏛️ **Previous Year Questions (PYQs)**: Past recalls.\n"
+            "• 🎲 **Random / Mock Test MCQs**: Mixed subject questions.",
+            buttons=make_mcq_hub_menu(uid)
+        )
+
+    @bot_client.on(events.CallbackQuery(data=b"mcq_upgrade_info"))
+    async def cb_upgrade_info(event):
+        await event.answer("🔒 Q-Bank Access Required", alert=True)
+        await event.respond(
+            f"🔒 **Interactive Q-Bank Not Included in Your Current Plan**\n\n"
+            "Your account currently has access to **Lectures & Notes Only**.\n\n"
+            f"To unlock the interactive CBT test simulator with scorecards and option shuffling, contact {OWNER_CONTACT} to upgrade your plan."
+        )
+
+    @bot_client.on(events.CallbackQuery(pattern=rb"^mcq_p:(.+)$"))
+    async def cb_mcq_paper(event):
+        cat = event.pattern_match.group(1).decode()
+        subj = user_subjects.get(event.sender_id, "Anatomy")
+        titles = {
+            "topic_wise": "📂 Topic-Wise Q-Bank PDFs",
+            "pyqs": "🏛️ Previous Year Questions (PYQs)",
+            "random": "🎲 Random / Mock Test MCQs"
+        }
+        await event.edit(
+            f"📑 **{subj} — {titles.get(cat, 'MCQs')}**\n\nSearching question banks in storage...",
+            buttons=[[Button.inline("⬅️ Back to MCQ Hub", data=b"mcq_hub")]]
+        )
+
     return bot_entity_box
 
 # ============================================================
-# DEDICATED BOTS MANAGEMENT BOT ENGINE
+# BOT MANAGER ENGINE (ADMIN CONTROL CENTER)
 # ============================================================
 
 def make_manager_menu():
@@ -762,14 +868,15 @@ def make_manager_menu():
             Button.inline("💎 Verified Members", data=b"mgmt_approved"),
         ],
         [
-            Button.inline("📢 Announcements", data=b"mgmt_announce"),
-            Button.inline("👥 Recent Users", data=b"mgmt_users"),
+            Button.inline("📢 Broadcast Announcement", data=b"mgmt_announce"),
+            Button.inline("👥 Registered Users", data=b"mgmt_users"),
         ],
         [
-            Button.inline("🚫 Banned Users", data=b"mgmt_banned"),
+            Button.inline("🟢 Alert: Server Online", data=b"mgmt_alert_online"),
+            Button.inline("🔴 Alert: Server Down", data=b"mgmt_alert_down"),
+        ],
+        [
             Button.inline("☁️ Cloud Backup Now", data=b"mgmt_do_backup"),
-        ],
-        [
             Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home"),
         ]
     ]
@@ -782,7 +889,7 @@ def make_toggles_menu():
     btn_sync = "🟢 ON" if settings.get("cloud_backup_enabled") else "🔴 OFF"
 
     return [
-        [Button.inline(f"⏳ Sub Expiry: {btn_exp}", data=b"tog:expiry_enabled")],
+        [Button.inline(f"⏳ Subscription Expiry: {btn_exp}", data=b"tog:expiry_enabled")],
         [Button.inline(f"🎓 Year-Lock Tier: {btn_tier}", data=b"tog:tier_access_enabled")],
         [Button.inline(f"🛡️ Anti-Leech Limit: {btn_limit}", data=b"tog:daily_limit_enabled")],
         [Button.inline(f"☁️ Cloud Auto-Sync: {btn_sync}", data=b"tog:cloud_backup_enabled")],
@@ -790,26 +897,27 @@ def make_toggles_menu():
     ]
 
 def setup_manager_bot_handlers(client):
-    """Sets up the dedicated Management Bot interface exclusively for the admin"""
 
     @client.on(events.NewMessage(pattern=r"^/start$"))
     async def manager_start(event):
         if event.sender_id != ADMIN_ID:
-            await event.respond("⛔ Access Denied. This is a private management control center.")
+            await event.respond("⛔ Access Denied.")
             return
 
         total_users = len(db.get("users", {}))
         approved_users = len(db.get("approved", []))
-        banned_users = len(db.get("banned", []))
-        online_bots = len(active_bots)
+        qbank_count = sum(1 for d in db.get("approved_details", {}).values() if d.get("content_tier") == "full")
+        lec_count = approved_users - qbank_count
 
         text = (
-            "🎛️ **MBBS Bots Management Control Panel**\n\n"
-            f"🤖 **Managed Bots Online:** `{online_bots}` bots\n"
+            "🎛️ **MBBS Management Control Center**\n\n"
+            f"🤖 **Managed Bots Online:** `{len(active_bots)}` bots\n"
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
-            f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Use the controls below to configure your features, manage users, modify permissions, or broadcast announcements:"
+            f"  └ 🩺 Full Q-Bank Access: `{qbank_count}`\n"
+            f"  └ 📚 Lectures Only: `{lec_count}`\n"
+            f"🚫 **Blocked Users:** `{len(db.get('banned', []))}`\n\n"
+            "Select an administrative action below:"
         )
         await event.respond(text, buttons=make_manager_menu())
 
@@ -819,16 +927,18 @@ def setup_manager_bot_handlers(client):
             return
         total_users = len(db.get("users", {}))
         approved_users = len(db.get("approved", []))
-        banned_users = len(db.get("banned", []))
-        online_bots = len(active_bots)
+        qbank_count = sum(1 for d in db.get("approved_details", {}).values() if d.get("content_tier") == "full")
+        lec_count = approved_users - qbank_count
 
         text = (
-            "🎛️ **MBBS Bots Management Control Panel**\n\n"
-            f"🤖 **Managed Bots Online:** `{online_bots}` bots\n"
+            "🎛️ **MBBS Management Control Center**\n\n"
+            f"🤖 **Managed Bots Online:** `{len(active_bots)}` bots\n"
             f"👥 **Total Registered Students:** `{total_users}`\n"
             f"💎 **Verified Paid Members:** `{approved_users}`\n"
-            f"🚫 **Blocked Users:** `{banned_users}`\n\n"
-            "Use the controls below to configure your features, manage users, modify permissions, or broadcast announcements:"
+            f"  └ 🩺 Full Q-Bank Access: `{qbank_count}`\n"
+            f"  └ 📚 Lectures Only: `{lec_count}`\n"
+            f"🚫 **Blocked Users:** `{len(db.get('banned', []))}`\n\n"
+            "Select an administrative action below:"
         )
         await event.edit(text, buttons=make_manager_menu())
 
@@ -836,15 +946,7 @@ def setup_manager_bot_handlers(client):
     async def cb_manager_toggles(event):
         if event.sender_id != ADMIN_ID:
             return
-        text = (
-            "⚙️ **System Feature Controls (ON / OFF)**\n\n"
-            "Tap any toggle below to turn it ON or OFF instantly:\n\n"
-            "• **Sub Expiry:** When OFF, approvals are permanent Lifetime. When ON, access expires automatically.\n"
-            "• **Year-Lock Tier:** When OFF, students can use all bots. When ON, only the year bot they bought.\n"
-            "• **Anti-Leech Limit:** Limits lectures per student per day to stop spam/account sharing.\n"
-            "• **Cloud Auto-Sync:** Backs up database to Telegram automatically."
-        )
-        await event.edit(text, buttons=make_toggles_menu())
+        await event.edit("⚙️ **System Feature Controls (ON / OFF)**", buttons=make_toggles_menu())
 
     @client.on(events.CallbackQuery(pattern=rb"^tog:(.+)$"))
     async def cb_toggle_switch(event):
@@ -854,8 +956,8 @@ def setup_manager_bot_handlers(client):
         if key in db["settings"]:
             db["settings"][key] = not db["settings"][key]
             save_db(db)
-            state_str = "ENABLED (ON)" if db["settings"][key] else "DISABLED (OFF)"
-            await event.answer(f"Feature {key} is now {state_str}!", alert=True)
+            state_str = "ON" if db["settings"][key] else "OFF"
+            await event.answer(f"{key} is now {state_str}!", alert=True)
             await cb_manager_toggles(event)
 
     @client.on(events.CallbackQuery(data=b"mgmt_do_backup"))
@@ -864,7 +966,7 @@ def setup_manager_bot_handlers(client):
             return
         await event.answer("Dispatching cloud backup to chat...")
         await trigger_cloud_backup()
-        await event.edit("✅ **Cloud backup dispatched!** A secure copy of `bot_database.json` has been sent directly to this chat.", buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
+        await event.edit("✅ **Cloud backup dispatched!** `bot_database.json` has been sent directly to this chat.", buttons=[[Button.inline("⬅️ Back", data=b"mgmt_home")]])
 
     @client.on(events.CallbackQuery(data=b"mgmt_stats"))
     async def cb_stats(event):
@@ -872,29 +974,22 @@ def setup_manager_bot_handlers(client):
             return
         total = len(db.get("users", {}))
         approved = len(db.get("approved", []))
-        banned = len(db.get("banned", []))
+        qbank_count = sum(1 for d in db.get("approved_details", {}).values() if d.get("content_tier") == "full")
+        lec_count = approved - qbank_count
         uptime = int(time.time() - START_TIME)
         up_str = f"{uptime // 3600}h {(uptime % 3600) // 60}m {uptime % 60}s"
 
-        settings = db["settings"]
-        t_exp = "🟢 ON" if settings.get("expiry_enabled") else "🔴 OFF"
-        t_tier = "🟢 ON" if settings.get("tier_access_enabled") else "🔴 OFF"
-        t_limit = "🟢 ON" if settings.get("daily_limit_enabled") else "🔴 OFF"
-
-        bot_list = "\n".join([f"• `{k}`: Online" for k in active_bots.keys()])
         text = (
             "📊 **Live System Analytics**\n\n"
-            f"👥 **Total Students:** `{total}`\n"
-            f"💎 **Paid Verified:** `{approved}`\n"
-            f"🚫 **Blocked:** `{banned}`\n"
-            f"⏱️ **Uptime:** `{up_str}`\n\n"
-            f"⚙️ **Active Toggles:**\n"
-            f"• Sub Expiry: {t_exp}\n"
-            f"• Year-Lock: {t_tier}\n"
-            f"• Anti-Leech: {t_limit}\n\n"
-            f"🤖 **Connected Bots:**\n{bot_list}"
+            f"👥 **Total Registered Students:** `{total}`\n"
+            f"💎 **Verified Paid:** `{approved}`\n"
+            f"  └ 🩺 Full (Lectures + QBank): `{qbank_count}`\n"
+            f"  └ 📚 Lectures & Notes Only: `{lec_count}`\n"
+            f"🚫 **Blocked:** `{len(db.get('banned', []))}`\n"
+            f"⏱️ **Server Uptime:** `{up_str}`\n\n"
+            f"🤖 **Connected Active Bots:** `{len(active_bots)}` online"
         )
-        await event.edit(text, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
+        await event.edit(text, buttons=[[Button.inline("⬅️ Back", data=b"mgmt_home")]])
 
     @client.on(events.CallbackQuery(data=b"mgmt_pending"))
     async def cb_pending(event):
@@ -906,142 +1001,155 @@ def setup_manager_bot_handlers(client):
             if not is_banned(uid) and int(uid) not in db.get("approved", [])
         ]
         if not pending:
-            await event.edit(
-                "✅ **No pending access requests!** All registered students are verified or dealt with.",
-                buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]]
-            )
+            await event.edit("✅ **No pending access requests!**", buttons=[[Button.inline("⬅️ Back", data=b"mgmt_home")]])
             return
 
         buttons = []
-        for uid, udata in pending[-8:]:
+        for uid, udata in pending[-6:]:
             name = udata.get("first_name", "Student")
             buttons.append([
-                Button.inline(f"⚡ Approve {name} ({uid})", data=f"adm_app:{uid}".encode()),
-                Button.inline(f"⚙️ Tier/Exp", data=f"adm_tier_opt:{uid}".encode())
+                Button.inline(f"⚡ Full {name} ({uid})", data=f"adm_app_full:{uid}".encode()),
+                Button.inline(f"📚 Lec Only", data=f"adm_app_lec:{uid}".encode())
             ])
-        buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
+        buttons.append([Button.inline("⬅️ Back", data=b"mgmt_home")])
+        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**", buttons=buttons)
 
-        await event.edit(f"⏳ **Pending Verification Requests ({len(pending)}):**\nTap to approve or assign tier:", buttons=buttons)
-
-    # Specific Tier & Expiry selection menu for a user (Used for both initial granting and changing permissions)
-    @client.on(events.CallbackQuery(pattern=rb"^adm_tier_opt:(\d+)$"))
-    async def cb_tier_options(event):
+    # 1-Click Approvals from Notification or Pending List
+    @client.on(events.CallbackQuery(pattern=rb"^adm_app_full:(\d+)$"))
+    async def cb_app_full(event):
         if event.sender_id != ADMIN_ID:
             return
-        uid = int(event.pattern_match.group(1))
-        curr_det = db.get("approved_details", {}).get(str(uid), {})
-        curr_tier = curr_det.get("tier", "Not Set")
-        curr_exp = curr_det.get("expiry") or "Lifetime"
+        target_id = int(event.pattern_match.group(1))
+        t_str = str(target_id)
 
-        buttons = [
-            [
-                Button.inline("👑 All Years (Lifetime)", data=f"adm_gr:{uid}:all:0".encode()),
-                Button.inline("📅 All Years (30 Days)", data=f"adm_gr:{uid}:all:30".encode()),
-            ],
-            [
-                Button.inline("🎓 1st Year (30 Days)", data=f"adm_gr:{uid}:year_1:30".encode()),
-                Button.inline("🎓 1st Year (1 Year)", data=f"adm_gr:{uid}:year_1:365".encode()),
-            ],
-            [
-                Button.inline("🎓 2nd Year (30 Days)", data=f"adm_gr:{uid}:year_2:30".encode()),
-                Button.inline("🎓 2nd Year (1 Year)", data=f"adm_gr:{uid}:year_2:365".encode()),
-            ],
-            [
-                Button.inline("🎓 3rd Year (30 Days)", data=f"adm_gr:{uid}:year_3:30".encode()),
-                Button.inline("🎓 3rd Year (1 Year)", data=f"adm_gr:{uid}:year_3:365".encode()),
-            ],
-            [
-                Button.inline("🎓 Final Year (30 Days)", data=f"adm_gr:{uid}:final_year:30".encode()),
-                Button.inline("🎓 Final Year (1 Year)", data=f"adm_gr:{uid}:final_year:365".encode()),
-            ],
-            [
-                Button.inline("⬅️ Cancel", data=b"mgmt_approved")
-            ]
-        ]
-        await event.edit(
-            f"⚙️ **Modify Plan & Tier for User `{uid}`:**\n\n"
-            f"• Current Enrolled Tier: `{curr_tier}`\n"
-            f"• Current Expiry: `{curr_exp}`\n\n"
-            f"Select a new enrollment tier and duration below to update immediately:",
-            buttons=buttons
-        )
+        if target_id not in db["approved"]:
+            db["approved"].append(target_id)
 
-    @client.on(events.CallbackQuery(pattern=rb"^adm_gr:(\d+):([a-z0-9_]+):(\d+)$"))
-    async def cb_grant_custom(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        uid = int(event.pattern_match.group(1))
-        tier = event.pattern_match.group(2).decode()
-        days = int(event.pattern_match.group(3))
+        if t_str not in db["approved_details"]:
+            db["approved_details"][t_str] = {}
 
-        expiry_date = None
-        exp_text = "Permanent Lifetime"
-        if days > 0:
-            expiry_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
-            exp_text = f"Valid until `{expiry_date}` ({days} days)"
+        db["approved_details"][t_str]["content_tier"] = "full"
+        db["approved_details"][t_str]["tier"] = "all"
+        db["approved_details"][t_str]["expiry"] = None
+        db["approved_details"][t_str]["added_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        is_already_approved = uid in db["approved"]
-        if uid not in db["approved"]:
-            db["approved"].append(uid)
-
-        db["approved_details"][str(uid)] = {
-            "tier": tier,
-            "expiry": expiry_date,
-            "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        qid, qpass = get_or_create_qbank_creds(target_id)
         save_db(db)
         await trigger_cloud_backup()
 
-        action_title = "Subscription Plan Updated" if is_already_approved else "Access Granted"
-        tier_title = BOT_TITLES_MAP.get(tier, tier.title())
-
-        await event.answer("✅ Updated Successfully!", alert=True)
+        await event.answer("✅ Full Access Granted!", alert=True)
         await event.edit(
-            f"✅ **{action_title}!**\n\n👤 User: `{uid}`\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Expiry: {exp_text}",
-            buttons=[
-                [Button.inline("💎 Back to Verified Members", data=b"mgmt_approved")],
-                [Button.inline("⬅️ Main Menu", data=b"mgmt_home")]
-            ]
+            f"✅ User `{target_id}` granted **Full Access (Lectures + Q-Bank)**!\n"
+            f"Generated Credentials: `{qid}` / `{qpass}`",
+            buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]]
         )
 
-        # Notify student about the update or new grant
-        msg_header = "🔄 **Your subscription plan was updated!**" if is_already_approved else "🎉 **Your account has been verified!**"
+        launch_url = f"{CBT_WEBAPP_BASE_URL}?uid={qid}&key={qpass}"
+        for bot in active_bots.values():
+            try:
+                msg = (
+                    "🎉 **Payment Verified — Full Access Granted!**\n\n"
+                    "You have enrolled in **MBBS Lectures + Interactive Q-Bank**:\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🆔 **Your Student ID:** `{qid}`\n"
+                    f"🔑 **Your Password:** `{qpass}`\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━\n"
+                    "Send /start to browse lectures, or tap below to launch your exam simulator:"
+                )
+                await bot.send_message(target_id, msg, buttons=[[Button.url("🌐 Launch Interactive Q-Bank", launch_url)]])
+                break
+            except Exception:
+                pass
+
+    @client.on(events.CallbackQuery(pattern=rb"^adm_app_lec:(\d+)$"))
+    async def cb_app_lec(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        target_id = int(event.pattern_match.group(1))
+        t_str = str(target_id)
+
+        if target_id not in db["approved"]:
+            db["approved"].append(target_id)
+
+        if t_str not in db["approved_details"]:
+            db["approved_details"][t_str] = {}
+
+        db["approved_details"][t_str]["content_tier"] = "lectures_only"
+        db["approved_details"][t_str]["tier"] = "all"
+        db["approved_details"][t_str]["expiry"] = None
+        db["approved_details"][t_str]["added_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        save_db(db)
+        await trigger_cloud_backup()
+
+        await event.answer("✅ Lectures Only Granted!", alert=True)
+        await event.edit(
+            f"✅ User `{target_id}` set to **Lectures & Notes Only** (No Q-Bank credentials issued).",
+            buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]]
+        )
+
         for bot in active_bots.values():
             try:
                 await bot.send_message(
-                    uid,
-                    f"{msg_header}\n\n🎓 Enrolled Tier: **{tier_title}**\n⏳ Duration: {exp_text}\n\nSend /start to continue studying!"
+                    target_id,
+                    "🎉 **Access Granted!**\n\nYour account has been enrolled in **MBBS Video Lectures & Notes**.\n"
+                    "Send /start to begin studying!"
                 )
                 break
             except Exception:
                 pass
 
-    @client.on(events.CallbackQuery(data=b"mgmt_users"))
-    async def cb_users(event):
+    # Server Status Quick Broadcasts
+    @client.on(events.CallbackQuery(data=b"mgmt_alert_online"))
+    async def cb_server_online(event):
         if event.sender_id != ADMIN_ID:
             return
-        users = db.get("users", {})
-        if not users:
-            await event.edit("No users registered yet.", buttons=[[Button.inline("⬅️ Back", data=b"mgmt_home")]])
+        await event.answer("Broadcasting server online notice...")
+        notice = (
+            "🟢 **MBBS Platform Status: All Systems Operational**\n\n"
+            "The lecture streaming servers and CBT Q-Bank app are fully online and responsive. Happy studying!"
+        )
+        sent = 0
+        sender_bot = list(active_bots.values())[0] if active_bots else client
+        for uid in db.get("approved", []):
+            if uid == ADMIN_ID:
+                continue
+            try:
+                await sender_bot.send_message(uid, notice)
+                sent += 1
+                await asyncio.sleep(0.05)
+            except Exception:
+                pass
+        await event.edit(f"✅ **Server Online notice delivered to `{sent}` paid students!**", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
+
+    @client.on(events.CallbackQuery(data=b"mgmt_alert_down"))
+    async def cb_server_down(event):
+        if event.sender_id != ADMIN_ID:
             return
-
-        msg = f"👥 **Recent 15 Registered Students:**\n\n"
-        for uid, udata in list(users.items())[-15:]:
-            name = udata.get("first_name", "Unknown")
-            uname = f"@{udata.get('username')}" if udata.get("username") else "No username"
-            status = "💎" if int(uid) in db.get("approved", []) else ("⛔" if is_banned(uid) else "🔒")
-            tier = db.get("approved_details", {}).get(str(uid), {}).get("tier", "all")
-            msg += f"{status} `{uid}`: **{name}** ({uname}) [{tier}]\n"
-
-        await event.edit(msg, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
+        await event.answer("Broadcasting maintenance notice...")
+        notice = (
+            "🛠️ **Scheduled Maintenance Notice**\n\n"
+            "We are performing quick cloud updates to improve lecture delivery speeds. "
+            "Services will be back up momentarily. Thank you for your patience!"
+        )
+        sent = 0
+        sender_bot = list(active_bots.values())[0] if active_bots else client
+        for uid in db.get("approved", []):
+            if uid == ADMIN_ID:
+                continue
+            try:
+                await sender_bot.send_message(uid, notice)
+                sent += 1
+                await asyncio.sleep(0.05)
+            except Exception:
+                pass
+        await event.edit(f"✅ **Maintenance notice delivered to `{sent}` paid students!**", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
     @client.on(events.CallbackQuery(data=b"mgmt_approved"))
     async def cb_approved(event):
-        """Displays verified members with options to Edit Tier or Revoke Access"""
         if event.sender_id != ADMIN_ID:
             return
         approved_list = db.get("approved", [])
-        msg = f"💎 **Verified Paid Students ({len(approved_list)}):**\n\nTap **✏️ Edit** on any student to change their year tier or duration:\n\n"
+        msg = f"💎 **Verified Paid Students ({len(approved_list)}):**\n\n"
         buttons = []
         for uid in approved_list[-8:]:
             if uid == ADMIN_ID:
@@ -1049,60 +1157,64 @@ def setup_manager_bot_handlers(client):
             udata = db.get("users", {}).get(str(uid), {})
             name = udata.get("first_name", f"User {uid}")
             det = db.get("approved_details", {}).get(str(uid), {})
-            t_name = det.get("tier", "all")
+            c_tier = det.get("content_tier", "full")
+            tier_badge = "🩺 Q-Bank" if c_tier == "full" else "📚 Lec"
             buttons.append([
-                Button.inline(f"✏️ {name} ({t_name})", data=f"adm_tier_opt:{uid}".encode()),
-                Button.inline(f"❌ Revoke", data=f"adm_rev:{uid}".encode())
+                Button.inline(f"✏️ {name} ({tier_badge})", data=f"adm_tier_opt:{uid}".encode()),
+                Button.inline("❌ Revoke", data=f"adm_rev:{uid}".encode())
             ])
-
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
         await event.edit(msg, buttons=buttons)
 
-    @client.on(events.CallbackQuery(data=b"mgmt_banned"))
-    async def cb_banned(event):
+    @client.on(events.CallbackQuery(pattern=rb"^adm_tier_opt:(\d+)$"))
+    async def cb_tier_options(event):
         if event.sender_id != ADMIN_ID:
             return
-        banned_list = db.get("banned", [])
-        if not banned_list:
-            await event.edit("🎉 No users are currently banned.", buttons=[[Button.inline("⬅️ Back", data=b"mgmt_home")]])
-            return
+        uid = int(event.pattern_match.group(1))
+        det = db.get("approved_details", {}).get(str(uid), {})
+        curr_ctier = det.get("content_tier", "full")
 
-        buttons = []
-        for uid in banned_list[-10:]:
-            buttons.append([Button.inline(f"🔓 Unban `{uid}`", data=f"adm_unb:{uid}".encode())])
-        buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
-        await event.edit(f"🚫 **Blocked Users ({len(banned_list)}):**\nTap to unban:", buttons=buttons)
+        buttons = [
+            [
+                Button.inline("🩺 Switch to Full Access (Lec + Q-Bank)", data=f"adm_set_tier:{uid}:full".encode()),
+            ],
+            [
+                Button.inline("📚 Switch to Lectures & Notes Only", data=f"adm_set_tier:{uid}:lectures_only".encode()),
+            ],
+            [
+                Button.inline("⬅️ Back", data=b"mgmt_approved")
+            ]
+        ]
+        await event.edit(
+            f"⚙️ **Modify Subscription for User `{uid}`:**\n\n"
+            f"• Current Plan: **{curr_ctier.upper()}**\n\n"
+            "Select an updated tier below:",
+            buttons=buttons
+        )
 
-    @client.on(events.CallbackQuery(pattern=rb"^adm_app:(\d+)$"))
-    async def cb_quick_approve(event):
+    @client.on(events.CallbackQuery(pattern=rb"^adm_set_tier:(\d+):([a-z0-9_]+)$"))
+    async def cb_apply_tier(event):
         if event.sender_id != ADMIN_ID:
             return
-        target_id = int(event.pattern_match.group(1))
-        if target_id not in db["approved"]:
-            db["approved"].append(target_id)
-            db["approved_details"][str(target_id)] = {
-                "tier": "all",
-                "expiry": None,
-                "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            save_db(db)
-            await trigger_cloud_backup()
-            await event.answer("✅ Access Granted (All Years Lifetime)!", alert=True)
-            await event.edit(f"✅ User `{target_id}` approved with Full Access!", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
-            for bot in active_bots.values():
-                try:
-                    await bot.send_message(
-                        target_id,
-                        "🎉 **Your payment was verified and access granted!**\n\nSend /start to browse all your MBBS lectures and notes!"
-                    )
-                    break
-                except Exception:
-                    pass
-        else:
-            await event.answer("Already approved.", alert=True)
+        uid = int(event.pattern_match.group(1))
+        new_tier = event.pattern_match.group(2).decode()
+        t_str = str(uid)
+
+        if t_str not in db["approved_details"]:
+            db["approved_details"][t_str] = {}
+
+        db["approved_details"][t_str]["content_tier"] = new_tier
+        save_db(db)
+        await trigger_cloud_backup()
+
+        await event.answer("✅ Updated Plan Successfully!", alert=True)
+        await event.edit(
+            f"✅ User `{uid}` successfully updated to **{new_tier.upper()}**!",
+            buttons=[[Button.inline("💎 Back to Verified Members", data=b"mgmt_approved")]]
+        )
 
     @client.on(events.CallbackQuery(pattern=rb"^adm_rev:(\d+)$"))
-    async def cb_quick_revoke(event):
+    async def cb_rev(event):
         if event.sender_id != ADMIN_ID:
             return
         target_id = int(event.pattern_match.group(1))
@@ -1111,12 +1223,10 @@ def setup_manager_bot_handlers(client):
             save_db(db)
             await trigger_cloud_backup()
             await event.answer("🔒 Access Revoked!", alert=True)
-            await event.edit(f"🔒 Access revoked for user `{target_id}`.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
-        else:
-            await event.answer("User was not approved.", alert=True)
+            await event.edit(f"🔒 Access revoked for `{target_id}`.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
     @client.on(events.CallbackQuery(pattern=rb"^adm_ban:(\d+)$"))
-    async def cb_quick_ban(event):
+    async def cb_ban(event):
         if event.sender_id != ADMIN_ID:
             return
         target_id = int(event.pattern_match.group(1))
@@ -1127,124 +1237,57 @@ def setup_manager_bot_handlers(client):
             save_db(db)
             await trigger_cloud_backup()
             await event.answer("⛔ User Banned!", alert=True)
-            await event.edit(f"⛔ User `{target_id}` banned across all bots.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
+            await event.edit(f"⛔ User `{target_id}` banned.", buttons=[[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
-    @client.on(events.CallbackQuery(pattern=rb"^adm_unb:(\d+)$"))
-    async def cb_quick_unban(event):
+    # Text Commands for Admin
+    @client.on(events.NewMessage(pattern=r"^/grant_qbank (\d+)$"))
+    async def cmd_grant_qbank(event):
         if event.sender_id != ADMIN_ID:
             return
         target_id = int(event.pattern_match.group(1))
-        if target_id in db.get("banned", []):
-            db["banned"].remove(target_id)
-            save_db(db)
-            await trigger_cloud_backup()
-            await event.answer("✅ User Unbanned!", alert=True)
-            await event.edit(f"✅ User `{target_id}` unbanned.", buttons=[[Button.inline("⬅️️ Menu", data=b"mgmt_home")]])
+        t_str = str(target_id)
+        if target_id not in db["approved"]:
+            db["approved"].append(target_id)
+        if t_str not in db["approved_details"]:
+            db["approved_details"][t_str] = {}
 
-    # Announcements Hub Menu
-    @client.on(events.CallbackQuery(data=b"mgmt_announce"))
-    async def cb_announcements_menu(event):
+        db["approved_details"][t_str]["content_tier"] = "full"
+        qid, qpass = get_or_create_qbank_creds(target_id)
+        save_db(db)
+        await trigger_cloud_backup()
+
+        await event.respond(f"✅ User `{target_id}` granted **Full Access (Lectures + Q-Bank)**!\n🆔 ID: `{qid}` | 🔑 Pass: `{qpass}`")
+
+    @client.on(events.NewMessage(pattern=r"^/grant_lectures (\d+)$"))
+    async def cmd_grant_lectures(event):
         if event.sender_id != ADMIN_ID:
             return
-        total_students = len(db.get("users", {}))
-        approved_count = len(db.get("approved", []))
+        target_id = int(event.pattern_match.group(1))
+        t_str = str(target_id)
+        if target_id not in db["approved"]:
+            db["approved"].append(target_id)
+        if t_str not in db["approved_details"]:
+            db["approved_details"][t_str] = {}
 
-        text = (
-            "📢 **Announcements & Broadcast Hub**\n\n"
-            f"👥 Reaching `{total_students}` students (`{approved_count}` paid members).\n\n"
-            "You can send an announcement to all students or target a specific year simply by sending a message here in this format:\n\n"
-            "• **To Everyone:**\n"
-            "`/broadcast <your message>`\n\n"
-            "• **To 1st Year Students Only:**\n"
-            "`/broadcast_y1 <your message>`\n\n"
-            "• **To 2nd Year Students Only:**\n"
-            "`/broadcast_y2 <your message>`\n\n"
-            "• **To 3rd Year Students Only:**\n"
-            "`/broadcast_y3 <your message>`\n\n"
-            "• **To Final Year Students Only:**\n"
-            "`/broadcast_final <your message>`\n\n"
-            "*Example: `/broadcast Hello everyone! New pathology lectures have been uploaded.`*"
-        )
-        await event.edit(text, buttons=[[Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]])
+        db["approved_details"][t_str]["content_tier"] = "lectures_only"
+        save_db(db)
+        await trigger_cloud_backup()
 
-    # Text command: Direct Tier / Expiry edit by ID
-    @client.on(events.NewMessage(pattern=r"^/(?:tier|edit|modify|grant) (\d+)$"))
-    async def manager_cmd_edit_tier(event):
+        await event.respond(f"✅ User `{target_id}` granted **Lectures & Notes Only**.")
+
+    @client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
+    async def cmd_broadcast(event):
         if event.sender_id != ADMIN_ID:
             return
-        uid = int(event.pattern_match.group(1))
-        curr_det = db.get("approved_details", {}).get(str(uid), {})
-        curr_tier = curr_det.get("tier", "Not Set")
-        curr_exp = curr_det.get("expiry") or "Lifetime"
-
-        buttons = [
-            [
-                Button.inline("👑 All Years (Lifetime)", data=f"adm_gr:{uid}:all:0".encode()),
-                Button.inline("📅 All Years (30 Days)", data=f"adm_gr:{uid}:all:30".encode()),
-            ],
-            [
-                Button.inline("🎓 1st Year (30 Days)", data=f"adm_gr:{uid}:year_1:30".encode()),
-                Button.inline("🎓 1st Year (1 Year)", data=f"adm_gr:{uid}:year_1:365".encode()),
-            ],
-            [
-                Button.inline("🎓 2nd Year (30 Days)", data=f"adm_gr:{uid}:year_2:30".encode()),
-                Button.inline("🎓 2nd Year (1 Year)", data=f"adm_gr:{uid}:year_2:365".encode()),
-            ],
-            [
-                Button.inline("🎓 3rd Year (30 Days)", data=f"adm_gr:{uid}:year_3:30".encode()),
-                Button.inline("🎓 3rd Year (1 Year)", data=f"adm_gr:{uid}:year_3:365".encode()),
-            ],
-            [
-                Button.inline("🎓 Final Year (30 Days)", data=f"adm_gr:{uid}:final_year:30".encode()),
-                Button.inline("🎓 Final Year (1 Year)", data=f"adm_gr:{uid}:final_year:365".encode()),
-            ],
-            [
-                Button.inline("⬅️ Cancel", data=b"mgmt_home")
-            ]
-        ]
-        await event.respond(
-            f"⚙️ **Modify Plan & Tier for User `{uid}`:**\n\n"
-            f"• Current Enrolled Tier: `{curr_tier}`\n"
-            f"• Current Expiry: `{curr_exp}`\n\n"
-            f"Select the new enrollment tier and duration below:",
-            buttons=buttons
-        )
-
-    # Universal & Year-Targeted Broadcast Command
-    @client.on(events.NewMessage(pattern=r"^/broadcast(?:_([a-z0-9_]+))? (.+)"))
-    async def manager_broadcast(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_group = event.pattern_match.group(1)
-        text = event.pattern_match.group(2).strip()
-
-        tier_map = {
-            "y1": "year_1",
-            "y2": "year_2",
-            "y3": "year_3",
-            "final": "final_year",
-        }
-        filter_tier = tier_map.get(target_group, target_group)
-
+        text = event.pattern_match.group(1).strip()
         users = db.get("users", {})
-        status = await event.respond("📢 Preparing announcement broadcast...")
+        status = await event.respond(f"📢 Broadcasting to `{len(users)}` users...")
         sent, failed = 0, 0
-
         sender_bot = list(active_bots.values())[0] if active_bots else client
-
-        target_title = f"{filter_tier.replace('_', ' ').title()}" if filter_tier else "All Students"
-        await status.edit(f"📢 Broadcasting to **{target_title}**...")
 
         for uid_str in list(users.keys()):
             if is_banned(uid_str):
                 continue
-
-            # If targeting a specific year tier, verify the student's enrollment
-            if filter_tier:
-                user_tier = db.get("approved_details", {}).get(uid_str, {}).get("tier", "all")
-                if user_tier != filter_tier and user_tier != "all":
-                    continue
-
             try:
                 await sender_bot.send_message(int(uid_str), f"📢 **MBBS Announcement:**\n\n{text}")
                 sent += 1
@@ -1252,37 +1295,10 @@ def setup_manager_bot_handlers(client):
             except Exception:
                 failed += 1
 
-        await status.edit(f"✅ **Broadcast complete!**\n\n🎯 Target: `{target_title}`\n📬 Delivered: `{sent}`\n❌ Failed: `{failed}`")
-
-    @client.on(events.NewMessage(pattern=r"^/approve (\d+)$"))
-    async def manager_cmd_approve(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id not in db["approved"]:
-            db["approved"].append(target_id)
-            db["approved_details"][str(target_id)] = {"tier": "all", "expiry": None, "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-            save_db(db)
-            await trigger_cloud_backup()
-            await event.respond(f"✅ User `{target_id}` approved (All Years Lifetime)!")
-        else:
-            await event.respond(f"ℹ️ User `{target_id}` is already approved.")
-
-    @client.on(events.NewMessage(pattern=r"^/remove (\d+)$"))
-    async def manager_cmd_remove(event):
-        if event.sender_id != ADMIN_ID:
-            return
-        target_id = int(event.pattern_match.group(1))
-        if target_id in db.get("approved", []):
-            db["approved"].remove(target_id)
-            save_db(db)
-            await trigger_cloud_backup()
-            await event.respond(f"🔒 Access revoked for `{target_id}`.")
-        else:
-            await event.respond(f"ℹ️️ User `{target_id}` was not in the approved list.")
+        await status.edit(f"✅ **Broadcast complete!**\n📬 Delivered: `{sent}` | ❌ Failed: `{failed}`")
 
 # ============================================================
-# ENGINE ENTRYPOINT
+# SYSTEM STARTUP & ORCHESTRATION
 # ============================================================
 
 async def main():
@@ -1290,10 +1306,11 @@ async def main():
     os.makedirs("downloads", exist_ok=True)
     await start_web_server()
 
-    logging.info("Connecting Telegram user client...")
+    logging.info("Starting Telegram user client ('session')...")
     await user_client.start()
     user_me = await user_client.get_me()
     USER_CLIENT_ID = user_me.id
+    logging.info("User client connected as: %s (ID: %s)", user_me.first_name, user_me.id)
 
     runners = [user_client.run_until_disconnected()]
 
@@ -1328,14 +1345,25 @@ async def main():
 
     if manager_bot_client:
         await auto_restore_from_telegram()
+        try:
+            await manager_bot_client.send_message(
+                ADMIN_ID,
+                "🟢 **MBBS Multi-Bot Production System Online!**\n\n"
+                f"• Active Year Bots: `{len(active_bots)}` online\n"
+                f"• User Client Connected: `{user_me.first_name}`\n"
+                f"• Registered Students: `{len(db.get('users', {}))}`\n\n"
+                "All lecture delivery relays, automated Q-Bank gating, and keep-alive listeners are active."
+            )
+        except Exception:
+            pass
 
-    logging.info("All MBBS bots and Management Control Bot online.")
+    logging.info("All MBBS bots and Management Control Bot are live.")
     await asyncio.gather(*runners)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Shutting down.")
+        logging.info("System shutting down.")
     except Exception:
-        logging.exception("Fatal engine crash")
+        logging.exception("Fatal crash")
