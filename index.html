@@ -1,0 +1,2294 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MBBS Interactive Q-Bank & Admin Hub</title>
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- PDF.js Library for Direct Mobile PDF Reading -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#2563eb',
+              green: '#10b981',
+              purple: '#8b5cf6',
+              pink: '#f43f5e',
+              amber: '#f59e0b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.3);
+      border-radius: 9999px;
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.2s ease-in-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen transition-colors duration-200 antialiased flex flex-col selection:bg-blue-600 selection:text-white">
+
+  <!-- HEADER -->
+  <header id="main-header" class="w-full bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md px-4 py-3 shadow-lg">
+    <div class="max-w-4xl mx-auto flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-stethoscope text-base"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+              MBBS Master Q-Bank
+              <span id="role-pill" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Student Mode</span>
+            </h1>
+            <p id="user-greeting" class="text-[11px] text-slate-400">Curated by @Nothing_0786</p>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-2">
+          <button id="btn-toggle-admin" onclick="handleAdminToggleClick()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span id="admin-btn-label">Admin Panel</span>
+          </button>
+          <button id="btn-view-stats" onclick="showAnalyticsModal()" title="View Test Analytics" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center gap-1 transition">
+            <i class="fa-solid fa-chart-pie text-emerald-400"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls row (Subject Selector & QID Search) -->
+      <div id="student-search-row" class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-800/60">
+        <div class="flex items-center gap-2">
+          <label for="subject-select" class="text-xs text-slate-400 font-medium">Subject:</label>
+          <select 
+            id="subject-select" 
+            onchange="onSubjectChange(this.value)" 
+            class="bg-slate-950 text-xs text-blue-400 font-bold px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition">
+          </select>
+        </div>
+
+        <form onsubmit="handleQidSearch(event)" class="flex items-center gap-1.5 flex-1 max-w-xs">
+          <div class="relative w-full">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500"></i>
+            <input 
+              id="qid-input" 
+              type="text" 
+              placeholder="Search QID (e.g. ANA-001)..." 
+              class="w-full bg-slate-950/80 text-xs text-slate-200 pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition"
+            />
+          </div>
+          <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+            Go
+          </button>
+        </form>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="setThemeAccent('blue', '#2563eb')" title="Blue Theme" class="w-4 h-4 rounded-full bg-blue-600 ring-2 ring-offset-2 ring-offset-slate-900 ring-blue-500 transition"></button>
+          <button onclick="setThemeAccent('green', '#10b981')" title="Green Theme" class="w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
+          <button onclick="setThemeAccent('purple', '#8b5cf6')" title="Purple Theme" class="w-4 h-4 rounded-full bg-purple-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
+          <button onclick="setThemeAccent('pink', '#f43f5e')" title="Rose Theme" class="w-4 h-4 rounded-full bg-rose-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col">
+
+    <!-- ==================== VIEW 1: BROWSE TESTS (STUDENT) ==================== -->
+    <div id="view-browse" class="flex flex-col gap-4">
+      <div id="module-hero-card" class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span id="hero-subject-tag" class="text-xs font-bold text-blue-400 uppercase tracking-wider">Anatomy</span>
+              <span class="text-slate-600">•</span>
+              <span class="text-xs text-slate-400">Clinical CBT Simulator</span>
+            </div>
+            <h2 id="hero-title" class="text-xl md:text-2xl font-extrabold text-white tracking-tight leading-snug">
+              Select a chapter below
+            </h2>
+            <p id="hero-meta" class="text-xs text-slate-400 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span><i class="fa-solid fa-layer-group mr-1 text-blue-400"></i>Topic-wise Question Bank</span>
+              <span><i class="fa-solid fa-award mr-1 text-amber-400"></i>+4 / -1 Marking Scheme</span>
+              <span><i class="fa-regular fa-clock mr-1 text-emerald-400"></i>Timed Simulation</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <div class="flex items-center gap-2">
+          <h3 class="text-base font-bold text-white tracking-tight">Available Topics</h3>
+          <span id="breadcrumb-subject" class="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Anatomy</span>
+        </div>
+        <button id="btn-up-level" onclick="navigateUpFolder()" class="hidden px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-arrow-turn-up text-[10px]"></i>
+          <span>All Topics</span>
+        </button>
+      </div>
+
+      <div id="tests-container" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1"></div>
+    </div>
+
+    <!-- ==================== VIEW 2: CBT TEST RUNNER ==================== -->
+    <div id="view-exam" class="hidden flex-col gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between shadow-lg">
+        <div>
+          <span id="exam-test-name" class="text-xs font-bold text-slate-300 block line-clamp-1">Upper Limb Examination MCQs</span>
+          <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+            <span>Q. <span id="current-q-index" class="text-white font-bold">1</span> / <span id="total-q-count">15</span></span>
+            <span class="text-slate-600">|</span>
+            <span id="exam-qid" class="text-[11px] font-mono text-blue-400">QID: ANA-001</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-amber-400 font-mono text-sm font-bold">
+            <i class="fa-regular fa-clock animate-pulse"></i>
+            <span id="exam-timer">20:00</span>
+          </div>
+          <button onclick="confirmSubmitExam()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow transition">
+            Submit
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col gap-5">
+        <div>
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full mb-2.5 border border-blue-500/20">
+            <i class="fa-solid fa-notes-medical"></i> Single Best Answer
+          </div>
+          <p id="question-text" class="text-sm md:text-base font-medium text-slate-100 leading-relaxed"></p>
+        </div>
+
+        <div id="options-container" class="flex flex-col gap-2.5"></div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col gap-3">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Question Palette</span>
+          <div class="flex items-center gap-3 text-[11px]">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Solved</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-700"></span> Unvisited</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Review</span>
+          </div>
+        </div>
+
+        <div id="palette-container" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto custom-scrollbar p-1"></div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+          <button id="btn-prev-q" onclick="navigateQuestion(-1)" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-chevron-left text-[10px]"></i> Prev
+          </button>
+          <button onclick="toggleMarkReview()" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-xs font-semibold text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition">
+            <i class="fa-regular fa-bookmark"></i> Review
+          </button>
+          <button id="btn-next-q" onclick="navigateQuestion(1)" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition">
+            Next <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 3: SCORECARD ==================== -->
+    <div id="view-result" class="hidden flex-col gap-4">
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 text-center shadow-xl">
+        <div class="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-2">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Assessment Complete</h2>
+        <p id="result-test-title" class="text-xs text-slate-400 mt-1">Test Title</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-medium block">Total Marks</span>
+            <span id="res-score" class="text-base font-black text-white">0 / 0</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-medium block">Accuracy</span>
+            <span id="res-accuracy" class="text-base font-black text-emerald-400">0%</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-medium block">Correct</span>
+            <span id="res-correct" class="text-base font-black text-blue-400">0 / 0</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-medium block">Time</span>
+            <span id="res-time" class="text-base font-black text-amber-400">00:00</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="retakeCurrentTest()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Retake
+          </button>
+          <button onclick="returnToBrowse()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition flex items-center gap-2">
+            <i class="fa-solid fa-folder-open"></i> Back to Bank
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-white mb-3 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-blue-400"></i> Solutions & Rationales
+        </h4>
+        <div id="solution-breakdown" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 4: ADMIN MANAGEMENT DASHBOARD -->
+    <!-- ============================================================ -->
+    <div id="view-admin" class="hidden flex-col gap-4">
+      
+      <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 mb-1.5">
+            <i class="fa-solid fa-lock-open"></i> Admin Control Center
+          </div>
+          <h2 class="text-lg font-bold text-white">Q-Bank Content Management</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Manage subjects, chapters, and extract MCQs from your clinical PDFs. Changes save automatically.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openChangePinModal()" class="px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+            <i class="fa-solid fa-key"></i> Change PIN
+          </button>
+          <button onclick="exportUpdatedJson()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+            <i class="fa-solid fa-download"></i> Save qbank.json
+          </button>
+          <button onclick="triggerJsonImport()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-upload"></i> Load JSON
+          </button>
+          <input type="file" id="json-file-input" accept=".json" onchange="handleJsonFileSelect(event)" class="hidden" />
+          <button onclick="closeAdminPanel()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition">
+            Exit Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Tabs Navigation -->
+      <div class="flex border-b border-slate-800 gap-2 overflow-x-auto pb-1">
+        <button id="tab-btn-bulk" onclick="switchAdminTab('bulk')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-file-pdf text-rose-400"></i> PDF & Text MCQ Importer
+        </button>
+        <button id="tab-btn-tree" onclick="switchAdminTab('tree')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-sitemap text-amber-400"></i> Structure (Subjects & Folders)
+        </button>
+        <button id="tab-btn-manual" onclick="switchAdminTab('manual')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-plus-circle text-blue-400"></i> Manual Single MCQ
+        </button>
+      </div>
+
+      <!-- ================= TAB 1: BULK IMPORTER (PRIMARY) ================= -->
+      <div id="admin-tab-bulk" class="flex flex-col gap-3.5">
+        <div class="p-4 rounded-xl bg-purple-950/20 border border-purple-500/30 flex flex-col gap-2">
+          <h4 class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Direct PDF & Document Auto-Importer
+          </h4>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Upload your question bank PDF directly from your phone storage, or paste question text below. The parser automatically detects question stems, 4 options (A/B/C/D), handles <b>"Correct Answer: B (...)"</b>, and separates full clinical explanations!
+          </p>
+        </div>
+
+        <!-- Target Destination Selectors -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Target Subject:</label>
+            <select id="bulk-subject-sel" class="w-full bg-slate-950 text-xs text-blue-400 font-bold p-2.5 rounded-lg border border-slate-800 focus:outline-none">
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Chapter / Topic Name:</label>
+            <input id="bulk-folder-input" type="text" value="01_Upper Limb" placeholder="e.g. 01_Upper Limb" class="w-full bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Test Title:</label>
+            <input id="bulk-test-title" type="text" value="Upper Limb Examination MCQs" placeholder="e.g. 001 Upper Limb MCQs" class="w-full bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Method A: PDF Upload Box -->
+        <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+          <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-file-pdf text-rose-400"></i> Option 1: Upload PDF File
+          </span>
+          <div class="flex items-center gap-3">
+            <input type="file" id="pdf-file-input" accept=".pdf" class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
+            <button onclick="handlePdfFileUpload()" id="btn-parse-pdf" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-bolt"></i> Extract PDF MCQs
+            </button>
+          </div>
+          <span id="pdf-status-text" class="text-[11px] text-slate-400">Extracts questions, A/B/C/D options, "Correct Answer:" keys, and explanations automatically.</span>
+        </div>
+
+        <!-- Method B: Raw Text Paste Box -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-slate-400 flex items-center justify-between">
+            <span>Option 2: Or Paste Questions Text Here:</span>
+            <span class="text-[10px] text-slate-500 font-mono">Q1. ... A) ... B) ... Correct Answer: B</span>
+          </label>
+          <textarea id="bulk-raw-text" rows="7" placeholder="Paste questions here directly from PDF or document:
+
+Q1. A 24-year-old motorcyclist is thrown from his bike...
+A) C8 and T1
+B) C5 and C6
+C) C7 and C8
+D) C5, C6, and C7
+Correct Answer: B (C5 and C6)
+Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg-slate-950 text-xs font-mono text-slate-200 p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-purple-500"></textarea>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="handleBulkTextParse()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Parse Text & Add to Test
+          </button>
+          <button onclick="document.getElementById('bulk-raw-text').value=''" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+            Clear Box
+          </button>
+        </div>
+
+        <div id="bulk-preview-container" class="hidden flex-col gap-2 pt-2">
+          <h5 class="text-xs font-bold text-emerald-400">Import Success! Preview of added questions:</h5>
+          <div id="bulk-preview-list" class="max-h-48 overflow-y-auto custom-scrollbar flex flex-col gap-2"></div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2: STRUCTURE (SUBJECTS & FOLDERS) ================= -->
+      <div id="admin-tab-tree" class="hidden flex-col gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          <!-- Add Subject Box -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-book-medical text-blue-400"></i> Create Subject
+            </h4>
+            <input id="new-subj-name" type="text" placeholder="e.g. Ophthalmology" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500" />
+            <button onclick="adminAddSubject()" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition">
+              + Add Subject
+            </button>
+          </div>
+
+          <!-- Add Chapter / Topic Folder Box -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-folder-plus text-amber-400"></i> Create Topic Folder
+            </h4>
+            <select id="admin-target-subject" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none">
+            </select>
+            <input id="new-folder-name" type="text" placeholder="e.g. 03_Lens & Cataract" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+            <input id="new-folder-desc" type="text" placeholder="Short description" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
+            <button onclick="adminAddFolder()" class="w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition">
+              + Add Folder
+            </button>
+          </div>
+
+          <!-- Add Test Mock Box -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-file-circle-plus text-emerald-400"></i> Create Test Mock
+            </h4>
+            <select id="admin-target-folder" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none">
+            </select>
+            <input id="new-test-title" type="text" placeholder="e.g. 001 Anatomy of Cornea" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
+            <div class="flex gap-2">
+              <input id="new-test-qid" type="text" placeholder="QID (OPH-101)" class="w-1/2 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
+              <input id="new-test-duration" type="number" placeholder="Duration (min)" value="15" class="w-1/2 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
+            </div>
+            <button onclick="adminAddTest()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition">
+              + Add Test Paper
+            </button>
+          </div>
+        </div>
+
+        <!-- Current Tree Inventory -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Live Inventory (Subjects, Topics & Tests)</h4>
+            <span id="tree-stats-badge" class="text-[11px] text-slate-400 font-mono">0 Subjects • 0 Tests</span>
+          </div>
+          <div id="admin-tree-display" class="flex flex-col gap-2.5 max-h-96 overflow-y-auto custom-scrollbar pr-1"></div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: MANUAL SINGLE MCQ ================= -->
+      <div id="admin-tab-manual" class="hidden flex-col gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Select Target Test:</label>
+            <select id="manual-target-test" class="w-full bg-slate-950 text-xs text-blue-400 font-bold p-2.5 rounded-lg border border-slate-800 focus:outline-none">
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Question ID (QID):</label>
+            <input id="manual-qid" type="text" placeholder="e.g. ANA-099" class="w-full bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Clinical Question Stem:</label>
+          <textarea id="manual-question-text" rows="3" placeholder="Enter clinical scenario or direct question..." class="w-full bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-xs text-slate-400 block">Options (Select radio for correct answer):</label>
+          
+          <div class="flex items-center gap-2">
+            <input type="radio" name="manual_correct" value="0" checked class="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700" />
+            <span class="w-6 text-xs font-bold text-slate-400">A</span>
+            <input id="manual-opt-0" type="text" placeholder="Option A text..." class="flex-1 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="radio" name="manual_correct" value="1" class="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700" />
+            <span class="w-6 text-xs font-bold text-slate-400">B</span>
+            <input id="manual-opt-1" type="text" placeholder="Option B text..." class="flex-1 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="radio" name="manual_correct" value="2" class="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700" />
+            <span class="w-6 text-xs font-bold text-slate-400">C</span>
+            <input id="manual-opt-2" type="text" placeholder="Option C text..." class="flex-1 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="radio" name="manual_correct" value="3" class="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700" />
+            <span class="w-6 text-xs font-bold text-slate-400">D</span>
+            <input id="manual-opt-3" type="text" placeholder="Option D text..." class="flex-1 bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Clinical Rationale & High-Yield Explanation:</label>
+          <textarea id="manual-explanation" rows="2" placeholder="Explain why the option is correct..." class="w-full bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none"></textarea>
+        </div>
+
+        <button onclick="adminAddManualQuestion()" class="py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i> Add Question to Test
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ================= IN-APP MODALS (NO BROWSER POPUPS) ================= -->
+
+  <!-- RENAME SUBJECT MODAL -->
+  <div id="rename-subject-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-blue-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
+      <div class="w-10 h-10 mx-auto rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-base">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Rename Subject</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Enter new name for this subject</p>
+      </div>
+      <input id="rename-subject-input" type="text" class="w-full text-center text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 font-bold" />
+      <input type="hidden" id="rename-subject-target" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="confirmRenameSubject()" class="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow">
+          Save Changes
+        </button>
+        <button onclick="closeRenameSubjectModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RENAME FOLDER MODAL -->
+  <div id="rename-folder-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
+      <div class="w-10 h-10 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-base">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Rename Topic Chapter</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Enter new chapter name</p>
+      </div>
+      <input id="rename-folder-input" type="text" class="w-full text-center text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500 font-bold" />
+      <input type="hidden" id="rename-folder-subj" />
+      <input type="hidden" id="rename-folder-id" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="confirmRenameFolder()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition shadow">
+          Save Changes
+        </button>
+        <button onclick="closeRenameFolderModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM DELETE MODAL -->
+  <div id="confirm-delete-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
+      <div class="w-10 h-10 mx-auto rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-base">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 id="delete-modal-title" class="text-sm font-bold text-white">Confirm Removal</h3>
+        <p id="delete-modal-desc" class="text-[11px] text-slate-400 mt-0.5">Are you sure you want to delete this?</p>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button id="btn-execute-delete" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition shadow">
+          Yes, Delete
+        </button>
+        <button onclick="closeDeleteModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN AUTH MODAL -->
+  <div id="admin-auth-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3.5 text-center animate-fadeIn">
+      <div class="w-12 h-12 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Admin Access</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Enter PIN to open Content Management Dashboard</p>
+      </div>
+      
+      <form onsubmit="event.preventDefault(); verifyAdminPin();" class="flex flex-col gap-2.5">
+        <input id="admin-pin-input" type="password" placeholder="Enter PIN" autocomplete="current-password" class="w-full text-center tracking-widest text-sm bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+        
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition shadow">
+            Unlock
+          </button>
+          <button type="button" onclick="closeAdminAuthModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHANGE PIN MODAL -->
+  <div id="change-pin-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
+      <div class="w-10 h-10 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-base">
+        <i class="fa-solid fa-key"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Change Admin PIN</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Set a new secret code for admin access</p>
+      </div>
+      <form onsubmit="event.preventDefault(); saveNewAdminPin();" class="flex flex-col gap-2.5">
+        <input id="new-pin-val" type="password" placeholder="Enter New PIN" class="w-full text-center tracking-widest text-sm bg-slate-950 text-white p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+        <input id="confirm-pin-val" type="password" placeholder="Confirm New PIN" class="w-full text-center tracking-widest text-sm bg-slate-950 text-white p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+        <div class="flex gap-2 pt-1">
+          <button type="submit" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow">
+            Save PIN
+          </button>
+          <button type="button" onclick="closeChangePinModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ANALYTICS MODAL -->
+  <div id="analytics-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-emerald-400"></i>
+          <h3 class="text-sm font-bold text-white">Your Q-Bank Progress & History</h3>
+        </div>
+        <button onclick="closeAnalyticsModal()" class="text-slate-400 hover:text-white p-1 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-1">
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Tests Taken</span>
+            <span id="stat-total-tests" class="text-base font-bold text-white">0</span>
+          </div>
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">MCQs Solved</span>
+            <span id="stat-total-solved" class="text-base font-bold text-blue-400">0</span>
+          </div>
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Avg Accuracy</span>
+            <span id="stat-avg-accuracy" class="text-base font-bold text-emerald-400">0%</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-300 mb-2">Previous Attempts:</h4>
+          <div id="history-logs-container" class="flex flex-col gap-2"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+        <button onclick="restoreDefaultQBank()" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">
+          Reset / Reload Default Data
+        </button>
+        <button onclick="clearSavedHistory()" class="text-xs text-rose-400 hover:text-rose-300 font-semibold px-3 py-1.5">
+          Clear History
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================= GLOBAL STATE =================
+    let ALL_SUBJECTS = {};
+    let activeSubjectName = "Anatomy";
+    let currentFolder = null;
+    let activeTest = null;
+    let currentQuestionIndex = 0;
+    let userAnswers = {};
+    let markedForReview = new Set();
+    let timerInterval = null;
+    let timeRemainingSeconds = 0;
+    let timeSpentSeconds = 0;
+    let isAdminUnlocked = false;
+
+    let memoryHistory = [];
+
+    const TELEGRAM_ADMIN_ID = 8417145295;
+    const DEFAULT_PIN = "149958";
+    const PIN_STORAGE_KEY = "mbbs_admin_pin_secret_v2";
+    const DB_STORAGE_KEY = "mbbs_qbank_local_db_v2";
+
+    function getAdminPin() {
+      try {
+        return localStorage.getItem(PIN_STORAGE_KEY) || DEFAULT_PIN;
+      } catch (e) {
+        return DEFAULT_PIN;
+      }
+    }
+
+    function setAdminPin(newPin) {
+      try {
+        localStorage.setItem(PIN_STORAGE_KEY, newPin);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function persistDatabase() {
+      try {
+        localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(ALL_SUBJECTS));
+      } catch (e) {}
+    }
+
+    // Default Preloaded Data including your exact 8+ clinical Upper Limb MCQs
+    const DEFAULT_PRELOAD_DATA = {
+      "Anatomy": {
+        folders: [
+          {
+            id: "01_upper_limb",
+            name: "01_Upper Limb",
+            description: "Brachial plexus, shoulder, arm, cubital fossa & hand nerves",
+            testCount: 1,
+            tests: [
+              {
+                id: "test_ana_upper_001",
+                qid: "ANA-001",
+                title: "Upper Limb Anatomy — High-Yield Examination MCQs",
+                totalQuestions: 8,
+                totalMarks: 32,
+                durationMinutes: 15,
+                questions: [
+                  {
+                    id: "q_ana_1",
+                    qid: "ANA-001",
+                    text: "A 24-year-old motorcyclist is thrown from his bike, landing violently on his shoulder while his head is forced to the opposite side. Examination reveals an adducted, internally rotated arm with an extended elbow and pronated forearm ('waiter's tip' posture). Which roots of the brachial plexus are most likely injured?",
+                    options: [
+                      "C8 and T1",
+                      "C5 and C6",
+                      "C7 and C8",
+                      "C5, C6, and C7"
+                    ],
+                    correctIndex: 1,
+                    explanation: "This presentation describes Erb-Duchenne palsy (Erb's palsy), caused by traction or rupture of the upper trunk (roots C5 and C6) due to an excessive increase in the angle between neck and shoulder. Damage to suprascapular, axillary, and musculocutaneous nerves paralyzes abductors, lateral rotators, elbow flexors, and supinators, producing classic waiter's tip limb posture."
+                  },
+                  {
+                    id: "q_ana_2",
+                    qid: "ANA-002",
+                    text: "A 52-year-old painter reports severe pain when abducting the right arm, especially between 60° and 120°. On examination, he is completely unable to initiate the first 15° of abduction. Which muscle is most likely torn?",
+                    options: [
+                      "Infraspinatus",
+                      "Subscapularis",
+                      "Supraspinatus",
+                      "Teres minor"
+                    ],
+                    correctIndex: 2,
+                    explanation: "The supraspinatus muscle (innervated by suprascapular nerve, C5-C6) initiates the first 0°-15° of arm abduction at the glenohumeral joint. The deltoid muscle continues abduction from 15° to 90°. Supraspinatus is the most commonly torn rotator cuff tendon due to subacromial impingement."
+                  },
+                  {
+                    id: "q_ana_3",
+                    qid: "ANA-003",
+                    text: "A mid-shaft fracture of the humerus is most likely to injure which nerve and associated blood vessel located along the radial (spiral) groove?",
+                    options: [
+                      "Axillary nerve and posterior circumflex humeral artery",
+                      "Radial nerve and profunda brachii artery",
+                      "Median nerve and brachial artery",
+                      "Ulnar nerve and superior ulnar collateral artery"
+                    ],
+                    correctIndex: 1,
+                    explanation: "The radial nerve and profunda brachii artery (deep artery of the arm) course together along the spiral groove on the posterior surface of the humeral shaft. Mid-shaft fractures frequently lacerate or entrap the radial nerve, leading to 'wrist drop' (loss of wrist and finger extension) and sensory loss on dorsum of first web space."
+                  },
+                  {
+                    id: "q_ana_4",
+                    qid: "ANA-004",
+                    text: "A 45-year-old computer programmer presents with nocturnal tingling, numbness, and burning pain over the palmar aspect of the lateral three and a half digits. Thenar muscle wasting is noted. Which structure is spared because its branch does not pass through the carpal tunnel?",
+                    options: [
+                      "Flexor pollicis longus tendon",
+                      "Median nerve proper",
+                      "Flexor digitorum profundus tendons",
+                      "Palmar cutaneous branch of the median nerve"
+                    ],
+                    correctIndex: 3,
+                    explanation: "In carpal tunnel syndrome, structures traversing deep to the flexor retinaculum (median nerve, 4 FDS tendons, 4 FDP tendons, 1 FPL tendon) are compressed. However, the palmar cutaneous branch of the median nerve passes superficial to the flexor retinaculum, preserving cutaneous sensation over the central palm."
+                  },
+                  {
+                    id: "q_ana_5",
+                    qid: "ANA-005",
+                    text: "Following a fall onto an outstretched hand (FOOSH), a 21-year-old athlete has tenderness in the anatomical snuffbox. Radiographs confirm a fracture across the waist of the scaphoid. What is the most significant clinical risk associated with this fracture?",
+                    options: [
+                      "Avascular necrosis of the proximal pole",
+                      "Radial artery thrombosis",
+                      "Acute ulnar nerve entrapment",
+                      "Volkmann ischemic contracture"
+                    ],
+                    correctIndex: 0,
+                    explanation: "The blood supply to the scaphoid bone is retrograde, entering primarily via distal branches of the radial artery and flowing from distal to proximal. A fracture across the scaphoid waist interrupts blood flow to the proximal segment, predisposing it to nonunion and avascular necrosis (AVN)."
+                  },
+                  {
+                    id: "q_ana_6",
+                    qid: "ANA-006",
+                    text: "Which structure traverses the quadrangular space of the posterior scapular region alongside the axillary nerve?",
+                    options: [
+                      "Circumflex scapular artery",
+                      "Profunda brachii artery",
+                      "Posterior circumflex humeral artery",
+                      "Suprascapular artery"
+                    ],
+                    correctIndex: 2,
+                    explanation: "The quadrangular space is bounded superiorly by teres minor, inferiorly by teres major, medially by long head of triceps, and laterally by surgical neck of humerus. It transmits the axillary nerve and posterior circumflex humeral artery. Fractures of surgical neck can compromise both structures."
+                  },
+                  {
+                    id: "q_ana_7",
+                    qid: "ANA-007",
+                    text: "From medial to lateral, what is the correct anatomical sequence of the deep contents located within the cubital fossa?",
+                    options: [
+                      "Radial nerve -> Biceps tendon -> Brachial artery -> Median nerve",
+                      "Median nerve -> Brachial artery -> Biceps brachii tendon -> Radial nerve",
+                      "Brachial artery -> Median nerve -> Biceps tendon -> Radial nerve",
+                      "Biceps tendon -> Brachial artery -> Median nerve -> Ulnar nerve"
+                    ],
+                    correctIndex: 1,
+                    explanation: "From medial to lateral, the mnemonic 'MBBR' (Median nerve, Brachial artery, Biceps tendon, Radial nerve [deep between brachialis and brachioradialis]) outlines the contents. Clinically, the bicipital aponeurosis separates these deep contents from the superficial median cubital vein, protecting the artery during venipuncture."
+                  },
+                  {
+                    id: "q_ana_8",
+                    qid: "ANA-008",
+                    text: "A difficult breech delivery involving excessive upward traction on the upper limb damages the lower trunk of the brachial plexus (C8-T1). The infant demonstrates a 'claw hand' posture and ipsilateral Horner syndrome. What is this clinical condition called?",
+                    options: [
+                      "Erb-Duchenne palsy",
+                      "Klumpke palsy",
+                      "Saturday night palsy",
+                      "Thoracic outlet syndrome"
+                    ],
+                    correctIndex: 1,
+                    explanation: "Klumpke palsy results from injury to the C8 and T1 ventral rami / lower trunk. Loss of T1 innervation to the intrinsic hand muscles (lumbricals and interossei) produces claw hand (hyperextension of MCP and flexion of IP joints). Damage to sympathetic fibers running with T1 causes Horner syndrome (ptosis, miosis, anhidrosis)."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Microbiology": {
+        folders: [
+          {
+            id: "01_general_micro",
+            name: "01_General Microbiology",
+            description: "Stains, Sterilization, Genetics & Microscopy",
+            testCount: 1,
+            tests: [
+              {
+                id: "test_mic_001",
+                qid: "MIC-101",
+                title: "001 Scientists Stains And Microscopes",
+                totalQuestions: 2,
+                totalMarks: 8,
+                durationMinutes: 5,
+                questions: [
+                  {
+                    id: "qm_1",
+                    qid: "MIC-001",
+                    text: "Which of the following staining methods uses heated carbolfuchsin as the primary stain and 20% sulfuric acid as the decolorizer?",
+                    options: [
+                      "Gram staining",
+                      "Ziehl-Neelsen (Acid-Fast) staining",
+                      "Albert's staining",
+                      "Negative (India ink) staining"
+                    ],
+                    correctIndex: 1,
+                    explanation: "Ziehl-Neelsen staining uses carbolfuchsin with heat, 20% H2SO4 decolorizer, and methylene blue counterstain to identify acid-fast bacilli like Mycobacterium tuberculosis."
+                  },
+                  {
+                    id: "qm_2",
+                    qid: "MIC-002",
+                    text: "Albert's stain is specifically used for the demonstration of which intracellular component in Corynebacterium diphtheriae?",
+                    options: [
+                      "Bacterial endospores",
+                      "Volutin (Metachromatic) granules",
+                      "Flagella",
+                      "Capsular polysaccharide"
+                    ],
+                    correctIndex: 1,
+                    explanation: "Albert's stain contains toluidine blue and malachite green. It stains polymetaphosphate granules bluish-black."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const toast = document.createElement("div");
+      toast.className = `pointer-events-auto p-3.5 rounded-xl border text-xs font-semibold shadow-2xl flex items-center gap-2.5 animate-fadeIn transition-all ${
+        type === "success" 
+          ? "bg-slate-900 border-emerald-500/50 text-emerald-300" 
+          : type === "error" 
+          ? "bg-slate-900 border-rose-500/50 text-rose-300" 
+          : "bg-slate-900 border-blue-500/50 text-blue-300"
+      }`;
+
+      const iconClass = type === "success" ? "fa-circle-check text-emerald-400" : type === "error" ? "fa-circle-exclamation text-rose-400" : "fa-circle-info text-blue-400";
+      toast.innerHTML = `<i class="fa-solid ${iconClass} text-sm"></i><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    function initTelegramSdk() {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        try {
+          tg.ready();
+          tg.expand();
+          if (tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            const name = u.first_name || "Doctor";
+            const greeting = document.getElementById("user-greeting");
+            if (greeting) {
+              greeting.innerHTML = `Welcome, <b>Dr. ${name}</b> • Curated by @Nothing_0786`;
+            }
+            if (u.id === TELEGRAM_ADMIN_ID) {
+              isAdminUnlocked = true;
+              const rolePill = document.getElementById("role-pill");
+              if (rolePill) {
+                rolePill.textContent = "ADMIN (VERIFIED)";
+                rolePill.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30";
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    function triggerHaptic(type = "light") {
+      try {
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.HapticFeedback) {
+          tg.HapticFeedback.impactOccurred(type);
+        }
+      } catch (e) {}
+    }
+
+    async function loadDatabase() {
+      initTelegramSdk();
+
+      // Check device storage
+      try {
+        const localData = localStorage.getItem(DB_STORAGE_KEY);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+            ALL_SUBJECTS = parsed;
+          }
+        }
+      } catch (e) {}
+
+      // Fallback to preload defaults
+      if (!ALL_SUBJECTS || Object.keys(ALL_SUBJECTS).length === 0) {
+        ALL_SUBJECTS = JSON.parse(JSON.stringify(DEFAULT_PRELOAD_DATA));
+        persistDatabase();
+      }
+
+      populateSubjectDropdown();
+      renderBrowseView();
+      refreshAdminSelectors();
+    }
+
+    function restoreDefaultQBank() {
+      ALL_SUBJECTS = JSON.parse(JSON.stringify(DEFAULT_PRELOAD_DATA));
+      persistDatabase();
+      populateSubjectDropdown();
+      renderBrowseView();
+      refreshAdminSelectors();
+      showToast("Q-Bank restored to default syllabus data!", "success");
+      closeAnalyticsModal();
+    }
+
+    function populateSubjectDropdown() {
+      const sel = document.getElementById("subject-select");
+      if (!sel) return;
+      sel.innerHTML = "";
+      const subjects = Object.keys(ALL_SUBJECTS);
+      
+      if (subjects.length === 0) {
+        sel.appendChild(new Option("No Subjects Available", ""));
+        return;
+      }
+
+      subjects.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+
+      if (!ALL_SUBJECTS[activeSubjectName]) {
+        activeSubjectName = subjects[0];
+      }
+      sel.value = activeSubjectName;
+    }
+
+    function onSubjectChange(newSubj) {
+      if (!newSubj || !ALL_SUBJECTS[newSubj]) return;
+      triggerHaptic("selection");
+      activeSubjectName = newSubj;
+      currentFolder = null;
+      renderBrowseView();
+    }
+
+    function renderBrowseView() {
+      const viewBrowse = document.getElementById('view-browse');
+      const viewExam = document.getElementById('view-exam');
+      const viewResult = document.getElementById('view-result');
+      const viewAdmin = document.getElementById('view-admin');
+
+      if (viewBrowse) { viewBrowse.classList.remove('hidden'); viewBrowse.style.display = 'flex'; }
+      if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
+      if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+      if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
+
+      const container = document.getElementById('tests-container');
+      const upBtn = document.getElementById('btn-up-level');
+      const breadcrumb = document.getElementById('breadcrumb-subject');
+      const heroSubj = document.getElementById('hero-subject-tag');
+      const heroTitle = document.getElementById('hero-title');
+      const heroMeta = document.getElementById('hero-meta');
+
+      if (!container) return;
+      container.innerHTML = "";
+      if (heroSubj) heroSubj.textContent = activeSubjectName;
+
+      const subjectData = ALL_SUBJECTS[activeSubjectName] || { folders: [] };
+
+      if (!currentFolder) {
+        if (upBtn) upBtn.classList.add('hidden');
+        if (breadcrumb) breadcrumb.textContent = activeSubjectName;
+        if (heroTitle) heroTitle.textContent = `${activeSubjectName} Question Bank`;
+        if (heroMeta) {
+          heroMeta.innerHTML = `
+            <span><i class="fa-solid fa-folder-open mr-1 text-blue-400"></i>${subjectData.folders.length} Chapter Folders</span>
+            <span><i class="fa-solid fa-award mr-1 text-amber-400"></i>Standard CBT (+4/-1)</span>
+            <span class="text-slate-500">~90 sec/question</span>
+          `;
+        }
+
+        if (subjectData.folders.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2">
+              <i class="fa-solid fa-folder-open text-2xl text-slate-600"></i>
+              <span>No chapter topics created in <b>${activeSubjectName}</b> yet.</span>
+              <button onclick="handleAdminToggleClick()" class="px-3.5 py-1.5 mt-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition">
+                Open Admin Dashboard to Add MCQs
+              </button>
+            </div>`;
+          return;
+        }
+
+        subjectData.folders.forEach(folder => {
+          const card = document.createElement('div');
+          card.className = "p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex items-center justify-between group";
+          card.onclick = () => {
+            triggerHaptic("selection");
+            openFolder(folder.id);
+          };
+          card.innerHTML = `
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-folder-open"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition">${folder.name}</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">${folder.testCount || folder.tests?.length || 0} practice mocks • ${folder.description || 'Topic review'}</p>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition"></i>
+          `;
+          container.appendChild(card);
+        });
+
+      } else {
+        if (upBtn) upBtn.classList.remove('hidden');
+        if (breadcrumb) breadcrumb.textContent = `${activeSubjectName} ➔ ${currentFolder.name}`;
+        if (heroTitle) heroTitle.textContent = currentFolder.name;
+        if (heroMeta) heroMeta.innerHTML = `<span class="text-slate-400">${currentFolder.description || ''}</span>`;
+
+        if (!currentFolder.tests || currentFolder.tests.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2">
+              <i class="fa-solid fa-file-lines text-2xl text-slate-600"></i>
+              <span>No test papers added inside <b>${currentFolder.name}</b> yet.</span>
+            </div>`;
+          return;
+        }
+
+        (currentFolder.tests || []).forEach(test => {
+          const prevAttempt = memoryHistory.find(h => h.testId === test.id);
+          let badge = "";
+          if (prevAttempt) {
+            const acc = Math.round((prevAttempt.correct / prevAttempt.total) * 100);
+            badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${acc >= 75 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'}">Previous: ${acc}%</span>`;
+          }
+
+          const card = document.createElement('div');
+          card.className = "p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex flex-col justify-between gap-3 group";
+          card.onclick = () => {
+            triggerHaptic("medium");
+            startExam(test);
+          };
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[10px] font-mono text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">${test.qid}</span>
+                ${badge}
+              </div>
+              <h4 class="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition leading-snug">${test.title}</h4>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+              <span class="flex items-center gap-1"><i class="fa-regular fa-file-lines text-slate-500"></i> ${test.totalQuestions || test.questions.length} Questions</span>
+              <span class="flex items-center gap-1"><i class="fa-solid fa-award text-slate-500"></i> ${test.totalMarks} Marks</span>
+              <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-slate-500"></i> ${test.durationMinutes} min</span>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+    }
+
+    function openFolder(folderId) {
+      const subj = ALL_SUBJECTS[activeSubjectName];
+      if (subj) {
+        currentFolder = subj.folders.find(f => f.id === folderId);
+        renderBrowseView();
+      }
+    }
+
+    function navigateUpFolder() {
+      triggerHaptic("selection");
+      currentFolder = null;
+      renderBrowseView();
+    }
+
+    function startExam(test) {
+      if (!test.questions || test.questions.length === 0) {
+        showToast("This test paper has no questions yet. Use Admin Panel to add MCQs!", "error");
+        return;
+      }
+      activeTest = test;
+      currentQuestionIndex = 0;
+      userAnswers = {};
+      markedForReview.clear();
+      timeRemainingSeconds = (test.durationMinutes || 15) * 60;
+      timeSpentSeconds = 0;
+
+      const viewBrowse = document.getElementById('view-browse');
+      const viewExam = document.getElementById('view-exam');
+      const viewResult = document.getElementById('view-result');
+      const viewAdmin = document.getElementById('view-admin');
+
+      if (viewBrowse) { viewBrowse.classList.add('hidden'); viewBrowse.style.display = 'none'; }
+      if (viewExam) { viewExam.classList.remove('hidden'); viewExam.style.display = 'flex'; }
+      if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+      if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
+
+      document.getElementById('exam-test-name').textContent = test.title;
+      document.getElementById('total-q-count').textContent = test.questions.length;
+
+      clearInterval(timerInterval);
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timeRemainingSeconds--;
+        timeSpentSeconds++;
+        updateTimerDisplay();
+        if (timeRemainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          finishExam();
+        }
+      }, 1000);
+
+      renderCurrentQuestion();
+      renderPalette();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeRemainingSeconds / 60);
+      const seconds = timeRemainingSeconds % 60;
+      const el = document.getElementById('exam-timer');
+      if (el) {
+        el.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+    }
+
+    function renderCurrentQuestion() {
+      const q = activeTest.questions[currentQuestionIndex];
+      document.getElementById('current-q-index').textContent = currentQuestionIndex + 1;
+      document.getElementById('exam-qid').textContent = `QID: ${q.qid || 'MCQ'}`;
+      document.getElementById('question-text').textContent = q.text;
+
+      const optsContainer = document.getElementById('options-container');
+      optsContainer.innerHTML = "";
+
+      const alphabet = ['A', 'B', 'C', 'D'];
+      const currentSelected = userAnswers[q.id];
+
+      q.options.forEach((optText, idx) => {
+        const isSelected = currentSelected === idx;
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3.5 rounded-xl border text-xs md:text-sm font-medium transition flex items-start gap-3 ${
+          isSelected 
+            ? 'bg-blue-600/15 border-blue-500 text-blue-300 shadow ring-1 ring-blue-500' 
+            : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700'
+        }`;
+        btn.onclick = () => {
+          triggerHaptic("light");
+          selectOption(idx);
+        };
+        btn.innerHTML = `
+          <span class="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold ${
+            isSelected ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'
+          }">${alphabet[idx]}</span>
+          <span class="pt-0.5 leading-relaxed">${optText}</span>
+        `;
+        optsContainer.appendChild(btn);
+      });
+
+      const prevBtn = document.getElementById('btn-prev-q');
+      if (prevBtn) {
+        prevBtn.disabled = (currentQuestionIndex === 0);
+        prevBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+      }
+      
+      const nextBtn = document.getElementById('btn-next-q');
+      if (nextBtn) {
+        if (currentQuestionIndex === activeTest.questions.length - 1) {
+          nextBtn.innerHTML = `Submit Exam <i class="fa-solid fa-flag text-[10px]"></i>`;
+        } else {
+          nextBtn.innerHTML = `Next <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
+        }
+      }
+
+      renderPalette();
+    }
+
+    function selectOption(index) {
+      const q = activeTest.questions[currentQuestionIndex];
+      userAnswers[q.id] = index;
+      renderCurrentQuestion();
+      renderPalette();
+    }
+
+    function toggleMarkReview() {
+      triggerHaptic("selection");
+      const q = activeTest.questions[currentQuestionIndex];
+      if (markedForReview.has(q.id)) {
+        markedForReview.delete(q.id);
+      } else {
+        markedForReview.add(q.id);
+      }
+      renderPalette();
+    }
+
+    function navigateQuestion(direction) {
+      triggerHaptic("selection");
+      const target = currentQuestionIndex + direction;
+      if (target >= 0 && target < activeTest.questions.length) {
+        currentQuestionIndex = target;
+        renderCurrentQuestion();
+      } else if (target >= activeTest.questions.length) {
+        confirmSubmitExam();
+      }
+    }
+
+    function jumpToQuestion(idx) {
+      triggerHaptic("selection");
+      currentQuestionIndex = idx;
+      renderCurrentQuestion();
+    }
+
+    function renderPalette() {
+      const container = document.getElementById('palette-container');
+      if (!container) return;
+      container.innerHTML = "";
+
+      activeTest.questions.forEach((q, idx) => {
+        const isCurrent = idx === currentQuestionIndex;
+        const isAnswered = userAnswers[q.id] !== undefined;
+        const isMarked = markedForReview.has(q.id);
+
+        let bgClass = "bg-slate-800 border-slate-700 text-slate-400";
+        if (isAnswered) bgClass = "bg-emerald-600 border-emerald-500 text-white font-bold";
+        if (isMarked) bgClass = "bg-amber-600 border-amber-500 text-white font-bold";
+
+        const btn = document.createElement('button');
+        btn.className = `w-7 h-7 rounded-lg text-xs flex items-center justify-center border transition ${bgClass} ${
+          isCurrent ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900 scale-105' : ''
+        }`;
+        btn.textContent = idx + 1;
+        btn.onclick = () => jumpToQuestion(idx);
+        container.appendChild(btn);
+      });
+    }
+
+    function confirmSubmitExam() {
+      triggerHaptic("warning");
+      finishExam();
+    }
+
+    function finishExam() {
+      clearInterval(timerInterval);
+
+      let correctCount = 0;
+      let wrongCount = 0;
+      let unattempted = 0;
+
+      activeTest.questions.forEach(q => {
+        const userChoice = userAnswers[q.id];
+        if (userChoice === undefined) {
+          unattempted++;
+        } else if (userChoice === q.correctIndex) {
+          correctCount++;
+        } else {
+          wrongCount++;
+        }
+      });
+
+      const totalQuestions = activeTest.questions.length;
+      const rawScore = (correctCount * 4) - (wrongCount * 1);
+      const maxScore = totalQuestions * 4;
+      const accuracyPercent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+      const minutesSpent = Math.floor(timeSpentSeconds / 60);
+      const secondsSpent = timeSpentSeconds % 60;
+      const timeStr = `${String(minutesSpent).padStart(2, '0')}:${String(secondsSpent).padStart(2, '0')}`;
+
+      memoryHistory.unshift({
+        testId: activeTest.id,
+        testTitle: activeTest.title,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        correct: correctCount,
+        wrong: wrongCount,
+        unattempted: unattempted,
+        total: totalQuestions,
+        score: rawScore,
+        maxScore: maxScore,
+        accuracy: accuracyPercent,
+        timeSpent: timeStr
+      });
+
+      const viewExam = document.getElementById('view-exam');
+      const viewResult = document.getElementById('view-result');
+      if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
+      if (viewResult) { viewResult.classList.remove('hidden'); viewResult.style.display = 'flex'; }
+
+      document.getElementById('result-test-title').textContent = activeTest.title;
+      document.getElementById('res-score').textContent = `${rawScore} / ${maxScore}`;
+      document.getElementById('res-accuracy').textContent = `${accuracyPercent}%`;
+      document.getElementById('res-correct').textContent = `${correctCount} / ${totalQuestions}`;
+      document.getElementById('res-time').textContent = timeStr;
+
+      const breakdownContainer = document.getElementById('solution-breakdown');
+      breakdownContainer.innerHTML = "";
+      const alphabet = ['A', 'B', 'C', 'D'];
+
+      activeTest.questions.forEach((q, idx) => {
+        const userChoice = userAnswers[q.id];
+        const isCorrect = userChoice === q.correctIndex;
+        const isSkipped = userChoice === undefined;
+
+        let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Correct (+4)</span>`;
+        if (isSkipped) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Skipped (0)</span>`;
+        } else if (!isCorrect) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Incorrect (-1)</span>`;
+        }
+
+        const item = document.createElement('div');
+        item.className = "p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-2.5 text-xs";
+        item.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <span class="font-bold text-slate-200">Q${idx + 1}. ${q.text}</span>
+            ${statusBadge}
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-1">
+            ${q.options.map((opt, optIdx) => {
+              let optStyle = "border-slate-800 text-slate-400 bg-slate-900";
+              if (optIdx === q.correctIndex) {
+                optStyle = "border-emerald-500/50 text-emerald-300 bg-emerald-950/30 font-semibold";
+              } else if (optIdx === userChoice && !isCorrect) {
+                optStyle = "border-rose-500/50 text-rose-300 bg-rose-950/30 line-through";
+              }
+              return `
+                <div class="p-2 rounded-lg border ${optStyle} flex items-center gap-2">
+                  <span class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-slate-800">${alphabet[optIdx]}</span>
+                  <span>${opt}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="p-3 rounded-lg bg-blue-950/20 border border-blue-500/20 text-slate-300 text-[11px] leading-relaxed">
+            <span class="text-blue-400 font-bold block mb-0.5"><i class="fa-solid fa-lightbulb"></i> Clinical Explanation:</span>
+            ${q.explanation}
+          </div>
+        `;
+        breakdownContainer.appendChild(item);
+      });
+    }
+
+    function retakeCurrentTest() {
+      if (activeTest) startExam(activeTest);
+    }
+
+    function returnToBrowse() {
+      const viewResult = document.getElementById('view-result');
+      if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+      renderBrowseView();
+    }
+
+    // ================= ADMIN AUTH & DASHBOARD =================
+
+    function handleAdminToggleClick() {
+      triggerHaptic("medium");
+      if (isAdminUnlocked) {
+        openAdminPanel();
+      } else {
+        const modal = document.getElementById('admin-auth-modal');
+        if (modal) {
+          modal.style.display = 'flex';
+          const pinInput = document.getElementById('admin-pin-input');
+          if (pinInput) {
+            pinInput.value = "";
+            setTimeout(() => pinInput.focus(), 150);
+          }
+        }
+      }
+    }
+
+    function closeAdminAuthModal() {
+      const modal = document.getElementById('admin-auth-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function verifyAdminPin() {
+      const input = document.getElementById('admin-pin-input');
+      const pin = input ? input.value.trim() : "";
+      const currentExpectedPin = getAdminPin();
+
+      if (pin === currentExpectedPin) {
+        isAdminUnlocked = true;
+        closeAdminAuthModal();
+        const rolePill = document.getElementById("role-pill");
+        if (rolePill) {
+          rolePill.textContent = "ADMIN MODE";
+          rolePill.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30";
+        }
+        showToast("Admin Panel Unlocked!", "success");
+        openAdminPanel();
+      } else {
+        showToast("Incorrect Admin PIN.", "error");
+      }
+    }
+
+    function openChangePinModal() {
+      const modal = document.getElementById('change-pin-modal');
+      if (modal) {
+        document.getElementById('new-pin-val').value = "";
+        document.getElementById('confirm-pin-val').value = "";
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeChangePinModal() {
+      const modal = document.getElementById('change-pin-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function saveNewAdminPin() {
+      const newPin = document.getElementById('new-pin-val').value.trim();
+      const confirmPin = document.getElementById('confirm-pin-val').value.trim();
+
+      if (!newPin) {
+        return showToast("PIN cannot be blank!", "error");
+      }
+      if (newPin !== confirmPin) {
+        return showToast("PIN confirmation does not match!", "error");
+      }
+
+      setAdminPin(newPin);
+      closeChangePinModal();
+      showToast("Admin PIN updated successfully!", "success");
+    }
+
+    function openAdminPanel() {
+      const viewBrowse = document.getElementById('view-browse');
+      const viewExam = document.getElementById('view-exam');
+      const viewResult = document.getElementById('view-result');
+      const adminView = document.getElementById('view-admin');
+
+      if (viewBrowse) { viewBrowse.classList.add('hidden'); viewBrowse.style.display = 'none'; }
+      if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
+      if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+      
+      if (adminView) {
+        adminView.classList.remove('hidden');
+        adminView.style.display = 'flex';
+      }
+
+      refreshAdminTree();
+      refreshAdminSelectors();
+    }
+
+    function closeAdminPanel() {
+      const adminView = document.getElementById('view-admin');
+      if (adminView) {
+        adminView.classList.add('hidden');
+        adminView.style.display = 'none';
+      }
+      populateSubjectDropdown();
+      renderBrowseView();
+    }
+
+    function switchAdminTab(tabName) {
+      triggerHaptic("selection");
+      const tabs = ['bulk', 'tree', 'manual'];
+      tabs.forEach(t => {
+        const pane = document.getElementById(`admin-tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (!pane || !btn) return;
+
+        if (t === tabName) {
+          pane.classList.remove('hidden');
+          pane.style.display = 'flex';
+          btn.className = "px-3.5 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap";
+        } else {
+          pane.classList.add('hidden');
+          pane.style.display = 'none';
+          btn.className = "px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap";
+        }
+      });
+    }
+
+    function refreshAdminSelectors() {
+      const targetSubj = document.getElementById('admin-target-subject');
+      const bulkSubj = document.getElementById('bulk-subject-sel');
+      if (!targetSubj || !bulkSubj) return;
+
+      targetSubj.innerHTML = "";
+      bulkSubj.innerHTML = "";
+
+      const subjects = Object.keys(ALL_SUBJECTS);
+      subjects.forEach(s => {
+        targetSubj.appendChild(new Option(s, s));
+        bulkSubj.appendChild(new Option(s, s));
+      });
+
+      targetSubj.onchange = () => refreshFolderSelectorForSubject(targetSubj.value);
+      if (subjects.length > 0) {
+        if (!ALL_SUBJECTS[targetSubj.value]) {
+          targetSubj.value = subjects[0];
+        }
+        refreshFolderSelectorForSubject(targetSubj.value);
+        bulkSubj.value = activeSubjectName || subjects[0];
+      } else {
+        const targetFolder = document.getElementById('admin-target-folder');
+        if (targetFolder) targetFolder.innerHTML = "";
+      }
+
+      const manualSel = document.getElementById('manual-target-test');
+      if (manualSel) {
+        manualSel.innerHTML = "";
+        subjects.forEach(sName => {
+          const subj = ALL_SUBJECTS[sName];
+          (subj.folders || []).forEach(f => {
+            (f.tests || []).forEach(t => {
+              const optText = `${sName} ➔ ${f.name} ➔ ${t.title} (${t.qid})`;
+              const val = `${sName}:::${f.id}:::${t.id}`;
+              manualSel.appendChild(new Option(optText, val));
+            });
+          });
+        });
+      }
+    }
+
+    function refreshFolderSelectorForSubject(sName) {
+      const targetFolder = document.getElementById('admin-target-folder');
+      if (!targetFolder) return;
+      targetFolder.innerHTML = "";
+      const subj = ALL_SUBJECTS[sName];
+      if (subj && subj.folders) {
+        subj.folders.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = `${sName}:::${f.id}`;
+          opt.textContent = `${sName} / ${f.name}`;
+          targetFolder.appendChild(opt);
+        });
+      }
+    }
+
+    function refreshAdminTree() {
+      const container = document.getElementById('admin-tree-display');
+      if (!container) return;
+      container.innerHTML = "";
+      let totalTests = 0;
+      const subjects = Object.keys(ALL_SUBJECTS);
+
+      if (subjects.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center">No subjects created yet. Use the Create Subject box to begin.</p>`;
+        const badge = document.getElementById('tree-stats-badge');
+        if (badge) badge.textContent = `0 Subjects • 0 Tests`;
+        return;
+      }
+
+      subjects.forEach(sName => {
+        const subj = ALL_SUBJECTS[sName];
+        const sDiv = document.createElement('div');
+        sDiv.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex flex-col gap-2";
+        
+        let folderListHtml = "";
+        (subj.folders || []).forEach(f => {
+          totalTests += (f.tests || []).length;
+          folderListHtml += `
+            <div class="ml-3 mt-1.5 pl-2 border-l border-slate-700 flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-amber-400"><i class="fa-regular fa-folder mr-1"></i>${f.name}</span>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="adminEditFolderPrompt('${sName}', '${f.id}')" title="Edit Folder" class="text-blue-400 hover:text-blue-300 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                    <i class="fa-solid fa-pen"></i> Rename
+                  </button>
+                  <button onclick="adminDeleteFolderPrompt('${sName}', '${f.id}')" title="Delete Folder" class="text-rose-400 hover:text-rose-300 text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="ml-3 mt-1 flex flex-col gap-1">
+                ${(f.tests || []).map(t => `
+                  <div class="text-[11px] text-slate-300 flex items-center justify-between bg-slate-900/60 p-1.5 rounded">
+                    <span><i class="fa-solid fa-file-lines text-blue-400 mr-1"></i><b>${t.qid}</b>: ${t.title}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-500 font-mono">${t.questions?.length || 0} Qs</span>
+                      <button onclick="adminDeleteTestPrompt('${sName}', '${f.id}', '${t.id}')" title="Delete Test" class="text-rose-400 hover:text-rose-300">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+
+        sDiv.innerHTML = `
+          <div class="flex items-center justify-between font-bold text-white border-b border-slate-800/80 pb-1.5">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-book-medical text-blue-400"></i>${sName}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] text-slate-500 font-normal">${subj.folders?.length || 0} chapters</span>
+              <button onclick="adminEditSubjectPrompt('${sName}')" title="Rename Subject" class="text-blue-400 hover:text-blue-300 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                <i class="fa-solid fa-pen"></i> Rename
+              </button>
+              <button onclick="adminDeleteSubjectPrompt('${sName}')" title="Delete Subject" class="text-rose-400 hover:text-rose-300 text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          ${folderListHtml || '<p class="text-[10px] text-slate-600 ml-3">No chapters created yet</p>'}
+        `;
+        container.appendChild(sDiv);
+      });
+
+      const badge = document.getElementById('tree-stats-badge');
+      if (badge) badge.textContent = `${subjects.length} Subjects • ${totalTests} Tests`;
+    }
+
+    // ================= SUBJECT & FOLDER CRUD (WITH CUSTOM MODALS) =================
+
+    function adminAddSubject() {
+      const name = document.getElementById('new-subj-name').value.trim();
+      if (!name) return showToast("Please enter subject name.", "error");
+      if (ALL_SUBJECTS[name]) return showToast("Subject already exists!", "error");
+
+      ALL_SUBJECTS[name] = { folders: [] };
+      persistDatabase();
+      document.getElementById('new-subj-name').value = "";
+      
+      activeSubjectName = name;
+      refreshAdminTree();
+      populateSubjectDropdown();
+      refreshAdminSelectors();
+      showToast(`Subject '${name}' created and saved permanently!`, "success");
+    }
+
+    function adminEditSubjectPrompt(oldName) {
+      document.getElementById('rename-subject-target').value = oldName;
+      document.getElementById('rename-subject-input').value = oldName;
+      document.getElementById('rename-subject-modal').style.display = 'flex';
+      setTimeout(() => document.getElementById('rename-subject-input').focus(), 150);
+    }
+
+    function closeRenameSubjectModal() {
+      document.getElementById('rename-subject-modal').style.display = 'none';
+    }
+
+    function confirmRenameSubject() {
+      const oldName = document.getElementById('rename-subject-target').value;
+      const newName = document.getElementById('rename-subject-input').value.trim();
+      if (!newName || newName === oldName) {
+        closeRenameSubjectModal();
+        return;
+      }
+      if (ALL_SUBJECTS[newName]) {
+        return showToast("A subject with that name already exists!", "error");
+      }
+
+      ALL_SUBJECTS[newName] = ALL_SUBJECTS[oldName];
+      delete ALL_SUBJECTS[oldName];
+
+      if (activeSubjectName === oldName) {
+        activeSubjectName = newName;
+      }
+
+      persistDatabase();
+      closeRenameSubjectModal();
+      refreshAdminTree();
+      populateSubjectDropdown();
+      refreshAdminSelectors();
+      renderBrowseView();
+      showToast(`Renamed to '${newName}'!`, "success");
+    }
+
+    function adminDeleteSubjectPrompt(sName) {
+      const modal = document.getElementById('confirm-delete-modal');
+      document.getElementById('delete-modal-title').textContent = `Delete Subject '${sName}'?`;
+      document.getElementById('delete-modal-desc').textContent = "This will remove this subject and all its questions permanently.";
+      
+      const btn = document.getElementById('btn-execute-delete');
+      btn.onclick = () => {
+        delete ALL_SUBJECTS[sName];
+        persistDatabase();
+        closeDeleteModal();
+
+        const remaining = Object.keys(ALL_SUBJECTS);
+        activeSubjectName = remaining.length > 0 ? remaining[0] : "";
+
+        refreshAdminTree();
+        populateSubjectDropdown();
+        refreshAdminSelectors();
+        renderBrowseView();
+        showToast(`Subject '${sName}' deleted.`, "info");
+      };
+
+      modal.style.display = 'flex';
+    }
+
+    function adminAddFolder() {
+      const sName = document.getElementById('admin-target-subject').value;
+      const fName = document.getElementById('new-folder-name').value.trim();
+      const fDesc = document.getElementById('new-folder-desc').value.trim();
+      if (!sName) return showToast("Please select a Subject first!", "error");
+      if (!fName) return showToast("Enter folder / chapter name!", "error");
+
+      const subj = ALL_SUBJECTS[sName];
+      if (!subj) return;
+
+      const fId = fName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      subj.folders.push({
+        id: fId,
+        name: fName,
+        description: fDesc || `${sName} high-yield topic`,
+        testCount: 0,
+        tests: []
+      });
+
+      persistDatabase();
+      document.getElementById('new-folder-name').value = "";
+      document.getElementById('new-folder-desc').value = "";
+      refreshAdminTree();
+      refreshAdminSelectors();
+      showToast(`Chapter '${fName}' added to ${sName}!`, "success");
+    }
+
+    function adminEditFolderPrompt(sName, fId) {
+      const subj = ALL_SUBJECTS[sName];
+      if (!subj) return;
+      const folder = subj.folders.find(f => f.id === fId);
+      if (!folder) return;
+
+      document.getElementById('rename-folder-subj').value = sName;
+      document.getElementById('rename-folder-id').value = fId;
+      document.getElementById('rename-folder-input').value = folder.name;
+      document.getElementById('rename-folder-modal').style.display = 'flex';
+    }
+
+    function closeRenameFolderModal() {
+      document.getElementById('rename-folder-modal').style.display = 'none';
+    }
+
+    function confirmRenameFolder() {
+      const sName = document.getElementById('rename-folder-subj').value;
+      const fId = document.getElementById('rename-folder-id').value;
+      const newName = document.getElementById('rename-folder-input').value.trim();
+
+      const subj = ALL_SUBJECTS[sName];
+      if (subj) {
+        const folder = subj.folders.find(f => f.id === fId);
+        if (folder && newName) {
+          folder.name = newName;
+          persistDatabase();
+          refreshAdminTree();
+          refreshAdminSelectors();
+          showToast("Chapter renamed successfully!", "success");
+        }
+      }
+      closeRenameFolderModal();
+    }
+
+    function adminDeleteFolderPrompt(sName, fId) {
+      const modal = document.getElementById('confirm-delete-modal');
+      document.getElementById('delete-modal-title').textContent = "Delete Topic Chapter?";
+      document.getElementById('delete-modal-desc').textContent = "All test mocks inside this chapter will be deleted.";
+
+      const btn = document.getElementById('btn-execute-delete');
+      btn.onclick = () => {
+        const subj = ALL_SUBJECTS[sName];
+        if (subj) {
+          subj.folders = subj.folders.filter(f => f.id !== fId);
+          persistDatabase();
+          refreshAdminTree();
+          refreshAdminSelectors();
+          showToast("Chapter folder removed.", "info");
+        }
+        closeDeleteModal();
+      };
+
+      modal.style.display = 'flex';
+    }
+
+    function adminDeleteTestPrompt(sName, fId, tId) {
+      const modal = document.getElementById('confirm-delete-modal');
+      document.getElementById('delete-modal-title').textContent = "Delete Test Mock?";
+      document.getElementById('delete-modal-desc').textContent = "This will remove this test paper permanently.";
+
+      const btn = document.getElementById('btn-execute-delete');
+      btn.onclick = () => {
+        const subj = ALL_SUBJECTS[sName];
+        if (subj) {
+          const folder = subj.folders.find(f => f.id === fId);
+          if (folder) {
+            folder.tests = folder.tests.filter(t => t.id !== tId);
+            folder.testCount = folder.tests.length;
+            persistDatabase();
+            refreshAdminTree();
+            refreshAdminSelectors();
+            showToast("Test paper removed.", "info");
+          }
+        }
+        closeDeleteModal();
+      };
+
+      modal.style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('confirm-delete-modal').style.display = 'none';
+    }
+
+    function adminAddTest() {
+      const selVal = document.getElementById('admin-target-folder').value;
+      if (!selVal) return showToast("Please select a Topic Folder first!", "error");
+
+      const [sName, fId] = selVal.split(":::");
+      const title = document.getElementById('new-test-title').value.trim();
+      const qid = document.getElementById('new-test-qid').value.trim().toUpperCase() || "TEST-01";
+      const dur = parseInt(document.getElementById('new-test-duration').value) || 15;
+
+      if (!title) return showToast("Please enter test title!", "error");
+
+      const folder = ALL_SUBJECTS[sName].folders.find(f => f.id === fId);
+      if (!folder) return;
+
+      const testId = `test_${fId}_${Date.now()}`;
+      folder.tests.push({
+        id: testId,
+        qid: qid,
+        title: title,
+        totalQuestions: 0,
+        totalMarks: 0,
+        durationMinutes: dur,
+        questions: []
+      });
+      folder.testCount = folder.tests.length;
+
+      persistDatabase();
+      document.getElementById('new-test-title').value = "";
+      document.getElementById('new-test-qid').value = "";
+      refreshAdminTree();
+      refreshAdminSelectors();
+      showToast(`Test '${title}' created successfully!`, "success");
+    }
+
+    // ================= ROBUST PDF & TEXT PARSER =================
+
+    async function handlePdfFileUpload() {
+      const fileInput = document.getElementById('pdf-file-input');
+      const statusText = document.getElementById('pdf-status-text');
+      const parseBtn = document.getElementById('btn-parse-pdf');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("Please choose a PDF file from your storage first!", "error");
+        return;
+      }
+
+      if (!window.pdfjsLib) {
+        showToast("PDF parsing library is still loading. Check your internet connection.", "error");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      parseBtn.disabled = true;
+      parseBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Reading PDF...`;
+      statusText.textContent = `Extracting text from '${file.name}'...`;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let extractedText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          statusText.textContent = `Reading page ${i} of ${pdf.numPages}...`;
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageStr = textContent.items.map(item => item.str).join(" ");
+          extractedText += pageStr + "\n\n";
+        }
+
+        document.getElementById('bulk-raw-text').value = extractedText;
+        statusText.textContent = `Extracted ${pdf.numPages} pages successfully! Click 'Parse Text & Add to Test'.`;
+        showToast(`Extracted ${pdf.numPages} pages! Click Parse Text & Add.`, "success");
+      } catch (err) {
+        statusText.textContent = `Error reading PDF: ${err.message}`;
+        showToast("Could not read PDF. Ensure it has selectable text.", "error");
+      } finally {
+        parseBtn.disabled = false;
+        parseBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Extract PDF MCQs`;
+      }
+    }
+
+    function handleBulkTextParse() {
+      const raw = document.getElementById('bulk-raw-text').value.trim();
+      const sName = document.getElementById('bulk-subject-sel').value || activeSubjectName;
+      const folderName = document.getElementById('bulk-folder-input').value.trim() || "01_High-Yield Topic";
+      const testTitle = document.getElementById('bulk-test-title').value.trim() || `001 Examination Mock (${new Date().toLocaleDateString()})`;
+
+      if (!raw) {
+        showToast("Please paste question text or upload a PDF first!", "error");
+        return;
+      }
+
+      if (!ALL_SUBJECTS[sName]) {
+        ALL_SUBJECTS[sName] = { folders: [] };
+      }
+
+      const subj = ALL_SUBJECTS[sName];
+      let folder = subj.folders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+      if (!folder) {
+        const fId = folderName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        folder = {
+          id: fId,
+          name: folderName,
+          description: `${sName} questions`,
+          testCount: 0,
+          tests: []
+        };
+        subj.folders.push(folder);
+      }
+
+      const testId = `test_${Date.now()}`;
+      const prefix = sName.slice(0, 3).toUpperCase();
+      const newTest = {
+        id: testId,
+        qid: `${prefix}-${folder.tests.length + 1}01`,
+        title: testTitle,
+        totalQuestions: 0,
+        totalMarks: 0,
+        durationMinutes: 15,
+        questions: []
+      };
+
+      // Clean text from headers and footers
+      let cleaned = raw.replace(/\r\n|\r/g, "\n");
+      cleaned = cleaned.replace(/Clinical\s+Anatomy[^\n]*/gi, '');
+      cleaned = cleaned.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
+      cleaned = cleaned.replace(/\b\d+\s*\/\s*\d+\b/g, '');
+
+      // Ultra-robust slicing: find all question boundary starts (e.g. Q1., Q.1, Question 1., 1.)
+      const qRegex = /(?:^|\n)\s*(?:Q(?:uestion)?\.?\s*(\d+)[\.\:\)]|\b(\d+)[\.\)])\s+/gi;
+      const matches = [];
+      let match;
+      while ((match = qRegex.exec(cleaned)) !== null) {
+        matches.push({
+          index: match.index,
+          num: match[1] || match[2],
+          headerLength: match[0].length
+        });
+      }
+
+      const previewList = document.getElementById('bulk-preview-list');
+      previewList.innerHTML = "";
+      let parsedCount = 0;
+
+      if (matches.length > 0) {
+        for (let i = 0; i < matches.length; i++) {
+          const startIdx = matches[i].index + matches[i].headerLength;
+          const endIdx = matches[i + 1] ? matches[i + 1].index : cleaned.length;
+          const block = cleaned.substring(startIdx, endIdx).trim();
+
+          if (!block || block.length < 15) continue;
+
+          // Extract Options A, B, C, D (stops at next option, Correct Answer, Explanation, or end)
+          const optPattern = /(?:^|\n|\s)\s*[\(\[]?([A-D])[\)\]\.\:\-]\s*([\s\S]+?)(?=(?:[\(\[]?[A-D][\)\]\.\:\-]|\b(?:Correct\s+)?Ans(?:wer)?[\:\s]|💡|\bExplanation[\:\s]|\bRationale[\:\s]|$))/gi;
+          const optMatches = [...block.matchAll(optPattern)];
+
+          if (optMatches.length >= 4) {
+            const opts = optMatches.slice(0, 4).map(m => m[2].trim().replace(/\n+/g, ' '));
+            
+            // Stem is everything before the first option
+            const firstOptMatch = optMatches[0];
+            const splitIdx = block.indexOf(firstOptMatch[0]);
+            let qText = splitIdx !== -1 ? block.substring(0, splitIdx).trim().replace(/\n+/g, ' ') : "Clinical Question";
+            
+            // Clean any trailing or leading topic pills (like "BRACHIAL PLEXUS & NERVE INJURY")
+            qText = qText.replace(/^[A-Z\s&,-]{4,}\n+/g, '').trim();
+
+            // Extract Correct Answer: handles "Correct Answer: B (C5 and C6)", "Ans: B", "Answer: C", etc.
+            const ansMatch = block.match(/(?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[\:\s\*\-\.]+([A-D])(?:\s*[\(\[][^\)\]]+[\)\]])?/i);
+            const correctLetter = ansMatch ? ansMatch[1].toUpperCase() : "A";
+            const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
+            const correctIndex = letterMap[correctLetter] !== undefined ? letterMap[correctLetter] : 0;
+
+            // Extract Explanation
+            const expMatch = block.match(/(?:Explanation|Rationale|Note)[\:\s\*\-]+([\s\S]+)/i);
+            let explanation = expMatch ? expMatch[1].trim().replace(/\n+/g, ' ') : "High-yield clinical concept.";
+            explanation = explanation.replace(/Page\s+\d+.*$/i, '').trim();
+
+            const qNumber = newTest.questions.length + 1;
+            const newQ = {
+              id: `q_${Date.now()}_${qNumber}`,
+              qid: `${prefix}-${String(qNumber).padStart(3, '0')}`,
+              text: qText,
+              options: opts,
+              correctIndex: correctIndex,
+              explanation: explanation
+            };
+
+            newTest.questions.push(newQ);
+            parsedCount++;
+
+            const pItem = document.createElement('div');
+            pItem.className = "p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-300";
+            pItem.innerHTML = `<b>${newQ.qid}</b>: ${newQ.text.slice(0, 75)}... <span class="text-emerald-400 font-bold ml-1">[Correct: ${correctLetter}]</span>`;
+            previewList.appendChild(pItem);
+          }
+        }
+      }
+
+      if (parsedCount > 0) {
+        newTest.totalQuestions = newTest.questions.length;
+        newTest.totalMarks = newTest.questions.length * 4;
+        newTest.durationMinutes = Math.max(5, Math.round(newTest.questions.length * 1.5));
+
+        folder.tests.push(newTest);
+        folder.testCount = folder.tests.length;
+
+        persistDatabase();
+        refreshAdminTree();
+        refreshAdminSelectors();
+        const prevBox = document.getElementById('bulk-preview-container');
+        if (prevBox) {
+          prevBox.classList.remove('hidden');
+          prevBox.style.display = 'flex';
+        }
+        showToast(`🎉 Successfully extracted and added ${parsedCount} MCQs to '${testTitle}'!`, "success");
+      } else {
+        showToast("No standard 4-option MCQs recognized. Ensure options are labeled A), B), C), D) and answers marked as 'Correct Answer: B'.", "error");
+      }
+    }
+
+    function adminAddManualQuestion() {
+      const targetVal = document.getElementById('manual-target-test').value;
+      if (!targetVal) return showToast("Create or select a target test first!", "error");
+
+      const [sName, fId, tId] = targetVal.split(":::");
+      const folder = ALL_SUBJECTS[sName].folders.find(f => f.id === fId);
+      const test = folder.tests.find(t => t.id === tId);
+
+      const qText = document.getElementById('manual-question-text').value.trim();
+      const o0 = document.getElementById('manual-opt-0').value.trim();
+      const o1 = document.getElementById('manual-opt-1').value.trim();
+      const o2 = document.getElementById('manual-opt-2').value.trim();
+      const o3 = document.getElementById('manual-opt-3').value.trim();
+      const exp = document.getElementById('manual-explanation').value.trim();
+      const qid = document.getElementById('manual-qid').value.trim().toUpperCase() || `${sName.slice(0, 3).toUpperCase()}-${test.questions.length + 1}`;
+
+      if (!qText || !o0 || !o1 || !o2 || !o3) {
+        return showToast("Please fill in question text and all 4 options!", "error");
+      }
+
+      const radio = document.querySelector('input[name="manual_correct"]:checked');
+      const correctIndex = radio ? parseInt(radio.value) : 0;
+
+      test.questions.push({
+        id: `q_${Date.now()}`,
+        qid: qid,
+        text: qText,
+        options: [o0, o1, o2, o3],
+        correctIndex: correctIndex,
+        explanation: exp || "High-yield clinical concept."
+      });
+
+      test.totalQuestions = test.questions.length;
+      test.totalMarks = test.questions.length * 4;
+
+      persistDatabase();
+      document.getElementById('manual-question-text').value = "";
+      document.getElementById('manual-opt-0').value = "";
+      document.getElementById('manual-opt-1').value = "";
+      document.getElementById('manual-opt-2').value = "";
+      document.getElementById('manual-opt-3').value = "";
+      document.getElementById('manual-explanation').value = "";
+
+      refreshAdminTree();
+      showToast(`Question added to '${test.title}'!`, "success");
+    }
+
+    function exportUpdatedJson() {
+      const fullDb = {
+        version: "1.0",
+        lastUpdated: new Date().toISOString().split('T')[0],
+        subjects: ALL_SUBJECTS
+      };
+      const jsonStr = JSON.stringify(fullDb, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "qbank.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("qbank.json downloaded! Commit to your GitHub repo to sync all devices.", "success");
+    }
+
+    function triggerJsonImport() {
+      const inp = document.getElementById('json-file-input');
+      if (inp) inp.click();
+    }
+
+    function handleJsonFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.subjects) {
+            ALL_SUBJECTS = parsed.subjects;
+          } else if (parsed && typeof parsed === "object") {
+            ALL_SUBJECTS = parsed;
+          }
+          persistDatabase();
+          refreshAdminTree();
+          populateSubjectDropdown();
+          refreshAdminSelectors();
+          showToast("Imported new qbank.json database successfully!", "success");
+        } catch (err) {
+          showToast("Invalid JSON file format.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function handleQidSearch(e) {
+      e.preventDefault();
+      const val = document.getElementById('qid-input').value.trim().toUpperCase();
+      if (!val) return;
+
+      const subj = ALL_SUBJECTS[activeSubjectName];
+      if (!subj) return;
+
+      for (const folder of subj.folders) {
+        for (const test of folder.tests) {
+          if (test.qid.toUpperCase() === val) {
+            currentFolder = folder;
+            startExam(test);
+            document.getElementById('qid-input').value = "";
+            return;
+          }
+          const matchedQ = test.questions.find(q => (q.qid || '').toUpperCase() === val);
+          if (matchedQ) {
+            currentFolder = folder;
+            startExam(test);
+            currentQuestionIndex = test.questions.indexOf(matchedQ);
+            renderCurrentQuestion();
+            document.getElementById('qid-input').value = "";
+            return;
+          }
+        }
+      }
+      showToast("QID not found in this subject.", "info");
+    }
+
+    function setThemeAccent(name, hexColor) {
+      triggerHaptic("selection");
+      document.documentElement.style.setProperty('--accent-color', hexColor);
+    }
+
+    function showAnalyticsModal() {
+      triggerHaptic("selection");
+      const modal = document.getElementById('analytics-modal');
+      if (!modal) return;
+
+      const totalTests = memoryHistory.length;
+      let totalSolved = 0;
+      let totalAccSum = 0;
+
+      memoryHistory.forEach(h => {
+        totalSolved += h.total;
+        totalAccSum += h.accuracy;
+      });
+
+      const avgAcc = totalTests > 0 ? Math.round(totalAccSum / totalTests) : 0;
+
+      document.getElementById('stat-total-tests').textContent = totalTests;
+      document.getElementById('stat-total-solved').textContent = totalSolved;
+      document.getElementById('stat-avg-accuracy').textContent = `${avgAcc}%`;
+
+      const logsContainer = document.getElementById('history-logs-container');
+      logsContainer.innerHTML = "";
+
+      if (memoryHistory.length === 0) {
+        logsContainer.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center">No tests completed in this session. Start practicing to see your progress!</p>`;
+      } else {
+        memoryHistory.forEach(h => {
+          const logCard = document.createElement('div');
+          logCard.className = "p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between text-xs";
+          logCard.innerHTML = `
+            <div>
+              <span class="font-bold text-slate-200 block">${h.testTitle}</span>
+              <span class="text-[10px] text-slate-400">${h.date} • Score: ${h.score}/${h.maxScore}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-sm ${h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${h.accuracy}%</span>
+              <span class="text-[10px] text-slate-500 block">${h.correct}/${h.total} correct</span>
+            </div>
+          `;
+          logsContainer.appendChild(logCard);
+        });
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeAnalyticsModal() {
+      const modal = document.getElementById('analytics-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function clearSavedHistory() {
+      memoryHistory = [];
+      showAnalyticsModal();
+      renderBrowseView();
+      showToast("Session history cleared.", "info");
+    }
+
+    window.addEventListener('DOMContentLoaded', loadDatabase);
+  </script>
+</body>
+</html>
