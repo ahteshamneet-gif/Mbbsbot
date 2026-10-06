@@ -416,7 +416,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
             </h4>
             <select id="admin-target-subject" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none">
             </select>
-            <input id="new-folder-name" type="text" placeholder="e.g. 03_Lens & Cataract" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+            <input id="new-folder-name" type="text" placeholder="e.g. 03_Lens & Cataract" class="bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
             <input id="new-folder-desc" type="text" placeholder="Short description" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
             <button onclick="adminAddFolder()" class="w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition">
               + Add Folder
@@ -428,7 +428,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
             <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <i class="fa-solid fa-file-circle-plus text-emerald-400"></i> Create Test Mock
             </h4>
-            <select id="admin-target-folder" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none">
+            <select id="admin-target-folder" class="bg-slate-950 text-xs text-slate-200 p-2 border border-slate-800 focus:outline-none">
             </select>
             <input id="new-test-title" type="text" placeholder="e.g. 001 Anatomy of Cornea" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none" />
             <div class="flex gap-2">
@@ -723,7 +723,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       } catch (e) {}
     }
 
-    // Default Preloaded Data including your exact 8+ clinical Upper Limb MCQs
+    // Default Preloaded Data
     const DEFAULT_PRELOAD_DATA = {
       "Anatomy": {
         folders: [
@@ -850,54 +850,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
             ]
           }
         ]
-      },
-      "Microbiology": {
-        folders: [
-          {
-            id: "01_general_micro",
-            name: "01_General Microbiology",
-            description: "Stains, Sterilization, Genetics & Microscopy",
-            testCount: 1,
-            tests: [
-              {
-                id: "test_mic_001",
-                qid: "MIC-101",
-                title: "001 Scientists Stains And Microscopes",
-                totalQuestions: 2,
-                totalMarks: 8,
-                durationMinutes: 5,
-                questions: [
-                  {
-                    id: "qm_1",
-                    qid: "MIC-001",
-                    text: "Which of the following staining methods uses heated carbolfuchsin as the primary stain and 20% sulfuric acid as the decolorizer?",
-                    options: [
-                      "Gram staining",
-                      "Ziehl-Neelsen (Acid-Fast) staining",
-                      "Albert's staining",
-                      "Negative (India ink) staining"
-                    ],
-                    correctIndex: 1,
-                    explanation: "Ziehl-Neelsen staining uses carbolfuchsin with heat, 20% H2SO4 decolorizer, and methylene blue counterstain to identify acid-fast bacilli like Mycobacterium tuberculosis."
-                  },
-                  {
-                    id: "qm_2",
-                    qid: "MIC-002",
-                    text: "Albert's stain is specifically used for the demonstration of which intracellular component in Corynebacterium diphtheriae?",
-                    options: [
-                      "Bacterial endospores",
-                      "Volutin (Metachromatic) granules",
-                      "Flagella",
-                      "Capsular polysaccharide"
-                    ],
-                    correctIndex: 1,
-                    explanation: "Albert's stain contains toluidine blue and malachite green. It stains polymetaphosphate granules bluish-black."
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     };
 
@@ -961,7 +913,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
     async function loadDatabase() {
       initTelegramSdk();
 
-      // Check device storage
       try {
         const localData = localStorage.getItem(DB_STORAGE_KEY);
         if (localData) {
@@ -972,7 +923,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         }
       } catch (e) {}
 
-      // Fallback to preload defaults
       if (!ALL_SUBJECTS || Object.keys(ALL_SUBJECTS).length === 0) {
         ALL_SUBJECTS = JSON.parse(JSON.stringify(DEFAULT_PRELOAD_DATA));
         persistDatabase();
@@ -1686,7 +1636,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       if (badge) badge.textContent = `${subjects.length} Subjects • ${totalTests} Tests`;
     }
 
-    // ================= SUBJECT & FOLDER CRUD (WITH CUSTOM MODALS) =================
+    // ================= SUBJECT & FOLDER CRUD (CUSTOM IN-APP MODALS) =================
 
     function adminAddSubject() {
       const name = document.getElementById('new-subj-name').value.trim();
@@ -1912,7 +1862,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       showToast(`Test '${title}' created successfully!`, "success");
     }
 
-    // ================= ROBUST PDF & TEXT PARSER =================
+    // ================= ENHANCED ROBUST PDF & TEXT PARSER =================
 
     async function handlePdfFileUpload() {
       const fileInput = document.getElementById('pdf-file-input');
@@ -1943,13 +1893,29 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
           statusText.textContent = `Reading page ${i} of ${pdf.numPages}...`;
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageStr = textContent.items.map(item => item.str).join(" ");
-          extractedText += pageStr + "\n\n";
+          
+          let lastY = null;
+          let pageText = "";
+
+          for (const item of textContent.items) {
+            if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+              pageText += "\n";
+            } else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+              pageText += " ";
+            }
+            pageText += item.str;
+            lastY = item.transform[5];
+          }
+
+          extractedText += pageText + "\n\n";
         }
 
         document.getElementById('bulk-raw-text').value = extractedText;
-        statusText.textContent = `Extracted ${pdf.numPages} pages successfully! Click 'Parse Text & Add to Test'.`;
-        showToast(`Extracted ${pdf.numPages} pages! Click Parse Text & Add.`, "success");
+        statusText.textContent = `Extracted ${pdf.numPages} pages! Auto-parsing MCQs now...`;
+        showToast(`Extracted ${pdf.numPages} pages! Processing MCQs...`, "success");
+
+        // Automatically trigger parsing directly after PDF text extraction
+        handleBulkTextParse();
       } catch (err) {
         statusText.textContent = `Error reading PDF: ${err.message}`;
         showToast("Could not read PDF. Ensure it has selectable text.", "error");
@@ -1957,6 +1923,29 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         parseBtn.disabled = false;
         parseBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Extract PDF MCQs`;
       }
+    }
+
+    function normalizeMcqText(text) {
+      let s = text.replace(/\r\n|\r/g, "\n");
+      
+      // Clean running headers and footers
+      s = s.replace(/Clinical\s+Anatomy[^\n]*/gi, '');
+      s = s.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
+      s = s.replace(/\b\d+\s*\/\s*\d+\b/g, '');
+
+      // Injects clean newlines before question identifiers (e.g. Q1., Q.1, Question 1, 1.)
+      s = s.replace(/(?:^|\n|\s)(Q(?:uestion)?\.?\s*\d+[\.\:\)]|\b\d+[\.\)])\s+/gi, "\n\n###QUESTION### $1 ");
+
+      // Injects clean newlines before options A), B), C), D) or (A), (B), (C), (D)
+      s = s.replace(/[\s\n]+[\(\[]?([A-D])[\)\]\.\:\-]\s+/gi, "\n###OPT### $1) ");
+
+      // Injects clean newlines before Correct Answer / Ans
+      s = s.replace(/[\s\n]+((?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[\:\s\*\-\.]+)/gi, "\n###ANSWER### $1");
+
+      // Injects clean newlines before Explanation / Rationale
+      s = s.replace(/[\s\n]+((?:Explanation|Rationale|Note)[\:\s\*\-]+)/gi, "\n###EXP### $1");
+
+      return s;
     }
 
     function handleBulkTextParse() {
@@ -2000,80 +1989,63 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         questions: []
       };
 
-      // Clean text from headers and footers
-      let cleaned = raw.replace(/\r\n|\r/g, "\n");
-      cleaned = cleaned.replace(/Clinical\s+Anatomy[^\n]*/gi, '');
-      cleaned = cleaned.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
-      cleaned = cleaned.replace(/\b\d+\s*\/\s*\d+\b/g, '');
-
-      // Ultra-robust slicing: find all question boundary starts (e.g. Q1., Q.1, Question 1., 1.)
-      const qRegex = /(?:^|\n)\s*(?:Q(?:uestion)?\.?\s*(\d+)[\.\:\)]|\b(\d+)[\.\)])\s+/gi;
-      const matches = [];
-      let match;
-      while ((match = qRegex.exec(cleaned)) !== null) {
-        matches.push({
-          index: match.index,
-          num: match[1] || match[2],
-          headerLength: match[0].length
-        });
-      }
+      const normalized = normalizeMcqText(raw);
+      const rawBlocks = normalized.split("###QUESTION###").filter(b => b.trim().length > 15);
 
       const previewList = document.getElementById('bulk-preview-list');
       previewList.innerHTML = "";
       let parsedCount = 0;
 
-      if (matches.length > 0) {
-        for (let i = 0; i < matches.length; i++) {
-          const startIdx = matches[i].index + matches[i].headerLength;
-          const endIdx = matches[i + 1] ? matches[i + 1].index : cleaned.length;
-          const block = cleaned.substring(startIdx, endIdx).trim();
+      for (let block of rawBlocks) {
+        // Extract Question Stem
+        const firstOptIndex = block.indexOf("###OPT###");
+        if (firstOptIndex === -1) continue;
 
-          if (!block || block.length < 15) continue;
+        let qText = block.substring(0, firstOptIndex).trim();
+        // Remove question prefix (e.g. Q1., 1.)
+        qText = qText.replace(/^(?:Q(?:uestion)?\.?\s*\d+[\.\:\)]|\b\d+[\.\)])\s*/i, '');
+        // Remove any residual upper category pill titles
+        qText = qText.replace(/^[A-Z\s&,-]{4,}\n+/g, '').replace(/\n+/g, ' ').trim();
 
-          // Extract Options A, B, C, D (stops at next option, Correct Answer, Explanation, or end)
-          const optPattern = /(?:^|\n|\s)\s*[\(\[]?([A-D])[\)\]\.\:\-]\s*([\s\S]+?)(?=(?:[\(\[]?[A-D][\)\]\.\:\-]|\b(?:Correct\s+)?Ans(?:wer)?[\:\s]|💡|\bExplanation[\:\s]|\bRationale[\:\s]|$))/gi;
-          const optMatches = [...block.matchAll(optPattern)];
+        // Extract Options A, B, C, D
+        const optAMatch = block.match(/###OPT###\s*A\)\s*([\s\S]+?)(?=###OPT###\s*B\)|$)/i);
+        const optBMatch = block.match(/###OPT###\s*B\)\s*([\s\S]+?)(?=###OPT###\s*C\)|$)/i);
+        const optCMatch = block.match(/###OPT###\s*C\)\s*([\s\S]+?)(?=###OPT###\s*D\)|$)/i);
+        const optDMatch = block.match(/###OPT###\s*D\)\s*([\s\S]+?)(?=###ANSWER###|###EXP###|###OPT###|$)/i);
 
-          if (optMatches.length >= 4) {
-            const opts = optMatches.slice(0, 4).map(m => m[2].trim().replace(/\n+/g, ' '));
-            
-            // Stem is everything before the first option
-            const firstOptMatch = optMatches[0];
-            const splitIdx = block.indexOf(firstOptMatch[0]);
-            let qText = splitIdx !== -1 ? block.substring(0, splitIdx).trim().replace(/\n+/g, ' ') : "Clinical Question";
-            
-            // Clean any trailing or leading topic pills (like "BRACHIAL PLEXUS & NERVE INJURY")
-            qText = qText.replace(/^[A-Z\s&,-]{4,}\n+/g, '').trim();
+        if (optAMatch && optBMatch && optCMatch && optDMatch) {
+          const optA = optAMatch[1].replace(/\n+/g, ' ').trim();
+          const optB = optBMatch[1].replace(/\n+/g, ' ').trim();
+          const optC = optCMatch[1].replace(/\n+/g, ' ').trim();
+          const optD = optDMatch[1].replace(/\n+/g, ' ').trim();
 
-            // Extract Correct Answer: handles "Correct Answer: B (C5 and C6)", "Ans: B", "Answer: C", etc.
-            const ansMatch = block.match(/(?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[\:\s\*\-\.]+([A-D])(?:\s*[\(\[][^\)\]]+[\)\]])?/i);
-            const correctLetter = ansMatch ? ansMatch[1].toUpperCase() : "A";
-            const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
-            const correctIndex = letterMap[correctLetter] !== undefined ? letterMap[correctLetter] : 0;
+          // Extract Answer Key (A, B, C, or D)
+          const ansMatch = block.match(/(?:###ANSWER###[\s\S]*?|Ans(?:wer)?[\:\s\*\-\.]+)([A-D])(?:\s*[\(\[][^\)\]]+[\)\]])?/i);
+          const correctLetter = ansMatch ? ansMatch[1].toUpperCase() : "A";
+          const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
+          const correctIndex = letterMap[correctLetter] !== undefined ? letterMap[correctLetter] : 0;
 
-            // Extract Explanation
-            const expMatch = block.match(/(?:Explanation|Rationale|Note)[\:\s\*\-]+([\s\S]+)/i);
-            let explanation = expMatch ? expMatch[1].trim().replace(/\n+/g, ' ') : "High-yield clinical concept.";
-            explanation = explanation.replace(/Page\s+\d+.*$/i, '').trim();
+          // Extract Explanation
+          const expMatch = block.match(/(?:###EXP###[\s\S]*?|Explanation|Rationale|Note)[\:\s\*\-]+([\s\S]+?)(?=$)/i);
+          let explanation = expMatch ? expMatch[1].replace(/###[A-Z]+###/g, '').replace(/\n+/g, ' ').trim() : "High-yield clinical concept.";
 
-            const qNumber = newTest.questions.length + 1;
-            const newQ = {
-              id: `q_${Date.now()}_${qNumber}`,
-              qid: `${prefix}-${String(qNumber).padStart(3, '0')}`,
-              text: qText,
-              options: opts,
-              correctIndex: correctIndex,
-              explanation: explanation
-            };
+          const qNumber = newTest.questions.length + 1;
+          const newQ = {
+            id: `q_${Date.now()}_${qNumber}`,
+            qid: `${prefix}-${String(qNumber).padStart(3, '0')}`,
+            text: qText,
+            options: [optA, optB, optC, optD],
+            correctIndex: correctIndex,
+            explanation: explanation
+          };
 
-            newTest.questions.push(newQ);
-            parsedCount++;
+          newTest.questions.push(newQ);
+          parsedCount++;
 
-            const pItem = document.createElement('div');
-            pItem.className = "p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-300";
-            pItem.innerHTML = `<b>${newQ.qid}</b>: ${newQ.text.slice(0, 75)}... <span class="text-emerald-400 font-bold ml-1">[Correct: ${correctLetter}]</span>`;
-            previewList.appendChild(pItem);
-          }
+          const pItem = document.createElement('div');
+          pItem.className = "p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-300";
+          pItem.innerHTML = `<b>${newQ.qid}</b>: ${newQ.text.slice(0, 75)}... <span class="text-emerald-400 font-bold ml-1">[Correct: ${correctLetter}]</span>`;
+          previewList.appendChild(pItem);
         }
       }
 
@@ -2093,9 +2065,9 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
           prevBox.classList.remove('hidden');
           prevBox.style.display = 'flex';
         }
-        showToast(`🎉 Successfully extracted and added ${parsedCount} MCQs to '${testTitle}'!`, "success");
+        showToast(`🎉 Extracted and added ${parsedCount} MCQs to '${testTitle}'!`, "success");
       } else {
-        showToast("No standard 4-option MCQs recognized. Ensure options are labeled A), B), C), D) and answers marked as 'Correct Answer: B'.", "error");
+        showToast("Could not parse 4-option MCQs. Ensure options are labeled A), B), C), D) and answers marked as 'Correct Answer: B'.", "error");
       }
     }
 
