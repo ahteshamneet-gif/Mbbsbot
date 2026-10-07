@@ -314,9 +314,9 @@
         <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <div>
             <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
-              <i class="fa-solid fa-user-plus text-emerald-400"></i> Create Paid Student Account
+              <i class="fa-solid fa-user-plus text-emerald-400"></i> Manual Student Account Creation
             </h4>
-            <p class="text-[11px] text-slate-400">Instantly generate a unique Student ID and simple password to send to your paid subscribers.</p>
+            <p class="text-[11px] text-slate-400">Generate extra logins or manage existing students registered through your bots.</p>
           </div>
           <button onclick="generateNewStudentAccount()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
             <i class="fa-solid fa-wand-magic-sparkles"></i> + Generate Student Login
@@ -448,7 +448,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
 
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- ================= AUTHENTICATION MODAL (STUDENT & ADMIN) ================= -->
+  <!-- ================= AUTHENTICATION MODAL (STRICT ACCESS) ================= -->
   <div id="auth-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl flex flex-col gap-4 text-center animate-fadeIn">
       <div class="w-12 h-12 mx-auto rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl shadow-lg">
@@ -462,7 +462,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       <form onsubmit="event.preventDefault(); processUserLogin();" class="flex flex-col gap-3 text-left">
         <div>
           <label class="text-[11px] text-slate-400 font-semibold block mb-1">User ID / Username:</label>
-          <input id="login-user-id" type="text" placeholder="e.g. STU-101 or admin" autocomplete="username" class="w-full text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 font-mono" required />
+          <input id="login-user-id" type="text" placeholder="e.g. STU-1001 or admin" autocomplete="username" class="w-full text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 font-mono" required />
         </div>
         <div>
           <label class="text-[11px] text-slate-400 font-semibold block mb-1">Password:</label>
@@ -475,7 +475,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
 
       <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 text-left">
         <span class="text-slate-300 font-semibold block mb-0.5">ℹ️ Need Access?</span>
-        Paid students receive credentials from <b>@Nothing_0786</b> on Telegram.
+        Paid students receive credentials automatically from <b>@Nothing_0786</b> via Telegram.
       </div>
     </div>
   </div>
@@ -492,7 +492,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       </div>
 
       <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-left flex flex-col gap-1 text-xs font-mono">
-        <div><span class="text-slate-500">Student ID:</span> <b id="new-stu-display-id" class="text-blue-400">STU-102</b></div>
+        <div><span class="text-slate-500">Student ID:</span> <b id="new-stu-display-id" class="text-blue-400">STU-1002</b></div>
         <div><span class="text-slate-500">Password:</span> <b id="new-stu-display-pass" class="text-emerald-400">mbbs-8392</b></div>
         <div><span class="text-slate-500">Role:</span> <span class="text-slate-300">Paid Subscriber</span></div>
       </div>
@@ -534,6 +534,25 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- DETAILED STUDENT REPORT MODAL (ADMIN VIEW) -->
+  <div id="student-report-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden animate-fadeIn">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="report-modal-name" class="text-sm font-bold text-white">Student Exam Log</h3>
+          <p id="report-modal-id" class="text-[11px] font-mono text-emerald-400">STU-1001</p>
+        </div>
+        <button onclick="closeStudentReportModal()" class="text-slate-400 hover:text-white p-1 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1">
+        <div id="student-report-history" class="flex flex-col gap-2"></div>
+      </div>
     </div>
   </div>
 
@@ -588,15 +607,15 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
     let timeSpentSeconds = 0;
 
     // Authentication & User State
-    let currentUser = null; // { id, name, role: 'student'|'admin' }
-    let USERS_DATABASE = []; // List of all paid students and credentials
+    let currentUser = null; // { id, name, username, role: 'student'|'admin' }
+    let USERS_DATABASE = []; // List of authorized paid students
     let STUDENT_ANALYTICS = {}; // Analytics mapped by studentId
 
-    const AUTH_STORAGE_KEY = "mbbs_auth_session_v3";
-    const USERS_DB_STORAGE_KEY = "mbbs_paid_users_v3";
-    const ANALYTICS_STORAGE_KEY = "mbbs_student_analytics_v3";
-    const DB_STORAGE_KEY = "mbbs_qbank_local_db_v3";
-    const ADMIN_CRED_KEY = "mbbs_admin_credentials_v3";
+    const AUTH_STORAGE_KEY = "mbbs_auth_session_v4";
+    const USERS_DB_STORAGE_KEY = "mbbs_paid_users_v4";
+    const ANALYTICS_STORAGE_KEY = "mbbs_student_analytics_v4";
+    const DB_STORAGE_KEY = "mbbs_qbank_local_db_v4";
+    const ADMIN_CRED_KEY = "mbbs_admin_credentials_v4";
 
     const DEFAULT_ADMIN = {
       id: "admin",
@@ -784,9 +803,10 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       if (!USERS_DATABASE || USERS_DATABASE.length === 0) {
         USERS_DATABASE = [
           {
-            id: "STU-101",
+            id: "STU-1001",
             pass: "mbbs2026",
-            name: "Dr. Candidate",
+            name: "Dr. Demo Candidate",
+            username: "@mbbs_candidate",
             created: new Date().toISOString().split('T')[0]
           }
         ];
@@ -826,6 +846,8 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       const searchParams = new URLSearchParams(window.location.search);
       let uid = searchParams.get('uid');
       let key = searchParams.get('key');
+      let name = searchParams.get('name');
+      let uname = searchParams.get('uname');
 
       // 2. Check hash fragments (#uid=...&key=... or #?uid=...)
       if (!uid && window.location.hash) {
@@ -833,57 +855,64 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         const hashParams = new URLSearchParams(rawHash);
         uid = hashParams.get('uid');
         key = hashParams.get('key');
+        name = name || hashParams.get('name');
+        uname = uname || hashParams.get('uname');
       }
 
-      // 3. Check Telegram WebApp initData if running directly inside Telegram
-      if (!uid && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
-        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        if (tgUser && tgUser.id) {
-          const suffix = String(tgUser.id).slice(-4);
-          uid = `STU-${suffix}`;
-        }
-      }
-
-      return { uid: uid ? uid.trim() : null, key: key ? key.trim() : null };
+      return { 
+        uid: uid ? uid.trim() : null, 
+        key: key ? key.trim() : null,
+        name: name ? decodeURIComponent(name.trim()) : null,
+        uname: uname ? decodeURIComponent(uname.trim()) : null
+      };
     }
 
     function checkCurrentSession() {
-      const { uid: paramUid, key: paramKey } = extractAuthParams();
+      const { uid: paramUid, key: paramKey, name: paramName, uname: paramUname } = extractAuthParams();
 
       if (paramUid) {
         const adminCreds = getAdminCredentials();
         if (paramUid.toLowerCase() === adminCreds.id.toLowerCase() && (!paramKey || paramKey === adminCreds.pass)) {
-          currentUser = { id: adminCreds.id, name: adminCreds.name, role: "admin" };
+          currentUser = { id: adminCreds.id, name: adminCreds.name, username: "@admin", role: "admin" };
           saveSessionAndLaunch();
           showToast("Logged in as Administrator.", "success");
           return;
         }
 
-        // Auto-register student if arriving from Telegram bot link
+        // Validate or register verified student passed with valid bot credentials
         const cleanId = paramUid.toUpperCase();
-        let matched = USERS_DATABASE.find(u => u.id.toUpperCase() === cleanId);
-        if (!matched) {
-          matched = {
-            id: cleanId,
-            pass: paramKey || "mbbs2026",
-            name: `Dr. ${cleanId}`,
-            created: new Date().toISOString().split('T')[0]
-          };
-          USERS_DATABASE.push(matched);
-          saveUsersDatabase();
-        } else if (paramKey && matched.pass !== paramKey) {
-          matched.pass = paramKey;
-          saveUsersDatabase();
-        }
+        if (cleanId.startsWith("STU-") && paramKey && paramKey.length >= 4) {
+          let matched = USERS_DATABASE.find(u => u.id.toUpperCase() === cleanId);
+          const studentDisplayName = paramName || (matched ? matched.name : `Dr. Candidate`);
+          const studentUsername = paramUname || (matched ? matched.username : "");
 
-        currentUser = {
-          id: matched.id,
-          name: matched.name || `Dr. ${matched.id}`,
-          role: "student"
-        };
-        saveSessionAndLaunch();
-        showToast(`Welcome, ${currentUser.name}! Auto-logged in.`, "success");
-        return;
+          if (!matched) {
+            matched = {
+              id: cleanId,
+              pass: paramKey,
+              name: studentDisplayName,
+              username: studentUsername,
+              created: new Date().toISOString().split('T')[0]
+            };
+            USERS_DATABASE.push(matched);
+            saveUsersDatabase();
+          } else {
+            matched.pass = paramKey;
+            if (paramName) matched.name = paramName;
+            if (paramUname) matched.username = paramUname;
+            saveUsersDatabase();
+          }
+
+          currentUser = {
+            id: matched.id,
+            name: matched.name,
+            username: matched.username,
+            role: "student"
+          };
+          saveSessionAndLaunch();
+          showToast(`Welcome, ${currentUser.name}! Auto-logged in.`, "success");
+          return;
+        }
       }
 
       // Check existing saved session
@@ -929,6 +958,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         currentUser = {
           id: adminCreds.id,
           name: adminCreds.name,
+          username: "@admin",
           role: "admin"
         };
         saveSessionAndLaunch();
@@ -936,26 +966,16 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      // Check existing registered students
-      let matchedStudent = USERS_DATABASE.find(u => u.id.toLowerCase() === uId.toLowerCase() && u.pass.toLowerCase() === uPass.toLowerCase());
-
-      // Bot-issued Student ID validation:
-      // Accepts format STU-XXXX with any valid password provided by the bot
-      if (!matchedStudent && (uId.toUpperCase().startsWith("STU-") || uId.toUpperCase().startsWith("MBBS-")) && uPass.length >= 4) {
-        matchedStudent = {
-          id: uId.toUpperCase(),
-          pass: uPass,
-          name: `Dr. ${uId.toUpperCase()}`,
-          created: new Date().toISOString().split('T')[0]
-        };
-        USERS_DATABASE.push(matchedStudent);
-        saveUsersDatabase();
-      }
+      // Strict validation: Check registered paid students
+      let matchedStudent = USERS_DATABASE.find(u => 
+        u.id.toLowerCase() === uId.toLowerCase() && u.pass.toLowerCase() === uPass.toLowerCase()
+      );
 
       if (matchedStudent) {
         currentUser = {
           id: matchedStudent.id,
-          name: matchedStudent.name || `Dr. ${matchedStudent.id}`,
+          name: matchedStudent.name || `Dr. Candidate`,
+          username: matchedStudent.username || "",
           role: "student"
         };
         saveSessionAndLaunch();
@@ -963,7 +983,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      showToast("Invalid Credentials. Please check your Student ID & Password from the bot.", "error");
+      showToast("Access Denied: Invalid credentials or inactive subscription.", "error");
     }
 
     function saveSessionAndLaunch() {
@@ -999,7 +1019,8 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       } else {
         tag.textContent = currentUser.id;
         tag.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30";
-        greeting.innerHTML = `Welcome, <b>${currentUser.name}</b> • Full Q-Bank Access Active`;
+        const unameDisplay = currentUser.username ? `(${currentUser.username})` : "";
+        greeting.innerHTML = `Welcome, <b>${currentUser.name}</b> ${unameDisplay} • Full Q-Bank Active`;
         if (adminBtn) adminBtn.classList.add('hidden');
       }
     }
@@ -1009,11 +1030,12 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       const randomPassNum = Math.floor(1000 + Math.random() * 9000);
       
       const newId = `STU-${randomSuffix}`;
-      const newPass = `mbbs-${randomPassNum}`;
+      const newPass = `mbbs${randomPassNum}`;
       const newStudent = {
         id: newId,
         pass: newPass,
-        name: `Doctor (${newId})`,
+        name: `Dr. Candidate (${newId})`,
+        username: "",
         created: new Date().toISOString().split('T')[0]
       };
 
@@ -1034,7 +1056,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
     function copyGeneratedCredentials() {
       const sId = document.getElementById('new-stu-display-id').textContent;
       const sPass = document.getElementById('new-stu-display-pass').textContent;
-      const copyText = `🩺 MBBS Master Q-Bank Access:\nApp Link: https://ahteshamneet-gif.github.io/Mbbsbot/\nUser ID: ${sId}\nPassword: ${sPass}\nBest wishes for your preparation!`;
+      const copyText = `🩺 MBBS Master Q-Bank Access:\nApp Link: https://ahteshamneet-gif.github.io/Mbbsbot/index.html\nUser ID: ${sId}\nPassword: ${sPass}\nBest wishes for your preparation!`;
 
       const tempTextArea = document.createElement("textarea");
       tempTextArea.value = copyText;
@@ -1052,6 +1074,44 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       showToast(`User ${sId} removed.`, "info");
     }
 
+    function openStudentReportModal(sId) {
+      const student = USERS_DATABASE.find(u => u.id === sId);
+      if (!student) return;
+
+      const stats = STUDENT_ANALYTICS[sId] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
+      document.getElementById('report-modal-name').textContent = `${student.name} ${student.username || ''}`;
+      document.getElementById('report-modal-id').textContent = `${student.id} • ${stats.testsTaken} tests completed (${stats.avgAccuracy}% avg accuracy)`;
+
+      const container = document.getElementById('student-report-history');
+      container.innerHTML = "";
+
+      if (!stats.history || stats.history.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center">No test attempts logged yet for this candidate.</p>`;
+      } else {
+        stats.history.forEach(h => {
+          const item = document.createElement('div');
+          item.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs";
+          item.innerHTML = `
+            <div>
+              <span class="font-bold text-slate-200 block">${h.testTitle}</span>
+              <span class="text-[10px] text-slate-500">${h.date} • Time: ${h.timeSpent}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-sm ${h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${h.accuracy}%</span>
+              <span class="text-[10px] text-slate-400 block">${h.score}/${h.maxScore} marks (${h.correct}/${h.total} correct)</span>
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      }
+
+      document.getElementById('student-report-modal').style.display = 'flex';
+    }
+
+    function closeStudentReportModal() {
+      document.getElementById('student-report-modal').style.display = 'none';
+    }
+
     function refreshStudentsList() {
       const container = document.getElementById('students-list-container');
       const badge = document.getElementById('student-count-badge');
@@ -1061,12 +1121,13 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       if (badge) badge.textContent = `${USERS_DATABASE.length} Paid Students`;
 
       if (USERS_DATABASE.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center">No student accounts generated yet. Tap "+ Generate Student Login" to add your first paid member.</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center">No student accounts registered yet. Students appear here automatically when granted Q-Bank access in your bot.</p>`;
         return;
       }
 
       USERS_DATABASE.forEach(s => {
-        const stats = STUDENT_ANALYTICS[s.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, lastScore: "None" };
+        const stats = STUDENT_ANALYTICS[s.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0 };
+        const unameDisplay = s.username ? `<span class="text-blue-400 font-normal">${s.username}</span>` : "";
         const card = document.createElement('div');
         card.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs";
         card.innerHTML = `
@@ -1079,15 +1140,18 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
                 <span class="font-bold text-white font-mono">${s.id}</span>
                 <span class="text-[10px] text-slate-400">Pass: <b class="text-emerald-400 font-mono">${s.pass}</b></span>
               </div>
-              <p class="text-[11px] text-slate-400">${s.name} • Created: ${s.created}</p>
+              <p class="text-[11px] text-slate-400">${s.name} ${unameDisplay} • Enrolled: ${s.created}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
             <div class="text-right">
               <span class="font-bold text-slate-200 block">${stats.testsTaken} tests taken</span>
               <span class="text-[10px] text-emerald-400 font-bold">${stats.avgAccuracy}% Avg Acc (${stats.mcqsSolved} Qs)</span>
             </div>
+            <button onclick="openStudentReportModal('${s.id}')" title="View Full Report" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] font-semibold border border-slate-700">
+              <i class="fa-solid fa-chart-line text-blue-400 mr-1"></i> Report
+            </button>
             <button onclick="deleteStudentAccount('${s.id}')" title="Revoke User" class="text-rose-400 hover:text-rose-300 p-1">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -1126,16 +1190,13 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
 
     // Dynamic option shuffling algorithm for questions
     function shuffleQuestionOptions(question) {
-      // Create indexed options array [ { text: "...", originalIndex: 0 }, ... ]
       const indexed = question.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
       
-      // Fisher-Yates shuffle
       for (let i = indexed.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
       }
 
-      // Find the new index of the correct answer
       const newCorrectIndex = indexed.findIndex(item => item.originalIndex === question.correctIndex);
 
       return {
@@ -1154,7 +1215,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      // Automatically randomize option placements for every question on every attempt
       activeTest = {
         ...test,
         questions: test.questions.map(q => shuffleQuestionOptions(q))
@@ -1364,7 +1424,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
         });
 
-        // Recalculate average accuracy
         const sumAcc = studentRec.history.reduce((acc, h) => acc + h.accuracy, 0);
         studentRec.avgAccuracy = Math.round(sumAcc / studentRec.history.length);
         saveStudentAnalytics();
@@ -1489,7 +1548,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         statusText.textContent = `Extracted ${pdf.numPages} pages! Auto-organizing topics now...`;
         showToast(`Extracted ${pdf.numPages} pages! Grouping topics...`, "success");
 
-        // Automatically trigger parsing directly after PDF text extraction
         handleBulkTextParse();
       } catch (err) {
         statusText.textContent = `Error reading PDF: ${err.message}`;
@@ -1502,25 +1560,14 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
 
     function normalizeMcqText(text) {
       let s = text.replace(/\r\n|\r/g, "\n");
-      
-      // Clean running headers and footers
       s = s.replace(/Clinical\s+Anatomy[^\n]*/gi, '');
       s = s.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
       s = s.replace(/\b\d+\s*\/\s*\d+\b/g, '');
 
-      // Identify topic pills (e.g. BRACHIAL PLEXUS & NERVE INJURY, SHOULDER & ROTATOR CUFF)
       s = s.replace(/([A-Z\s&,-]{5,}(?:INJURY|CUFF|NERVES|PATHOLOGY|SPACES|RELATIONS|FOSSA|ANATOMY|SURGERY|MEDICINE))/g, "\n###TOPIC### $1\n");
-
-      // Injects clean newlines before question identifiers (e.g. Q1., Q.1, Question 1, 1.)
       s = s.replace(/(?:^|\n|\s)(Q(?:uestion)?\.?\s*\d+[\.\:\)]|\b\d+[\.\)])\s+/gi, "\n\n###QUESTION### $1 ");
-
-      // Injects clean newlines before options A), B), C), D) or (A), (B), (C), (D)
       s = s.replace(/[\s\n]+[\(\[]?([A-D])[\)\]\.\:\-]\s+/gi, "\n###OPT### $1) ");
-
-      // Injects clean newlines before Correct Answer / Ans
       s = s.replace(/[\s\n]+((?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[\:\s\*\-\.]+)/gi, "\n###ANSWER### $1");
-
-      // Injects clean newlines before Explanation / Rationale
       s = s.replace(/[\s\n]+((?:Explanation|Rationale|Note)[\:\s\*\-]+)/gi, "\n###EXP### $1");
 
       return s;
@@ -1550,11 +1597,9 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       let currentTopicName = fallbackFolderName;
 
       for (let block of rawBlocks) {
-        // Detect if a topic pill header precedes this question
         const topicMatch = block.match(/###TOPIC###\s*([^\n]+)/);
         if (topicMatch) {
           const rawHeader = topicMatch[1].trim();
-          // Clean into a proper chapter title
           currentTopicName = rawHeader.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         }
 
@@ -1566,7 +1611,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         qText = qText.replace(/^(?:Q(?:uestion)?\.?\s*\d+[\.\:\)]|\b\d+[\.\)])\s*/i, '');
         qText = qText.replace(/\n+/g, ' ').trim();
 
-        // Extract Options A, B, C, D
         const optAMatch = block.match(/###OPT###\s*A\)\s*([\s\S]+?)(?=###OPT###\s*B\)|$)/i);
         const optBMatch = block.match(/###OPT###\s*B\)\s*([\s\S]+?)(?=###OPT###\s*C\)|$)/i);
         const optCMatch = block.match(/###OPT###\s*C\)\s*([\s\S]+?)(?=###OPT###\s*D\)|$)/i);
@@ -1586,7 +1630,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
           const expMatch = block.match(/(?:###EXP###[\s\S]*?|Explanation|Rationale|Note)[\:\s\*\-]+([\s\S]+?)(?=$)/i);
           let explanation = expMatch ? expMatch[1].replace(/###[A-Z]+###/g, '').replace(/\n+/g, ' ').trim() : "High-yield clinical concept.";
 
-          // Ensure topic chapter exists
           let targetFolder = subj.folders.find(f => f.name.toLowerCase() === currentTopicName.toLowerCase());
           if (!targetFolder) {
             targetFolder = {
@@ -1599,7 +1642,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
             subj.folders.push(targetFolder);
           }
 
-          // Ensure a test paper exists in this chapter
           let targetTest = targetFolder.tests[0];
           if (!targetTest) {
             targetTest = {
@@ -1925,7 +1967,12 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
     }
 
     function exportUpdatedJson() {
-      const fullDb = { version: "1.0", subjects: ALL_SUBJECTS };
+      const fullDb = { 
+        version: "1.0", 
+        subjects: ALL_SUBJECTS,
+        users: USERS_DATABASE,
+        analytics: STUDENT_ANALYTICS
+      };
       const blob = new Blob([JSON.stringify(fullDb, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1949,9 +1996,16 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         try {
           const parsed = JSON.parse(e.target.result);
           if (parsed && parsed.subjects) ALL_SUBJECTS = parsed.subjects;
+          if (parsed && parsed.users) USERS_DATABASE = parsed.users;
+          if (parsed && parsed.analytics) STUDENT_ANALYTICS = parsed.analytics;
+
           persistDatabase();
+          saveUsersDatabase();
+          saveStudentAnalytics();
+
           refreshAdminTree();
           populateSubjectDropdown();
+          refreshStudentsList();
           showToast("Imported database successfully!", "success");
         } catch (err) {
           showToast("Invalid JSON file.", "error");
