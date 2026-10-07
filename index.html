@@ -19,13 +19,13 @@
       -webkit-tap-highlight-color: transparent;
     }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
-    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scroll::-webkit-scrollbar-track { background: #0c1322; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     .glass-panel {
-      background: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
   </style>
 </head>
@@ -35,7 +35,7 @@
   <header id="main-header" class="sticky top-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
-      <!-- Brand & User Profile -->
+      <!-- Brand & Profile -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
           <i class="fa-solid fa-brain text-lg"></i>
@@ -51,7 +51,7 @@
 
       <!-- Action Portal Buttons -->
       <div class="flex items-center gap-2">
-        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-sm">
+        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-sliders"></i>
           <span>Admin Hub</span>
         </button>
@@ -69,28 +69,27 @@
 
     </div>
 
-    <!-- Filter & Subject Navigation (Only rendered when logged in) -->
+    <!-- Filter & Subject Navigation Bar -->
     <div id="sub-nav-bar" class="hidden max-w-6xl mx-auto mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2 flex-1 min-w-[250px]">
+      <div class="flex items-center gap-2 flex-1 min-w-[240px]">
         <label for="subject-select" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Subject:</label>
         <select id="subject-select" onchange="switchSubject(this.value)" class="bg-slate-800/90 border border-slate-700 text-slate-100 text-xs rounded-xl px-3 py-1.5 font-semibold focus:outline-none focus:border-blue-500 transition cursor-pointer flex-1 max-w-[220px]">
-          <!-- Populated via script -->
         </select>
       </div>
 
       <div class="flex items-center gap-2">
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-          <input type="text" id="topic-search-input" onkeyup="filterTestsByKeyword()" placeholder="Search test or topic..." class="bg-slate-800/90 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-44 sm:w-56 placeholder-slate-500 transition">
+          <input type="text" id="topic-search-input" onkeyup="filterTestsByKeyword()" placeholder="Search module or topic..." class="bg-slate-800/90 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-44 sm:w-56 placeholder-slate-500 transition">
         </div>
       </div>
     </div>
   </header>
 
-  <!-- ================= CORE VIEWPORT CONTAINER ================= -->
+  <!-- ================= CORE VIEWPORT ================= -->
   <main class="max-w-6xl mx-auto px-4 mt-6 flex-1 w-full">
 
-    <!-- VIEW 0: STRICT LOGIN GATE (Shown if not logged in) -->
+    <!-- VIEW 0: STRICT LOGIN GATE -->
     <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-lg mx-auto mt-8 border border-slate-800 shadow-2xl">
       <div class="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-2xl mx-auto mb-5">
         <i class="fa-solid fa-shield-halved"></i>
@@ -123,7 +122,7 @@
       </div>
     </section>
 
-    <!-- VIEW 1: CANDIDATE PORTAL BROWSE (Unlocked) -->
+    <!-- VIEW 1: CANDIDATE PORTAL BROWSE -->
     <section id="view-browse" class="hidden">
       <!-- Subject Header Card -->
       <div class="glass-panel rounded-3xl p-6 sm:p-7 mb-8 border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/30 shadow-xl">
@@ -148,13 +147,10 @@
 
       <!-- Modules Grid -->
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <span>Curated Tests & Topic Banks</span>
-        </h3>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Curated Tests & Topic Banks</h3>
       </div>
 
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Rendered via JS -->
       </div>
     </section>
 
@@ -162,7 +158,6 @@
     <section id="view-exam" class="hidden">
       <div class="glass-panel rounded-3xl border border-slate-800 p-5 sm:p-8 shadow-2xl">
         
-        <!-- Header status -->
         <div class="flex items-center justify-between pb-4 border-b border-slate-800 gap-3">
           <div>
             <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">ANATOMY</span>
@@ -177,7 +172,6 @@
           </div>
         </div>
 
-        <!-- Question Counter & Live Progress -->
         <div class="my-5">
           <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2">
             <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
@@ -188,7 +182,6 @@
           </div>
         </div>
 
-        <!-- Question Prompt Card -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-5 shadow-inner">
           <div class="flex items-center gap-2 mb-2.5">
             <span id="exam-q-topic-badge" class="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 px-2 py-0.5 rounded border border-slate-700">General</span>
@@ -197,12 +190,8 @@
           <p id="exam-q-statement" class="text-sm sm:text-base font-medium text-slate-100 leading-relaxed">Loading question...</p>
         </div>
 
-        <!-- Options Container -->
-        <div id="exam-options-list" class="space-y-3 mb-6">
-          <!-- Rendered dynamically -->
-        </div>
+        <div id="exam-options-list" class="space-y-3 mb-6"></div>
 
-        <!-- Clinical Pearl Explanation Box -->
         <div id="exam-explanation-box" class="hidden bg-slate-950/90 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 transition-all">
           <div class="flex items-center gap-2 text-xs font-bold text-amber-400 mb-1.5">
             <i class="fa-solid fa-lightbulb"></i>
@@ -211,7 +200,6 @@
           <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
         </div>
 
-        <!-- Bottom Navigation -->
         <div class="flex items-center justify-between pt-4 border-t border-slate-800">
           <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none">
             <i class="fa-solid fa-chevron-left mr-1.5"></i> Previous
@@ -262,7 +250,7 @@
 
   </main>
 
-  <!-- ================= MODERN ADMIN MANAGEMENT CONTROL PANEL ================= -->
+  <!-- ================= MODERN ADMIN MANAGEMENT COMMAND CENTER ================= -->
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
       
@@ -274,7 +262,7 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Content Management, PDF Automation & Student Analytics</p>
+            <p class="text-[11px] text-slate-400">Content Management, Staged PDF Importer & Candidate Auditing</p>
           </div>
         </div>
         <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -285,7 +273,7 @@
       <!-- Navigation Tabs -->
       <div class="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-bold overflow-x-auto custom-scroll">
         <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap">
-          <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects & Topics
+          <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects, Topics & MCQs
         </button>
         <button onclick="switchAdminTab('importer')" id="tab-btn-importer" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
           <i class="fa-solid fa-file-pdf mr-1.5"></i> Auto-Topic PDF Importer
@@ -295,17 +283,17 @@
         </button>
       </div>
 
-      <!-- Scrollable Tab Content Container -->
+      <!-- Scrollable Tab Container -->
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
 
-        <!-- TAB 1: CONTENT & TOPIC HIERARCHY MANAGER (CREATE, EDIT, DELETE) -->
+        <!-- TAB 1: SUBJECTS, TOPICS & DIRECT MCQ EDITOR -->
         <div id="admin-tab-content" class="space-y-6">
           
           <!-- Subject Controls Strip -->
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
             <div>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
-              <p class="text-[11px] text-slate-400">Create, rename, or purge curriculum subjects</p>
+              <p class="text-[11px] text-slate-400">Manage curriculum branches and their specific questions</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="promptCreateNewSubject()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5">
@@ -320,49 +308,34 @@
             </div>
           </div>
 
-          <!-- Active Subject Modules Table -->
+          <!-- Active Subject Modules & MCQ Editor -->
           <div>
             <div class="flex items-center justify-between mb-3">
-              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Tests in <span id="admin-cur-subject-name" class="text-blue-400">Anatomy</span></h4>
-              <span id="admin-subject-total-modules" class="text-xs text-slate-500">0 Total Modules</span>
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-blue-400">Anatomy</span></h4>
+              <span id="admin-subject-total-modules" class="text-xs text-slate-500">0 Modules</span>
             </div>
 
-            <div class="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/50">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                  <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
-                    <tr>
-                      <th class="p-3.5">Topic / Sub-Discipline</th>
-                      <th class="p-3.5">Test Title</th>
-                      <th class="p-3.5">MCQs</th>
-                      <th class="p-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-modules-tbody" class="divide-y divide-slate-800/60 font-medium">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
-              </div>
+            <div id="admin-modules-container" class="space-y-3">
+              <!-- Rendered dynamically as interactive modules with expandable MCQ lists -->
             </div>
           </div>
 
         </div>
 
-        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER -->
+        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH PRE-PUBLISH STAGING -->
         <div id="admin-tab-importer" class="hidden space-y-5">
           <div class="bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
             <div class="flex items-center gap-2 font-bold text-blue-400 mb-1">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>High-Yield Automated Parsing System</span>
+              <span>High-Yield Automated Parsing & Review Stage</span>
             </div>
-            Drop your clinical or topic-based MBBS MCQ PDF. The system will detect individual chapter headers, clinical topic tags (e.g. <em>Brachial Plexus</em>, <em>Shoulder & Rotator Cuff</em>), shuffle options, and register the tests directly into the student curriculum.
+            Upload your MCQ PDF. Questions are automatically segregated into clinical topic tests and placed in a <strong>Preview Stage</strong> below. You can inspect, modify choices or answer keys, and delete any unwanted items before publishing.
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Target Curriculum Subject</label>
               <select id="import-target-subject" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
-                <!-- Dynamically populated -->
               </select>
             </div>
             <div>
@@ -371,26 +344,44 @@
             </div>
           </div>
 
-          <div class="border-2 border-dashed border-slate-700 hover:border-blue-500/60 rounded-3xl p-8 text-center transition cursor-pointer bg-slate-900/30">
+          <div class="border-2 border-dashed border-slate-700 hover:border-blue-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/30">
             <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
             <label for="pdf-file-selector" class="cursor-pointer block">
-              <div class="w-14 h-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-2xl mx-auto mb-3">
+              <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl mx-auto mb-2">
                 <i class="fa-solid fa-file-arrow-up"></i>
               </div>
-              <div id="pdf-file-status-label" class="text-sm font-bold text-white">Tap to upload clinical MCQ PDF</div>
-              <p class="text-xs text-slate-500 mt-1">Automatic question boundary and topic isolation</p>
+              <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Tap to upload clinical MCQ PDF</div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Extracts choices, answers, and clinical pearls</p>
             </label>
           </div>
 
-          <button id="pdf-import-action-btn" onclick="executePdfImport()" disabled class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-bolt"></i>
-            <span>Parse, Group Topics & Publish</span>
+          <button id="pdf-import-action-btn" onclick="executePdfStaging()" disabled class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-microscope"></i>
+            <span>Parse & Preview MCQs Before Publishing</span>
           </button>
 
           <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 hidden font-mono leading-relaxed"></div>
+
+          <!-- Staging Preview Area -->
+          <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-slate-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Questions Review (<span id="staged-count" class="text-blue-400">0</span>)</h4>
+                <p class="text-[11px] text-slate-400">Review, edit, or delete items prior to publishing into the active question bank.</p>
+              </div>
+              <button onclick="commitStagedQuestionsToDatabase()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Confirm & Publish to Bank</span>
+              </button>
+            </div>
+
+            <div id="staged-questions-list" class="space-y-3">
+              <!-- Staged Question Cards dynamically injected here -->
+            </div>
+          </div>
         </div>
 
-        <!-- TAB 3: STUDENT PERFORMANCE & ANALYTICS TRACKER -->
+        <!-- TAB 3: CANDIDATE PERFORMANCE AUDIT TRACKER -->
         <div id="admin-tab-students" class="hidden space-y-5">
           
           <div class="flex flex-wrap items-center justify-between gap-3">
@@ -450,6 +441,65 @@
 
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EDIT SINGLE MCQ MODAL ================= -->
+  <div id="edit-mcq-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+      <button onclick="closeEditMcqModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="mb-4">
+        <h3 class="text-base font-extrabold text-white">Edit Question & Rationale</h3>
+        <p class="text-xs text-slate-400">Make immediate corrections to the MCQ</p>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Question Prompt</label>
+          <textarea id="edit-mcq-question" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option A</label>
+            <input type="text" id="edit-mcq-opt-0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option B</label>
+            <input type="text" id="edit-mcq-opt-1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option C</label>
+            <input type="text" id="edit-mcq-opt-2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option D</label>
+            <input type="text" id="edit-mcq-opt-3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Correct Answer</label>
+          <select id="edit-mcq-correct-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold text-emerald-400">
+            <option value="0">Matches Option A</option>
+            <option value="1">Matches Option B</option>
+            <option value="2">Matches Option C</option>
+            <option value="3">Matches Option D</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Explanation / Clinical Pearl</label>
+          <textarea id="edit-mcq-explanation" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-300 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+        </div>
+
+        <button onclick="saveActiveMcqEdits()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-600/20">
+          Save Changes
+        </button>
       </div>
     </div>
   </div>
@@ -547,10 +597,12 @@
       "Pathology": { name: "Pathology", chapters: [] }
     };
 
-    // --- GLOBAL PORTAL STATE ---
+    // --- APPLICATION STATE ---
     let DB = {};
     let currentSubjectKey = "Anatomy";
-    let activeUser = null; // { uid, name, role: 'admin' | 'student', tgId }
+    let activeUser = null;
+    let stagedModules = []; // Temp storage for PDF MCQs before publishing
+    let editingContext = null; // { moduleId, questionIndex, isStaged: bool }
     let activeExam = {
       test: null,
       questions: [],
@@ -573,10 +625,9 @@
           DB = JSON.parse(stored);
         }
       } catch (err) {
-        console.error("Storage read failed, reverting to seed:", err);
+        console.error("Storage load error:", err);
       }
 
-      // Self-healing check: ensure Anatomy exists and has at least one chapter
       if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"] || !DB["Anatomy"].chapters || DB["Anatomy"].chapters.length === 0) {
         DB = JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
         commitDatabase();
@@ -591,9 +642,8 @@
       }
     }
 
-    // ================= STRICT AUTHENTICATION PIPELINE =================
+    // ================= AUTHENTICATION PIPELINE =================
     function processAuthenticationPipeline() {
-      // 1. Check for automated 1-tap parameters in URL or Hash
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
 
@@ -602,7 +652,6 @@
       const name = searchParams.get("name") || hashParams.get("name");
 
       if (uid && key) {
-        // Evaluate credentials from 1-tap launch
         if ((uid.toLowerCase() === "admin" && (key === "admin" || key === "149958")) || uid === "8417145295") {
           completeLogin({ uid: "admin", name: "Administrator", role: "admin" });
           return;
@@ -616,7 +665,6 @@
         }
       }
 
-      // 2. Check for active session in localStorage
       try {
         const savedSession = localStorage.getItem("mbbs_logged_user");
         if (savedSession) {
@@ -628,7 +676,6 @@
         }
       } catch (e) {}
 
-      // 3. Fallback: Lock portal and require manual login
       lockPortalDisplay();
     }
 
@@ -638,14 +685,12 @@
       const keyInput = document.getElementById("gate-key").value.trim();
       const errBox = document.getElementById("gate-error-message");
 
-      // Admin verification
       if ((uidInput.toLowerCase() === "admin" && (keyInput === "admin" || keyInput === "149958")) || uidInput === "8417145295") {
         completeLogin({ uid: "admin", name: "Administrator", role: "admin" });
         errBox.classList.add("hidden");
         return;
       }
 
-      // Paid student verification
       if (uidInput.toUpperCase().startsWith("STU") || keyInput.toLowerCase().startsWith("mbbs") || keyInput.length >= 4) {
         completeLogin({
           uid: uidInput.toUpperCase(),
@@ -666,12 +711,10 @@
         localStorage.setItem("mbbs_logged_user", JSON.stringify(activeUser));
       }
 
-      // Hide locked view and render authenticated environment
       document.getElementById("view-locked").classList.add("hidden");
       document.getElementById("sub-nav-bar").classList.remove("hidden");
       document.getElementById("view-browse").classList.remove("hidden");
 
-      // Update Header Controls
       const roleBadge = document.getElementById("header-role-badge");
       const userLabel = document.getElementById("header-user-label");
       const authBtn = document.getElementById("auth-action-btn");
@@ -701,7 +744,6 @@
 
     function handleAuthButtonClick() {
       if (activeUser) {
-        // Logout execution
         activeUser = null;
         localStorage.removeItem("mbbs_logged_user");
         lockPortalDisplay();
@@ -828,7 +870,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE (RANDOMIZED A/B/C/D) =================
+    // ================= CBT EXAM ENGINE =================
     function launchExamSession(chapterId) {
       if (!activeUser) {
         lockPortalDisplay();
@@ -842,7 +884,6 @@
         return;
       }
 
-      // Option Randomization: Shuffle A, B, C, D choices independently for every attempt
       const preparedQuestions = test.questions.map((q, idx) => {
         const shuffledOptions = [...q.options];
         for (let i = shuffledOptions.length - 1; i > 0; i--) {
@@ -984,7 +1025,6 @@
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
       document.getElementById("result-stat-time").textContent = `${m}:${s}`;
 
-      // Persist to central analytics history
       storeExamAnalytics(activeExam.test.title, correct, total, accuracy);
 
       document.getElementById("view-exam").classList.add("hidden");
@@ -1027,7 +1067,7 @@
       } catch (e) {}
     }
 
-    // ================= ADVANCED ADMIN COMMAND CENTER =================
+    // ================= ADMIN COMMAND CENTER =================
     function openAdminModal() {
       if (!activeUser || activeUser.role !== "admin") return;
       document.getElementById("admin-modal").classList.remove("hidden");
@@ -1064,113 +1104,133 @@
       if (isStudents) renderAdminStudentAnalytics();
     }
 
-    // --- TAB 1: CONTENT & TOPIC HIERARCHY MANAGER ---
+    // --- TAB 1: MODULAR CONTENT, TOPIC & MCQ HIERARCHY MANAGER ---
     function renderAdminContentManager() {
       const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
       document.getElementById("admin-cur-subject-name").textContent = curSub.name;
       document.getElementById("admin-subject-total-modules").textContent = `${curSub.chapters.length} Modules`;
 
-      const tbody = document.getElementById("admin-modules-tbody");
-      tbody.innerHTML = "";
+      const container = document.getElementById("admin-modules-container");
+      container.innerHTML = "";
 
       if (curSub.chapters.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No test modules in ${curSub.name}. Upload a PDF to auto-populate.</td></tr>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">No test modules in ${curSub.name}. Upload a PDF to automatically generate them.</div>`;
         return;
       }
 
-      curSub.chapters.forEach((ch, idx) => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/40";
-        tr.innerHTML = `
-          <td class="p-3.5 font-bold text-indigo-400">${ch.topic || "Core"}</td>
-          <td class="p-3.5 text-white max-w-[220px] truncate">${ch.title}</td>
-          <td class="p-3.5 font-mono text-slate-400">${ch.questions.length}</td>
-          <td class="p-3.5 text-right space-x-2">
-            <button onclick="promptEditModuleTitle('${ch.id}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
-              <i class="fa-solid fa-pen"></i> Edit
-            </button>
-            <button onclick="deleteModule('${ch.id}')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs">
-              <i class="fa-solid fa-trash"></i> Delete
-            </button>
-          </td>
+      curSub.chapters.forEach((ch, chIdx) => {
+        const modCard = document.createElement("div");
+        modCard.className = "bg-slate-900/60 border border-slate-800 rounded-2xl p-4 transition";
+        modCard.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${ch.topic || "General"}</span>
+                <span class="text-xs text-slate-400 font-mono">${ch.questions.length} MCQs</span>
+              </div>
+              <h4 class="text-sm font-bold text-white">${ch.title}</h4>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-list-ul text-blue-400"></i>
+                <span id="btn-label-${ch.id}">Manage MCQs</span>
+              </button>
+              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button onclick="deleteModule('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Expandable MCQ Container -->
+          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-slate-800/80 space-y-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
+              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-blue-400 hover:underline font-bold">+ Add Question</button>
+            </div>
+            <div class="space-y-2.5" id="mcq-items-container-${ch.id}">
+              ${renderMcqItemRows(ch)}
+            </div>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(modCard);
       });
     }
 
-    function promptCreateNewSubject() {
-      const name = prompt("Enter the new Subject Name (e.g., Microbiology, Forensic Medicine):");
-      if (!name || !name.trim()) return;
-      const clean = name.trim();
-      if (DB[clean]) {
-        alert("Subject already exists!");
-        return;
+    function renderMcqItemRows(ch) {
+      if (!ch.questions || ch.questions.length === 0) {
+        return `<div class="text-xs text-slate-500 p-2">No MCQs registered.</div>`;
       }
 
-      DB[clean] = { name: clean, chapters: [] };
-      commitDatabase();
-      currentSubjectKey = clean;
-      syncSubjectDropdowns();
-      renderBrowsePortal();
-      renderAdminContentManager();
+      return ch.questions.map((q, idx) => `
+        <div class="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl flex items-start justify-between gap-3 text-xs">
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
+              <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
+            </div>
+            <div class="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
+              <i class="fa-solid fa-check text-[10px]"></i> Answer: ${q.answer}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 text-xs">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            <button onclick="deleteMcqFromModule('${ch.id}', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
     }
 
-    function promptEditCurrentSubject() {
-      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      const updated = prompt(`Rename Subject "${cur}" to:`, cur);
-      if (!updated || !updated.trim() || updated.trim() === cur) return;
-
-      const newKey = updated.trim();
-      const existingData = DB[currentSubjectKey];
-      existingData.name = newKey;
-      delete DB[currentSubjectKey];
-      DB[newKey] = existingData;
-
-      currentSubjectKey = newKey;
-      commitDatabase();
-      syncSubjectDropdowns();
-      renderBrowsePortal();
-      renderAdminContentManager();
+    function toggleModuleMcqs(moduleId) {
+      const el = document.getElementById(`mcq-list-${moduleId}`);
+      const btnLabel = document.getElementById(`btn-label-${moduleId}`);
+      if (!el) return;
+      const isHidden = el.classList.contains("hidden");
+      el.classList.toggle("hidden", !isHidden);
+      btnLabel.textContent = isHidden ? "Close List" : "Manage MCQs";
     }
 
-    function promptDeleteCurrentSubject() {
-      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      if (confirm(`Are you sure you want to delete the entire subject "${cur}" and all its test modules?`)) {
-        delete DB[currentSubjectKey];
-        const remaining = Object.keys(DB);
-        currentSubjectKey = remaining.length > 0 ? remaining[0] : "";
-        commitDatabase();
-        syncSubjectDropdowns();
-        renderBrowsePortal();
-        renderAdminContentManager();
-      }
-    }
-
-    function promptEditModuleTitle(moduleId) {
+    function addNewBlankMcq(moduleId) {
       const curSub = DB[currentSubjectKey];
       const mod = curSub.chapters.find(c => c.id === moduleId);
       if (!mod) return;
 
-      const newTitle = prompt("Edit Test Module Title:", mod.title);
-      if (newTitle && newTitle.trim()) {
-        mod.title = newTitle.trim();
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      }
+      const newQ = {
+        id: `MAN-${Date.now()}`,
+        topic: mod.topic || "Core",
+        question: "New Question Statement Here...",
+        options: ["Option A", "Option B", "Option C", "Option D"],
+        answer: "Option A",
+        explanation: "Clinical pearl and rationale description."
+      };
+      mod.questions.push(newQ);
+      commitDatabase();
+      renderAdminContentManager();
+      renderBrowsePortal();
+      openEditMcqModal(moduleId, mod.questions.length - 1, false);
     }
 
-    function deleteModule(moduleId) {
+    function deleteMcqFromModule(moduleId, qIdx) {
       const curSub = DB[currentSubjectKey];
-      if (confirm("Permanently delete this test module?")) {
-        curSub.chapters = curSub.chapters.filter(c => c.id !== moduleId);
+      const mod = curSub.chapters.find(c => c.id === moduleId);
+      if (!mod) return;
+
+      if (confirm(`Delete Question ${qIdx + 1}?`)) {
+        mod.questions.splice(qIdx, 1);
         commitDatabase();
         renderAdminContentManager();
         renderBrowsePortal();
       }
     }
 
-    // --- TAB 2: SMART AUTO-TOPIC PDF IMPORTER ---
+    // --- TAB 2: PDF IMPORTER WITH STAGING & PREVIEW ---
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1180,12 +1240,12 @@
       document.getElementById("pdf-import-action-btn").disabled = false;
     }
 
-    async function executePdfImport() {
+    async function executePdfStaging() {
       if (!stagedPdfFile) return;
 
       const log = document.getElementById("pdf-import-live-log");
       log.classList.remove("hidden");
-      log.textContent = "⏳ Reading PDF coordinate vectors & extracting textual layers...";
+      log.textContent = "⏳ Extracting vertical text coordinates from PDF...";
 
       try {
         const buffer = await stagedPdfFile.arrayBuffer();
@@ -1214,28 +1274,13 @@
           accumulatedText += pageText + "\n\n";
         }
 
-        log.textContent = `✅ Successfully extracted ${doc.numPages} pages. Identifying clinical topics & structuring MCQs...`;
+        log.textContent = `✅ Extracted ${doc.numPages} pages. Populating Staged Review Area below...`;
 
-        const targetSubject = document.getElementById("import-target-subject").value;
         const override = document.getElementById("import-chapter-override").value.trim();
         const baseName = override || stagedPdfFile.name.replace(".pdf", "");
 
-        const generatedModules = extractTopicTestsFromText(accumulatedText, baseName);
-
-        if (!DB[targetSubject]) DB[targetSubject] = { name: targetSubject, chapters: [] };
-        generatedModules.forEach(mod => {
-          DB[targetSubject].chapters.unshift(mod);
-        });
-
-        commitDatabase();
-        log.textContent = `🎉 Success! Generated and published ${generatedModules.length} clinical topic tests to ${targetSubject}!`;
-
-        currentSubjectKey = targetSubject;
-        syncSubjectDropdowns();
-        renderBrowsePortal();
-        renderAdminContentManager();
-
-        setTimeout(() => closeAdminModal(), 1600);
+        stagedModules = extractTopicTestsFromText(accumulatedText, baseName);
+        renderStagedReviewList();
 
       } catch (err) {
         console.error("PDF Parsing Failure:", err);
@@ -1272,7 +1317,6 @@
           };
           const letter = ansMatch[1].toUpperCase();
 
-          // Clinical topic tag detection
           let topicTag = "Clinical Topic Test";
           const headerMatch = block.match(/([A-Z\s]{4,30}(?:PLEXUS|FRACTURE|NERVE|TUNNEL|MUSCLE|ROTATOR|JOINT|LIMB|ARTERY|VEIN))/);
           if (headerMatch) topicTag = headerMatch[1].trim();
@@ -1285,7 +1329,7 @@
             question: qMatch[1].trim(),
             options: [map["A"], map["B"], map["C"], map["D"]],
             answer: map[letter] || map["A"],
-            explanation: expMatch ? expMatch[1].trim() : "High-yield MBBS guideline explanation."
+            explanation: expMatch ? expMatch[1].trim() : "High-yield guideline pearl."
           });
         }
       });
@@ -1303,14 +1347,164 @@
       return modules;
     }
 
-    // --- TAB 3: STUDENT PERFORMANCE & ANALYTICS TRACKER ---
+    function renderStagedReviewList() {
+      const container = document.getElementById("staged-questions-list");
+      const stagePreview = document.getElementById("pdf-staging-preview");
+      const countEl = document.getElementById("staged-count");
+      
+      let totalQ = 0;
+      stagedModules.forEach(m => totalQ += m.questions.length);
+      countEl.textContent = `${totalQ} in ${stagedModules.length} Modules`;
+
+      if (totalQ === 0) {
+        stagePreview.classList.add("hidden");
+        return;
+      }
+
+      stagePreview.classList.remove("hidden");
+      container.innerHTML = "";
+
+      stagedModules.forEach((mod, mIdx) => {
+        const groupEl = document.createElement("div");
+        groupEl.className = "p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3";
+        groupEl.innerHTML = `
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">${mod.topic}</span>
+              <h5 class="text-xs font-bold text-white mt-1">${mod.title} (${mod.questions.length} MCQs)</h5>
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${mod.questions.map((q, qIdx) => `
+              <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-start justify-between gap-3 text-xs">
+                <div class="flex-1 space-y-1">
+                  <p class="font-medium text-slate-200"><span class="font-mono text-slate-500 mr-1">Q${qIdx + 1}.</span>${q.question}</p>
+                  <p class="text-[11px] text-emerald-400 font-mono">Answer: ${q.answer}</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openEditMcqModal('${mod.id}',${qIdx}, true)" class="px-2 py-1 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 text-xs">Edit</button>
+                  <button onclick="deleteStagedMcq(${mIdx},${qIdx})" class="px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs">Delete</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+        container.appendChild(groupEl);
+      });
+    }
+
+    function deleteStagedMcq(mIdx, qIdx) {
+      stagedModules[mIdx].questions.splice(qIdx, 1);
+      if (stagedModules[mIdx].questions.length === 0) {
+        stagedModules.splice(mIdx, 1);
+      }
+      renderStagedReviewList();
+    }
+
+    function commitStagedQuestionsToDatabase() {
+      if (stagedModules.length === 0) return;
+      const targetSub = document.getElementById("import-target-subject").value;
+      if (!DB[targetSub]) DB[targetSub] = { name: targetSub, chapters: [] };
+
+      stagedModules.forEach(mod => {
+        DB[targetSub].chapters.unshift(mod);
+      });
+
+      commitDatabase();
+      stagedModules = [];
+      document.getElementById("pdf-staging-preview").classList.add("hidden");
+      document.getElementById("pdf-import-live-log").textContent = `🎉 Successfully committed all modules to ${targetSub}!`;
+
+      currentSubjectKey = targetSub;
+      syncSubjectDropdowns();
+      renderBrowsePortal();
+      renderAdminContentManager();
+
+      setTimeout(() => closeAdminModal(), 1200);
+    }
+
+    // ================= SINGLE MCQ MODAL EDITOR =================
+    function openEditMcqModal(moduleId, questionIndex, isStaged = false) {
+      editingContext = { moduleId, questionIndex, isStaged };
+      let q = null;
+
+      if (isStaged) {
+        const mod = stagedModules.find(m => m.id === moduleId);
+        if (mod) q = mod.questions[questionIndex];
+      } else {
+        const curSub = DB[currentSubjectKey];
+        const mod = curSub.chapters.find(c => c.id === moduleId);
+        if (mod) q = mod.questions[questionIndex];
+      }
+
+      if (!q) return;
+
+      document.getElementById("edit-mcq-question").value = q.question;
+      document.getElementById("edit-mcq-opt-0").value = q.options[0] || "";
+      document.getElementById("edit-mcq-opt-1").value = q.options[1] || "";
+      document.getElementById("edit-mcq-opt-2").value = q.options[2] || "";
+      document.getElementById("edit-mcq-opt-3").value = q.options[3] || "";
+      document.getElementById("edit-mcq-explanation").value = q.explanation || "";
+
+      let matchIdx = q.options.indexOf(q.answer);
+      if (matchIdx === -1) matchIdx = 0;
+      document.getElementById("edit-mcq-correct-select").value = String(matchIdx);
+
+      document.getElementById("edit-mcq-modal").classList.remove("hidden");
+    }
+
+    function closeEditMcqModal() {
+      document.getElementById("edit-mcq-modal").classList.add("hidden");
+      editingContext = null;
+    }
+
+    function saveActiveMcqEdits() {
+      if (!editingContext) return;
+      const { moduleId, questionIndex, isStaged } = editingContext;
+
+      let q = null;
+      if (isStaged) {
+        const mod = stagedModules.find(m => m.id === moduleId);
+        if (mod) q = mod.questions[questionIndex];
+      } else {
+        const curSub = DB[currentSubjectKey];
+        const mod = curSub.chapters.find(c => c.id === moduleId);
+        if (mod) q = mod.questions[questionIndex];
+      }
+
+      if (!q) return;
+
+      const opts = [
+        document.getElementById("edit-mcq-opt-0").value.trim(),
+        document.getElementById("edit-mcq-opt-1").value.trim(),
+        document.getElementById("edit-mcq-opt-2").value.trim(),
+        document.getElementById("edit-mcq-opt-3").value.trim()
+      ];
+      const correctIdx = parseInt(document.getElementById("edit-mcq-correct-select").value);
+
+      q.question = document.getElementById("edit-mcq-question").value.trim();
+      q.options = opts;
+      q.answer = opts[correctIdx] || opts[0];
+      q.explanation = document.getElementById("edit-mcq-explanation").value.trim();
+
+      if (!isStaged) {
+        commitDatabase();
+        renderAdminContentManager();
+        renderBrowsePortal();
+      } else {
+        renderStagedReviewList();
+      }
+
+      closeEditMcqModal();
+    }
+
+    // ================= STUDENT PERFORMANCE AUDIT TRACKER =================
     function renderAdminStudentAnalytics() {
       let audit = [];
       try {
         audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]");
       } catch (e) {}
 
-      // Calculate Metrics
       document.getElementById("metric-total-tests").textContent = audit.length;
       if (audit.length > 0) {
         const avg = Math.round(audit.reduce((a, c) => a + (c.accuracy || 0), 0) / audit.length);
@@ -1373,7 +1567,6 @@
       });
     }
 
-    // --- STUDENT SELF-ANALYTICS POPUP ---
     function openStudentStatsModal() {
       if (!activeUser) return;
       let audit = [];
@@ -1397,6 +1590,77 @@
 
     function closeStudentStatsModal() {
       document.getElementById("student-stats-modal").classList.add("hidden");
+    }
+
+    function promptCreateNewSubject() {
+      const name = prompt("Enter the new Subject Name:");
+      if (!name || !name.trim()) return;
+      const clean = name.trim();
+      if (DB[clean]) {
+        alert("Subject already exists!");
+        return;
+      }
+      DB[clean] = { name: clean, chapters: [] };
+      commitDatabase();
+      currentSubjectKey = clean;
+      syncSubjectDropdowns();
+      renderBrowsePortal();
+      renderAdminContentManager();
+    }
+
+    function promptEditCurrentSubject() {
+      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
+      const updated = prompt(`Rename Subject "${cur}" to:`, cur);
+      if (!updated || !updated.trim() || updated.trim() === cur) return;
+
+      const newKey = updated.trim();
+      const existingData = DB[currentSubjectKey];
+      existingData.name = newKey;
+      delete DB[currentSubjectKey];
+      DB[newKey] = existingData;
+
+      currentSubjectKey = newKey;
+      commitDatabase();
+      syncSubjectDropdowns();
+      renderBrowsePortal();
+      renderAdminContentManager();
+    }
+
+    function promptDeleteCurrentSubject() {
+      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
+      if (confirm(`Permanently delete subject "${cur}" and all its questions?`)) {
+        delete DB[currentSubjectKey];
+        const remaining = Object.keys(DB);
+        currentSubjectKey = remaining.length > 0 ? remaining[0] : "";
+        commitDatabase();
+        syncSubjectDropdowns();
+        renderBrowsePortal();
+        renderAdminContentManager();
+      }
+    }
+
+    function promptEditModuleTitle(moduleId) {
+      const curSub = DB[currentSubjectKey];
+      const mod = curSub.chapters.find(c => c.id === moduleId);
+      if (!mod) return;
+
+      const newTitle = prompt("Edit Test Module Title:", mod.title);
+      if (newTitle && newTitle.trim()) {
+        mod.title = newTitle.trim();
+        commitDatabase();
+        renderAdminContentManager();
+        renderBrowsePortal();
+      }
+    }
+
+    function deleteModule(moduleId) {
+      const curSub = DB[currentSubjectKey];
+      if (confirm("Permanently delete this test module?")) {
+        curSub.chapters = curSub.chapters.filter(c => c.id !== moduleId);
+        commitDatabase();
+        renderAdminContentManager();
+        renderBrowsePortal();
+      }
     }
   </script>
 </body>
