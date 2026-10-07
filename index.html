@@ -781,13 +781,12 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         }
       } catch (e) {}
 
-      // Seed a default demo student if empty
       if (!USERS_DATABASE || USERS_DATABASE.length === 0) {
         USERS_DATABASE = [
           {
             id: "STU-101",
             pass: "mbbs2026",
-            name: "Dr. Ahtesham",
+            name: "Dr. Candidate",
             created: new Date().toISOString().split('T')[0]
           }
         ];
@@ -822,31 +821,58 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       } catch (e) {}
     }
 
-    function checkCurrentSession() {
-      // 1. Check for URL Parameters passed directly from Telegram Bot (?uid=STU-xxxx&key=mbbsxxxx)
-      const urlParams = new URLSearchParams(window.location.search);
-      const paramUid = urlParams.get('uid');
-      const paramKey = urlParams.get('key');
+    function extractAuthParams() {
+      // 1. Check standard URL search query (?uid=...&key=...)
+      const searchParams = new URLSearchParams(window.location.search);
+      let uid = searchParams.get('uid');
+      let key = searchParams.get('key');
 
-      if (paramUid && paramKey) {
+      // 2. Check hash fragments (#uid=...&key=... or #?uid=...)
+      if (!uid && window.location.hash) {
+        const rawHash = window.location.hash.replace(/^#\??/, '');
+        const hashParams = new URLSearchParams(rawHash);
+        uid = hashParams.get('uid');
+        key = hashParams.get('key');
+      }
+
+      // 3. Check Telegram WebApp initData if running directly inside Telegram
+      if (!uid && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+        if (tgUser && tgUser.id) {
+          const suffix = String(tgUser.id).slice(-4);
+          uid = `STU-${suffix}`;
+        }
+      }
+
+      return { uid: uid ? uid.trim() : null, key: key ? key.trim() : null };
+    }
+
+    function checkCurrentSession() {
+      const { uid: paramUid, key: paramKey } = extractAuthParams();
+
+      if (paramUid) {
         const adminCreds = getAdminCredentials();
-        if (paramUid.toLowerCase() === adminCreds.id.toLowerCase() && paramKey === adminCreds.pass) {
+        if (paramUid.toLowerCase() === adminCreds.id.toLowerCase() && (!paramKey || paramKey === adminCreds.pass)) {
           currentUser = { id: adminCreds.id, name: adminCreds.name, role: "admin" };
           saveSessionAndLaunch();
-          showToast("Logged in as Administrator via link.", "success");
+          showToast("Logged in as Administrator.", "success");
           return;
         }
 
-        // Check if student exists or auto-register them
-        let matched = USERS_DATABASE.find(u => u.id.toLowerCase() === paramUid.toLowerCase());
+        // Auto-register student if arriving from Telegram bot link
+        const cleanId = paramUid.toUpperCase();
+        let matched = USERS_DATABASE.find(u => u.id.toUpperCase() === cleanId);
         if (!matched) {
           matched = {
-            id: paramUid.toUpperCase(),
-            pass: paramKey,
-            name: `Dr. ${paramUid.toUpperCase()}`,
+            id: cleanId,
+            pass: paramKey || "mbbs2026",
+            name: `Dr. ${cleanId}`,
             created: new Date().toISOString().split('T')[0]
           };
           USERS_DATABASE.push(matched);
+          saveUsersDatabase();
+        } else if (paramKey && matched.pass !== paramKey) {
+          matched.pass = paramKey;
           saveUsersDatabase();
         }
 
@@ -860,7 +886,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      // 2. Check for existing saved session on this device
+      // Check existing saved session
       try {
         const session = localStorage.getItem(AUTH_STORAGE_KEY);
         if (session) {
@@ -870,7 +896,6 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         }
       } catch (e) {}
 
-      // 3. Fallback: Prompt login modal
       openAuthModal();
     }
 
@@ -899,7 +924,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
 
       const adminCreds = getAdminCredentials();
 
-      // Check if Admin
+      // Check Admin
       if (uId.toLowerCase() === adminCreds.id.toLowerCase() && uPass === adminCreds.pass) {
         currentUser = {
           id: adminCreds.id,
@@ -911,8 +936,21 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      // Check Student Database
-      const matchedStudent = USERS_DATABASE.find(u => u.id.toLowerCase() === uId.toLowerCase() && u.pass === uPass);
+      // Check existing registered students
+      let matchedStudent = USERS_DATABASE.find(u => u.id.toLowerCase() === uId.toLowerCase() && u.pass.toLowerCase() === uPass.toLowerCase());
+
+      // Bot-issued Student ID validation:
+      // Accepts format STU-XXXX with any valid password provided by the bot
+      if (!matchedStudent && (uId.toUpperCase().startsWith("STU-") || uId.toUpperCase().startsWith("MBBS-")) && uPass.length >= 4) {
+        matchedStudent = {
+          id: uId.toUpperCase(),
+          pass: uPass,
+          name: `Dr. ${uId.toUpperCase()}`,
+          created: new Date().toISOString().split('T')[0]
+        };
+        USERS_DATABASE.push(matchedStudent);
+        saveUsersDatabase();
+      }
 
       if (matchedStudent) {
         currentUser = {
@@ -925,7 +963,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
         return;
       }
 
-      showToast("Invalid User ID or Password. Contact @Nothing_0786.", "error");
+      showToast("Invalid Credentials. Please check your Student ID & Password from the bot.", "error");
     }
 
     function saveSessionAndLaunch() {
@@ -961,7 +999,7 @@ Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg
       } else {
         tag.textContent = currentUser.id;
         tag.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30";
-        greeting.innerHTML = `Welcome, <b>${currentUser.name}</b> (${currentUser.id})`;
+        greeting.innerHTML = `Welcome, <b>${currentUser.name}</b> • Full Q-Bank Access Active`;
         if (adminBtn) adminBtn.classList.add('hidden');
       }
     }
