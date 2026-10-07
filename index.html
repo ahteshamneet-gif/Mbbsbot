@@ -41,76 +41,69 @@ to { opacity: 1; transform: translateY(0); }
 </head>
 ​<body class="bg-slate-950 text-slate-100 min-h-screen transition-colors duration-200 antialiased flex flex-col selection:bg-blue-600 selection:text-white">
 ​<!-- MAIN HEADER -->
-<header id="main-header" class="w-full bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md px-4 py-3 shadow-lg">
-<div class="max-w-4xl mx-auto flex flex-col gap-3">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2.5">
-<div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-<i class="fa-solid fa-stethoscope text-base"></i>
+<header id="main-header" class="w-full bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md px-3 sm:px-4 py-2.5 shadow-lg">
+<div class="max-w-4xl mx-auto flex flex-col gap-2.5">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+<i class="fa-solid fa-stethoscope text-sm"></i>
 </div>
 <div>
-<h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-MBBS Master Q-Bank
+<h1 class="text-xs sm:text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+<span>MBBS Q-Bank</span>
 <span id="header-user-tag" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Candidate</span>
 </h1>
-<p id="user-greeting" class="text-[11px] text-slate-400">Curated by @Nothing_0786</p>
+<p id="user-greeting" class="text-[10px] sm:text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-none">Curated by @Nothing_0786</p>
 </div>
 </div>
-​<!-- Account / Session Controls -->
-<div class="flex items-center gap-2">
-<!-- Admin Portal Trigger (Only visible to authenticated Admin) -->
-<button id="btn-admin-portal" onclick="openAdminPanel()" class="hidden px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-xs font-bold text-amber-300 border border-amber-500/40 items-center gap-1.5 transition cursor-pointer">
-<i class="fa-solid fa-sliders"></i>
-<span class="hidden sm:inline">Admin Hub</span>
+​<!-- Account & Session Controls -->
+<div class="flex items-center gap-1.5 sm:gap-2">
+<!-- Admin Portal Button (Shows gold if Admin, grey if student needing admin login) -->
+<button id="btn-admin-portal" onclick="triggerAdminAccess()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition cursor-pointer">
+<i class="fa-solid fa-shield-halved"></i>
+<span id="admin-btn-label">Admin Hub</span>
 </button>
-​<button id="btn-view-stats" onclick="showAnalyticsModal()" title="View Performance" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center gap-1 transition">
+​<button id="btn-view-stats" onclick="showAnalyticsModal()" title="View Performance" class="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center gap-1 transition">
 <i class="fa-solid fa-chart-pie text-emerald-400"></i>
-<span class="text-[11px] hidden sm:inline">My Stats</span>
+<span class="text-[11px] hidden sm:inline">Stats</span>
 </button>
-​<button id="btn-session-action" onclick="handleAuthAction()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center gap-1.5 transition">
-<i id="session-action-icon" class="fa-solid fa-right-from-bracket text-rose-400"></i>
-<span id="session-action-text" class="text-[11px]">Logout</span>
+​<button id="btn-session-action" onclick="openAuthModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center gap-1 transition">
+<i id="session-action-icon" class="fa-solid fa-arrow-right-to-bracket text-blue-400"></i>
+<span id="session-action-text" class="text-[11px]">Login</span>
 </button>
 </div>
 </div>
 ​<!-- Subject & Search controls -->
-<div id="student-search-row" class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-800/60">
-<div class="flex items-center gap-2">
-<label for="subject-select" class="text-xs text-slate-400 font-medium">Subject:</label>
+<div id="student-search-row" class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60">
+<div class="flex items-center gap-2 flex-1 min-w-[150px]">
+<label for="subject-select" class="text-xs text-slate-400 font-semibold whitespace-nowrap">Subject:</label>
 <select 
 id="subject-select" 
 onchange="onSubjectChange(this.value)" 
-class="bg-slate-950 text-xs text-blue-400 font-bold px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition">
+class="flex-1 bg-slate-950 text-xs text-blue-400 font-bold px-2 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition">
 </select>
 </div>
-​<form onsubmit="handleQidSearch(event)" class="flex items-center gap-1.5 flex-1 max-w-xs">
+​<form onsubmit="handleQidSearch(event)" class="flex items-center gap-1 flex-1 max-w-[200px]">
 <div class="relative w-full">
-<i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500"></i>
 <input 
 id="qid-input" 
 type="text" 
-placeholder="Search QID (e.g. ANA-001)..." 
-class="w-full bg-slate-950/80 text-xs text-slate-200 pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition"
+placeholder="QID (e.g. ANA-001)" 
+class="w-full bg-slate-950/80 text-xs text-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 transition"
 />
 </div>
-<button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+<button type="submit" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-sm transition">
 Go
 </button>
 </form>
-​<div class="flex items-center gap-1.5">
-<button onclick="setThemeAccent('blue', '#2563eb')" title="Blue Theme" class="w-4 h-4 rounded-full bg-blue-600 ring-2 ring-offset-2 ring-offset-slate-900 ring-blue-500 transition"></button>
-<button onclick="setThemeAccent('green', '#10b981')" title="Green Theme" class="w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
-<button onclick="setThemeAccent('purple', '#8b5cf6')" title="Purple Theme" class="w-4 h-4 rounded-full bg-purple-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
-<button onclick="setThemeAccent('pink', '#f43f5e')" title="Rose Theme" class="w-4 h-4 rounded-full bg-rose-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent transition"></button>
-</div>
 </div>
 </div>
 </header>
 ​<!-- MAIN APP CONTAINER -->
-<main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col">
+<main class="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 flex flex-col">
 ​<!-- ==================== VIEW 1: BROWSE TESTS (STUDENT) ==================== -->
 <div id="view-browse" class="flex flex-col gap-4">
-<div id="module-hero-card" class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden">
+<div id="module-hero-card" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden">
 <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
 <div class="flex items-start justify-between gap-4">
 <div>
@@ -119,7 +112,7 @@ Go
 <span class="text-slate-600">•</span>
 <span class="text-xs text-slate-400">Randomized CBT Simulator</span>
 </div>
-<h2 id="hero-title" class="text-xl md:text-2xl font-extrabold text-white tracking-tight leading-snug">
+<h2 id="hero-title" class="text-lg sm:text-xl md:text-2xl font-extrabold text-white tracking-tight leading-snug">
 Select a chapter below
 </h2>
 <p id="hero-meta" class="text-xs text-slate-400 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -130,12 +123,12 @@ Select a chapter below
 </div>
 </div>
 </div>
-​<div class="flex items-center justify-between pt-2">
+​<div class="flex items-center justify-between pt-1">
 <div class="flex items-center gap-2">
-<h3 class="text-base font-bold text-white tracking-tight">Available Topics</h3>
+<h3 class="text-sm sm:text-base font-bold text-white tracking-tight">Available Topics</h3>
 <span id="breadcrumb-subject" class="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Anatomy</span>
 </div>
-<button id="btn-up-level" onclick="navigateUpFolder()" class="hidden px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+<button id="btn-up-level" onclick="navigateUpFolder()" class="hidden px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
 <i class="fa-solid fa-arrow-turn-up text-[10px]"></i>
 <span>All Topics</span>
 </button>
@@ -163,12 +156,12 @@ Submit
 </button>
 </div>
 </div>
-​<div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col gap-5">
+​<div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col gap-4">
 <div>
-<div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full mb-2.5 border border-blue-500/20">
+<div class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full mb-2 border border-blue-500/20">
 <i class="fa-solid fa-notes-medical"></i> Single Best Answer (Randomized)
 </div>
-<p id="question-text" class="text-sm md:text-base font-medium text-slate-100 leading-relaxed"></p>
+<p id="question-text" class="text-xs sm:text-sm md:text-base font-medium text-slate-100 leading-relaxed"></p>
 </div>
 ​<div id="options-container" class="flex flex-col gap-2.5"></div>
 </div>
@@ -181,15 +174,15 @@ Submit
 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Review</span>
 </div>
 </div>
-​<div id="palette-container" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto custom-scrollbar p-1"></div>
+​<div id="palette-container" class="flex flex-wrap gap-1.5 sm:gap-2 max-h-24 overflow-y-auto custom-scrollbar p-1"></div>
 ​<div class="flex items-center justify-between pt-2 border-t border-slate-800">
-<button id="btn-prev-q" onclick="navigateQuestion(-1)" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+<button id="btn-prev-q" onclick="navigateQuestion(-1)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
 <i class="fa-solid fa-chevron-left text-[10px]"></i> Prev
 </button>
 <button onclick="toggleMarkReview()" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-xs font-semibold text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition">
 <i class="fa-regular fa-bookmark"></i> Review
 </button>
-<button id="btn-next-q" onclick="navigateQuestion(1)" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition">
+<button id="btn-next-q" onclick="navigateQuestion(1)" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition">
 Next <i class="fa-solid fa-chevron-right text-[10px]"></i>
 </button>
 </div>
@@ -197,36 +190,36 @@ Next <i class="fa-solid fa-chevron-right text-[10px]"></i>
 </div>
 ​<!-- ==================== VIEW 3: SCORECARD ==================== -->
 <div id="view-result" class="hidden flex-col gap-4">
-<div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 text-center shadow-xl">
-<div class="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-2">
+<div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-6 text-center shadow-xl">
+<div class="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-2">
 <i class="fa-solid fa-trophy"></i>
 </div>
-<h2 class="text-xl font-bold text-white">Assessment Complete</h2>
+<h2 class="text-lg sm:text-xl font-bold text-white">Assessment Complete</h2>
 <p id="result-test-title" class="text-xs text-slate-400 mt-1">Test Title</p>
-​<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
-<div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+​<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-4">
+<div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
 <span class="text-[10px] text-slate-500 font-medium block">Total Marks</span>
-<span id="res-score" class="text-base font-black text-white">0 / 0</span>
+<span id="res-score" class="text-sm sm:text-base font-black text-white">0 / 0</span>
 </div>
-<div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+<div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
 <span class="text-[10px] text-slate-500 font-medium block">Accuracy</span>
-<span id="res-accuracy" class="text-base font-black text-emerald-400">0%</span>
+<span id="res-accuracy" class="text-sm sm:text-base font-black text-emerald-400">0%</span>
 </div>
-<div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+<div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
 <span class="text-[10px] text-slate-500 font-medium block">Correct</span>
-<span id="res-correct" class="text-base font-black text-blue-400">0 / 0</span>
+<span id="res-correct" class="text-sm sm:text-base font-black text-blue-400">0 / 0</span>
 </div>
-<div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+<div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
 <span class="text-[10px] text-slate-500 font-medium block">Time</span>
-<span id="res-time" class="text-base font-black text-amber-400">00:00</span>
+<span id="res-time" class="text-sm sm:text-base font-black text-amber-400">00:00</span>
 </div>
 </div>
-​<div class="flex items-center justify-center gap-3">
-<button onclick="retakeCurrentTest()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-2">
-<i class="fa-solid fa-rotate-right"></i> Retake (Re-Shuffled)
+​<div class="flex items-center justify-center gap-2 sm:gap-3">
+<button onclick="retakeCurrentTest()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+<i class="fa-solid fa-rotate-right"></i> Retake
 </button>
-<button onclick="returnToBrowse()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition flex items-center gap-2">
-<i class="fa-solid fa-folder-open"></i> Back to Bank
+<button onclick="returnToBrowse()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
+<i class="fa-solid fa-folder-open"></i> All Topics
 </button>
 </div>
 </div>
@@ -237,88 +230,83 @@ Next <i class="fa-solid fa-chevron-right text-[10px]"></i>
 <div id="solution-breakdown" class="flex flex-col gap-3"></div>
 </div>
 </div>
-​<!-- ============================================================ -->
-<!-- VIEW 4: ADMIN MANAGEMENT DASHBOARD -->
-<!-- ============================================================ -->
+​<!-- ==================== VIEW 4: ADMIN MANAGEMENT DASHBOARD ==================== -->
 <div id="view-admin" class="hidden flex-col gap-4">
-​<div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+​<div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
 <div>
-<div class="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 mb-1.5">
+<div class="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 mb-1">
 <i class="fa-solid fa-shield-halved"></i> Admin Control Center
 </div>
-<h2 class="text-lg font-bold text-white">Q-Bank & Paid Student Management</h2>
-<p class="text-xs text-slate-400 mt-0.5">Auto-detect topics and chapters from PDFs, manage logins, and review exam metrics.</p>
+<h2 class="text-base sm:text-lg font-bold text-white">Q-Bank & Student Management</h2>
+<p class="text-xs text-slate-400">Auto-detect topics and chapters from PDFs, manage logins, and monitor test records.</p>
 </div>
 <div class="flex flex-wrap items-center gap-2">
-<button onclick="openChangeAdminCredentialsModal()" class="px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
-<i class="fa-solid fa-key"></i> Admin Login Key
+<button onclick="openChangeAdminCredentialsModal()" class="px-2.5 py-1.5 bg-amber-600/30 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+<i class="fa-solid fa-key"></i> Key
 </button>
-<button onclick="exportUpdatedJson()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
-<i class="fa-solid fa-download"></i> Save qbank.json
+<button onclick="exportUpdatedJson()" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+<i class="fa-solid fa-download"></i> Save JSON
 </button>
-<button onclick="triggerJsonImport()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-<i class="fa-solid fa-upload"></i> Load JSON
+<button onclick="triggerJsonImport()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+<i class="fa-solid fa-upload"></i> Load
 </button>
 <input type="file" id="json-file-input" accept=".json" onchange="handleJsonFileSelect(event)" class="hidden" />
-<button onclick="closeAdminPanel()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition">
-Exit Admin
+<button onclick="closeAdminPanel()" class="px-2.5 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition">
+Exit
 </button>
 </div>
 </div>
 ​<!-- Admin Tabs Navigation -->
 <div class="flex border-b border-slate-800 gap-2 overflow-x-auto pb-1">
-<button id="tab-btn-bulk" onclick="switchAdminTab('bulk')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap">
-<i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Auto-Topic & Chapter PDF Importer
+<button id="tab-btn-bulk" onclick="switchAdminTab('bulk')" class="px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap">
+<i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Auto-Topic PDF Importer
 </button>
-<button id="tab-btn-students" onclick="switchAdminTab('students')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
-<i class="fa-solid fa-user-graduate text-emerald-400"></i> Paid Students & Analytics
+<button id="tab-btn-students" onclick="switchAdminTab('students')" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
+<i class="fa-solid fa-user-graduate text-emerald-400"></i> Students & Analytics
 </button>
-<button id="tab-btn-tree" onclick="switchAdminTab('tree')" class="px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
-<i class="fa-solid fa-sitemap text-amber-400"></i> Structure (Topics & Tests)
+<button id="tab-btn-tree" onclick="switchAdminTab('tree')" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
+<i class="fa-solid fa-sitemap text-amber-400"></i> Structure
 </button>
 </div>
-​<!-- ================= TAB: SMART AUTO-TOPIC & CHAPTER PDF IMPORTER ================= -->
-<div id="admin-tab-bulk" class="flex flex-col gap-3.5">
-<div class="p-4 rounded-xl bg-purple-950/20 border border-purple-500/30 flex flex-col gap-2">
+​<!-- TAB: AUTO-TOPIC & CHAPTER PDF IMPORTER -->
+<div id="admin-tab-bulk" class="flex flex-col gap-3">
+<div class="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 flex flex-col gap-1.5">
 <h4 class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-<i class="fa-solid fa-wand-magic-sparkles"></i> Intelligent Chapter & Topic-Aware PDF Importer
+<i class="fa-solid fa-wand-magic-sparkles"></i> Automatic Chapter & Topic Organizer
 </h4>
 <p class="text-[11px] text-slate-300 leading-relaxed">
-Select your target subject and upload your Question Bank PDF. The parser automatically detects parent chapters (e.g. <b>Upper Limb Anatomy</b>) and extracts individual clinical topics (e.g. <b>BRACHIAL PLEXUS & NERVE INJURY</b>, <b>SHOULDER & ROTATOR CUFF</b>, <b>HUMERUS FRACTURES</b>), grouping questions into separate chapter topic tests and a comprehensive mock test.
+Select the target subject, then upload your Question Bank PDF. The system extracts questions, identifies topics (e.g. <b>BRACHIAL PLEXUS</b>, <b>SHOULDER & ROTATOR CUFF</b>), groups them into individual practice tests, and creates a comprehensive Mock Exam.
 </p>
 </div>
-​<!-- Target Subject Selector & Default Chapter Fallback -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+​<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 <div>
 <label class="text-xs text-slate-400 block mb-1 font-semibold">1. Target Subject:</label>
 <select id="bulk-subject-sel" class="w-full bg-slate-950 text-xs text-blue-400 font-bold p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500">
 </select>
 </div>
 <div>
-<label class="text-xs text-slate-400 block mb-1 font-semibold">2. Chapter Name (Auto-detected from PDF or fallback):</label>
+<label class="text-xs text-slate-400 block mb-1 font-semibold">2. Chapter Name (Auto-detected or fallback):</label>
 <input id="bulk-folder-input" type="text" value="01_Upper Limb" placeholder="e.g. 01_Upper Limb" class="w-full bg-slate-950 text-xs text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-purple-500 font-mono" />
 </div>
 </div>
-​<!-- Method A: PDF Upload Box -->
-<div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+​<div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
 <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
 <i class="fa-solid fa-file-pdf text-rose-400"></i> Upload PDF Question Bank
 </span>
-<div class="flex flex-wrap items-center gap-3">
-<input type="file" id="pdf-file-input" accept=".pdf" class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
-<button onclick="handlePdfFileUpload()" id="btn-parse-pdf" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
-<i class="fa-solid fa-bolt"></i> Extract & Auto-Organize Topics
+<div class="flex flex-wrap items-center gap-2.5">
+<input type="file" id="pdf-file-input" accept=".pdf" class="text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
+<button onclick="handlePdfFileUpload()" id="btn-parse-pdf" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+<i class="fa-solid fa-bolt"></i> Extract & Organize Topics
 </button>
 </div>
-<span id="pdf-status-text" class="text-[11px] text-slate-400">Extracts questions, four choices, answer keys, and builds topic-wise tests automatically.</span>
+<span id="pdf-status-text" class="text-[11px] text-slate-400">Supports direct PDF upload on phones and computers.</span>
 </div>
-​<!-- Method B: Raw Text Paste Box -->
-<div class="flex flex-col gap-1.5">
+​<div class="flex flex-col gap-1">
 <label class="text-xs text-slate-400 flex items-center justify-between">
-<span>Or Paste Raw MCQ Text:</span>
-<span class="text-[10px] text-slate-500 font-mono">BRACHIAL PLEXUS... Q1... A)... B)... Correct Answer: B</span>
+<span>Or Paste Raw Question Text:</span>
+<span class="text-[10px] text-slate-500 font-mono">Q1... A)... B)... Correct Answer: B</span>
 </label>
-<textarea id="bulk-raw-text" rows="7" placeholder="Paste questions here directly from PDF:
+<textarea id="bulk-raw-text" rows="6" placeholder="Paste questions here directly from PDF:
 ​BRACHIAL PLEXUS & NERVE INJURY
 Q1. A 24-year-old motorcyclist is thrown from his bike...
 A) C8 and T1
@@ -326,100 +314,92 @@ B) C5 and C6
 C) C7 and C8
 D) C5, C6, and C7
 Correct Answer: B (C5 and C6)
-Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg-slate-950 text-xs font-mono text-slate-200 p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-purple-500"></textarea>
+Explanation: This presentation describes Erb-Duchenne palsy..." class="w-full bg-slate-950 text-xs font-mono text-slate-200 p-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-purple-500"></textarea>
 </div>
-​<div class="flex items-center gap-3">
-<button onclick="handleBulkTextParse()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+​<div class="flex items-center gap-2.5">
+<button onclick="handleBulkTextParse()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
 <i class="fa-solid fa-bolt"></i> Parse & Organize Topics
 </button>
-<button onclick="document.getElementById('bulk-raw-text').value=''" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+<button onclick="document.getElementById('bulk-raw-text').value=''" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
 Clear Box
 </button>
 </div>
-​<!-- Extraction Breakdown & Results Container -->
-<div id="bulk-preview-container" class="hidden flex-col gap-3 pt-3">
-<div id="bulk-summary-badge" class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-xs flex flex-col gap-1.5">
+​<div id="bulk-preview-container" class="hidden flex-col gap-3 pt-2">
+<div id="bulk-summary-badge" class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-xs flex flex-col gap-1">
 </div>
-​<div class="flex items-center justify-between">
-<h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Generated Topic Tests & Question Inventory:</h5>
-<button onclick="returnToBrowse()" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
-<span>View in Student Browse</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
-</button>
-</div>
-<div id="bulk-preview-list" class="max-h-64 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1"></div>
+<div id="bulk-preview-list" class="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1"></div>
 </div>
 </div>
-​<!-- ================= TAB: PAID STUDENTS & PERFORMANCE ANALYTICS ================= -->
-<div id="admin-tab-students" class="hidden flex-col gap-3.5">
-<div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+​<!-- TAB: PAID STUDENTS & PERFORMANCE ANALYTICS -->
+<div id="admin-tab-students" class="hidden flex-col gap-3">
+<div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
 <div>
 <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
-<i class="fa-solid fa-user-plus text-emerald-400"></i> Manual Student Account Creation
+<i class="fa-solid fa-user-plus text-emerald-400"></i> Student Account Generation
 </h4>
-<p class="text-[11px] text-slate-400">Generate extra logins or manage existing students registered through your bots.</p>
+<p class="text-[11px] text-slate-400">Create login credentials or review students enrolled through your bot.</p>
 </div>
-<button onclick="generateNewStudentAccount()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
-<i class="fa-solid fa-wand-magic-sparkles"></i> + Generate Student Login
+<button onclick="generateNewStudentAccount()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+<i class="fa-solid fa-wand-magic-sparkles"></i> + Create Login
 </button>
 </div>
-​<!-- Student Accounts Table & Performance Metrics -->
-<div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+​<div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2.5">
 <div class="flex items-center justify-between">
-<h4 class="text-xs font-bold text-white uppercase tracking-wider">Paid Members & Real-Time Exam Analytics</h4>
-<span id="student-count-badge" class="text-[11px] font-mono text-emerald-400">0 Paid Students</span>
+<h4 class="text-xs font-bold text-white uppercase tracking-wider">Registered Paid Members</h4>
+<span id="student-count-badge" class="text-[11px] font-mono text-emerald-400">0 Students</span>
 </div>
-​<div id="students-list-container" class="flex flex-col gap-2.5 max-h-96 overflow-y-auto custom-scrollbar pr-1"></div>
+​<div id="students-list-container" class="flex flex-col gap-2 max-h-80 overflow-y-auto custom-scrollbar pr-1"></div>
 </div>
 </div>
-​<!-- ================= TAB: STRUCTURE (SUBJECTS & FOLDERS) ================= -->
-<div id="admin-tab-tree" class="hidden flex-col gap-4">
+​<!-- TAB: STRUCTURE -->
+<div id="admin-tab-tree" class="hidden flex-col gap-3.5">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-​<!-- Add Subject Box -->
-<div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+<div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2">
 <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
 <i class="fa-solid fa-book-medical text-blue-400"></i> Create Subject
 </h4>
-<input id="new-subj-name" type="text" placeholder="e.g. Ophthalmology" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500" />
+<input id="new-subj-name" type="text" placeholder="e.g. Pathology" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500" />
 <button onclick="adminAddSubject()" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition">
 + Add Subject
 </button>
 </div>
-​<!-- Add Chapter / Topic Folder Box -->
-<div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5">
+​<div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2">
 <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
 <i class="fa-solid fa-folder-plus text-amber-400"></i> Create Topic Folder
 </h4>
 <select id="admin-target-subject" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none">
 </select>
-<input id="new-folder-name" type="text" placeholder="e.g. 03_Lens & Cataract" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
+<input id="new-folder-name" type="text" placeholder="e.g. 02_Lower Limb" class="bg-slate-950 text-xs text-slate-200 p-2 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-500" />
 <button onclick="adminAddFolder()" class="w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition">
 + Add Folder
 </button>
 </div>
 </div>
-​<!-- Current Tree Inventory -->
-<div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+​<div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2.5">
 <div class="flex items-center justify-between">
-<h4 class="text-xs font-bold text-white uppercase tracking-wider">Live Inventory (Subjects, Topics & Tests)</h4>
+<h4 class="text-xs font-bold text-white uppercase tracking-wider">Live Inventory</h4>
 <span id="tree-stats-badge" class="text-[11px] text-slate-400 font-mono">0 Subjects • 0 Tests</span>
 </div>
-<div id="admin-tree-display" class="flex flex-col gap-2.5 max-h-96 overflow-y-auto custom-scrollbar pr-1"></div>
+<div id="admin-tree-display" class="flex flex-col gap-2 max-h-80 overflow-y-auto custom-scrollbar pr-1"></div>
 </div>
 </div>
 </div>
 </main>
 ​<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
-​<!-- ================= AUTHENTICATION MODAL (STRICT ACCESS) ================= -->
+​<!-- AUTHENTICATION MODAL -->
 <div id="auth-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md items-center justify-center p-4">
-<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl flex flex-col gap-4 text-center animate-fadeIn">
-<div class="w-12 h-12 mx-auto rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl shadow-lg">
-<i class="fa-solid fa-lock"></i>
+<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-3.5 text-center animate-fadeIn relative">
+<button onclick="closeAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white p-1 text-sm">
+<i class="fa-solid fa-xmark"></i>
+</button>
+​<div class="w-11 h-11 mx-auto rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg shadow-lg">
+<i class="fa-solid fa-user-lock"></i>
 </div>
 <div>
-<h3 class="text-base font-bold text-white">Student & Admin Access</h3>
-<p class="text-xs text-slate-400 mt-0.5">Enter your Assigned ID & Password to begin</p>
+<h3 id="auth-modal-title" class="text-base font-bold text-white">Sign In</h3>
+<p class="text-xs text-slate-400 mt-0.5">Enter your Student or Admin ID & Password</p>
 </div>
-​<form onsubmit="event.preventDefault(); processUserLogin();" class="flex flex-col gap-3 text-left">
+​<form onsubmit="event.preventDefault(); processUserLogin();" class="flex flex-col gap-2.5 text-left">
 <div>
 <label class="text-[11px] text-slate-400 font-semibold block mb-1">User ID / Student ID:</label>
 <input id="login-user-id" type="text" placeholder="e.g. STU-1001 or admin" autocomplete="username" class="w-full text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 font-mono" required />
@@ -428,38 +408,37 @@ Clear Box
 <label class="text-[11px] text-slate-400 font-semibold block mb-1">Password:</label>
 <input id="login-password" type="password" placeholder="Enter password" autocomplete="current-password" class="w-full text-xs bg-slate-950 text-white p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500 font-mono" required />
 </div>
-<button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-md mt-1">
-Login & Start Practicing
+<button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-md mt-1">
+Login
 </button>
 </form>
-​<div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 text-left">
-<span class="text-slate-300 font-semibold block mb-0.5">ℹ️ Need Access?</span>
-Paid students receive credentials automatically from <b>@Nothing_0786</b> via Telegram.
+​<div class="p-2.5 bg-slate-950/70 rounded-xl border border-slate-800/80 text-[10px] text-slate-400 text-left leading-relaxed">
+<span class="text-slate-300 font-semibold block">Access Note:</span>
+• <b>Admin:</b> ID: <span class="text-amber-300 font-mono font-bold">admin</span> | Pass: <span class="text-amber-300 font-mono font-bold">149958</span>
 
-<span class="text-slate-500 text-[10px] mt-1 block">Demo Account: ID: <b>STU-1001</b> | Pass: <b>mbbs2026</b></span>
+• <b>Student Demo:</b> ID: <span class="text-blue-300 font-mono font-bold">STU-1001</span> | Pass: <span class="text-blue-300 font-mono font-bold">mbbs2026</span>
 </div>
 </div>
 </div>
-​<!-- GENERATED STUDENT CREDENTIALS NOTIFICATION MODAL -->
+​<!-- NEW STUDENT MODAL -->
 <div id="new-student-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-<div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-sm w-full p-5 shadow-2xl flex flex-col gap-3.5 text-center animate-fadeIn">
-<div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+<div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-sm w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
+<div class="w-11 h-11 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
 <i class="fa-solid fa-id-card"></i>
 </div>
 <div>
 <h3 class="text-sm font-bold text-white">Paid Student Login Created!</h3>
-<p class="text-[11px] text-slate-400 mt-0.5">Copy and forward this directly to your paid student:</p>
+<p class="text-[11px] text-slate-400 mt-0.5">Forward this directly to your student:</p>
 </div>
-​<div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-left flex flex-col gap-1 text-xs font-mono">
+​<div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-left flex flex-col gap-1 text-xs font-mono">
 <div><span class="text-slate-500">Student ID:</span> <b id="new-stu-display-id" class="text-blue-400">STU-1002</b></div>
-<div><span class="text-slate-500">Password:</span> <b id="new-stu-display-pass" class="text-emerald-400">mbbs-8392</b></div>
-<div><span class="text-slate-500">Role:</span> <span class="text-slate-300">Paid Subscriber</span></div>
+<div><span class="text-slate-500">Password:</span> <b id="new-stu-display-pass" class="text-emerald-400">mbbs8392</b></div>
 </div>
 ​<div class="flex gap-2">
-<button onclick="copyGeneratedCredentials()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow">
+<button onclick="copyGeneratedCredentials()" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow">
 <i class="fa-solid fa-copy mr-1"></i> Copy Login Details
 </button>
-<button onclick="closeNewStudentModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+<button onclick="closeNewStudentModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
 Done
 </button>
 </div>
@@ -467,115 +446,108 @@ Done
 </div>
 ​<!-- CHANGE ADMIN CREDENTIALS MODAL -->
 <div id="change-admin-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-<div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 text-center animate-fadeIn">
-<div class="w-10 h-10 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-base">
-<i class="fa-solid fa-key"></i>
-</div>
-<div>
-<h3 class="text-sm font-bold text-white">Update Admin Login</h3>
-<p class="text-[11px] text-slate-400 mt-0.5">Change Admin ID & Password</p>
-</div>
+<div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xs w-full p-4 shadow-2xl flex flex-col gap-2.5 text-center animate-fadeIn">
+<h3 class="text-xs font-bold text-white">Update Admin Login</h3>
 <form onsubmit="event.preventDefault(); saveNewAdminCredentials();" class="flex flex-col gap-2 text-left">
-<label class="text-[10px] text-slate-400">Admin ID / Username:</label>
+<label class="text-[10px] text-slate-400">Admin Username / ID:</label>
 <input id="admin-cfg-id" type="text" class="w-full text-xs bg-slate-950 text-white p-2 rounded-lg border border-slate-800 font-mono" required />
 ​<label class="text-[10px] text-slate-400">New Password:</label>
 <input id="admin-cfg-pass" type="password" class="w-full text-xs bg-slate-950 text-white p-2 rounded-lg border border-slate-800 font-mono" required />
-​<div class="flex gap-2 pt-2">
-<button type="submit" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition shadow">
+​<div class="flex gap-2 pt-1">
+<button type="submit" class="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition shadow">
 Save
 </button>
-<button type="button" onclick="closeChangeAdminModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
+<button type="button" onclick="closeChangeAdminModal()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition">
 Cancel
 </button>
 </div>
 </form>
 </div>
 </div>
-​<!-- DETAILED STUDENT REPORT MODAL (ADMIN VIEW) -->
+​<!-- STUDENT REPORT MODAL (ADMIN) -->
 <div id="student-report-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden animate-fadeIn">
-<div class="flex items-center justify-between border-b border-slate-800 pb-3">
+<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 shadow-2xl flex flex-col gap-3 max-h-[85vh] overflow-hidden animate-fadeIn">
+<div class="flex items-center justify-between border-b border-slate-800 pb-2">
 <div>
-<h3 id="report-modal-name" class="text-sm font-bold text-white">Student Exam Log</h3>
-<p id="report-modal-id" class="text-[11px] font-mono text-emerald-400">STU-1001</p>
+<h3 id="report-modal-name" class="text-xs font-bold text-white">Student Test Report</h3>
+<p id="report-modal-id" class="text-[10px] font-mono text-emerald-400">STU-1001</p>
 </div>
 <button onclick="closeStudentReportModal()" class="text-slate-400 hover:text-white p-1 text-sm">
 <i class="fa-solid fa-xmark"></i>
 </button>
 </div>
-​<div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1">
+​<div class="overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
 <div id="student-report-history" class="flex flex-col gap-2"></div>
 </div>
 </div>
 </div>
-​<!-- ANALYTICS MODAL (STUDENT VIEW) -->
+​<!-- ANALYTICS MODAL (STUDENT) -->
 <div id="analytics-modal" style="display: none;" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4">
-<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden">
-<div class="flex items-center justify-between border-b border-slate-800 pb-3">
-<div class="flex items-center gap-2">
-<i class="fa-solid fa-chart-column text-emerald-400"></i>
-<h3 class="text-sm font-bold text-white">Your Q-Bank Performance History</h3>
+<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 shadow-2xl flex flex-col gap-3 max-h-[85vh] overflow-hidden">
+<div class="flex items-center justify-between border-b border-slate-800 pb-2">
+<div class="flex items-center gap-1.5">
+<i class="fa-solid fa-chart-column text-emerald-400 text-xs"></i>
+<h3 class="text-xs font-bold text-white">Your Exam Performance</h3>
 </div>
 <button onclick="closeAnalyticsModal()" class="text-slate-400 hover:text-white p-1 text-sm">
 <i class="fa-solid fa-xmark"></i>
 </button>
 </div>
-​<div class="overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-1">
+​<div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1">
 <div class="grid grid-cols-3 gap-2 text-center">
-<div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-<span class="text-[10px] text-slate-400 uppercase font-semibold block">Tests Taken</span>
-<span id="stat-total-tests" class="text-base font-bold text-white">0</span>
+<div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+<span class="text-[9px] text-slate-400 uppercase font-semibold block">Tests</span>
+<span id="stat-total-tests" class="text-sm font-bold text-white">0</span>
 </div>
-<div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-<span class="text-[10px] text-slate-400 uppercase font-semibold block">MCQs Solved</span>
-<span id="stat-total-solved" class="text-base font-bold text-blue-400">0</span>
+<div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+<span class="text-[9px] text-slate-400 uppercase font-semibold block">Solved</span>
+<span id="stat-total-solved" class="text-sm font-bold text-blue-400">0</span>
 </div>
-<div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-<span class="text-[10px] text-slate-400 uppercase font-semibold block">Avg Accuracy</span>
-<span id="stat-avg-accuracy" class="text-base font-bold text-emerald-400">0%</span>
+<div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+<span class="text-[9px] text-slate-400 uppercase font-semibold block">Avg Accuracy</span>
+<span id="stat-avg-accuracy" class="text-sm font-bold text-emerald-400">0%</span>
 </div>
 </div>
 ​<div>
-<h4 class="text-xs font-bold text-slate-300 mb-2">Previous Attempts:</h4>
-<div id="history-logs-container" class="flex flex-col gap-2"></div>
+<h4 class="text-[11px] font-bold text-slate-300 mb-1.5">Completed Tests:</h4>
+<div id="history-logs-container" class="flex flex-col gap-1.5"></div>
 </div>
 </div>
 </div>
 </div>
 ​<script>
 // ================= GLOBAL STATE =================
-let ALL_SUBJECTS = {};
-let activeSubjectName = "Anatomy";
-let currentFolder = null;
-let activeTest = null;
-let currentQuestionIndex = 0;
-let userAnswers = {};
-let markedForReview = new Set();
-let timerInterval = null;
-let timeRemainingSeconds = 0;
-let timeSpentSeconds = 0;
-​// Authentication & User State
-let currentUser = null;
-let USERS_DATABASE = [];
-let STUDENT_ANALYTICS = {};
-​const AUTH_STORAGE_KEY = "mbbs_auth_session_v4";
-const USERS_DB_STORAGE_KEY = "mbbs_paid_users_v4";
-const ANALYTICS_STORAGE_KEY = "mbbs_student_analytics_v4";
-const DB_STORAGE_KEY = "mbbs_qbank_local_db_v4";
-const ADMIN_CRED_KEY = "mbbs_admin_credentials_v4";
-​const DEFAULT_ADMIN = {
+var ALL_SUBJECTS = {};
+var activeSubjectName = "Anatomy";
+var currentFolder = null;
+var activeTest = null;
+var currentQuestionIndex = 0;
+var userAnswers = {};
+var markedForReview = new Set();
+var timerInterval = null;
+var timeRemainingSeconds = 0;
+var timeSpentSeconds = 0;
+​var currentUser = null;
+var USERS_DATABASE = [];
+var STUDENT_ANALYTICS = {};
+​var AUTH_STORAGE_KEY = "mbbs_auth_session_v5";
+var USERS_DB_STORAGE_KEY = "mbbs_paid_users_v5";
+var ANALYTICS_STORAGE_KEY = "mbbs_student_analytics_v5";
+var DB_STORAGE_KEY = "mbbs_qbank_local_db_v5";
+var ADMIN_CRED_KEY = "mbbs_admin_credentials_v5";
+​var DEFAULT_ADMIN = {
 id: "admin",
 pass: "149958",
 name: "Administrator"
 };
-​const DEFAULT_PRELOAD_DATA = {
+​var DEFAULT_PRELOAD_DATA = {
 "Anatomy": {
 folders: [
 {
 id: "01_upper_limb",
 name: "01_Upper Limb",
 description: "Brachial plexus, shoulder, arm, cubital fossa & hand nerves",
-testCount: 1,
+testCount: 2,
 tests: [
 {
 id: "test_ana_upper_001",
@@ -690,28 +662,67 @@ correctIndex: 1,
 explanation: "Klumpke palsy results from injury to the C8 and T1 ventral rami / lower trunk. Loss of T1 innervation to the intrinsic hand muscles produces claw hand."
 }
 ]
+},
+{
+id: "test_ana_upper_002",
+qid: "ANA-002",
+title: "Brachial Plexus & Nerve Injuries (Topic Practice)",
+totalQuestions: 2,
+totalMarks: 8,
+durationMinutes: 5,
+questions: [
+{
+id: "q_ana_b1",
+qid: "ANA-001",
+text: "Which roots of the brachial plexus are most likely injured in a classic 'waiter's tip' Erb-Duchenne presentation?",
+options: ["C8 and T1", "C5 and C6", "C7 and C8", "C5, C6, and C7"],
+correctIndex: 1,
+explanation: "Erb's palsy involves upper trunk traction (C5-C6 roots)."
+},
+{
+id: "q_ana_b2",
+qid: "ANA-008",
+text: "An infant demonstrates a claw hand deformity and ipsilateral Horner syndrome following traction during a breech delivery. Which roots are injured?",
+options: ["C5-C6", "C8-T1", "C7 only", "C4-C5"],
+correctIndex: 1,
+explanation: "Klumpke palsy involves C8-T1 nerve roots."
 }
 ]
 }
 ]
 }
+]
+},
+"Physiology": { folders: [] },
+"Biochemistry": { folders: [] },
+"Microbiology": { folders: [] },
+"Pathology": { folders: [] },
+"Pharmacology": { folders: [] },
+"General Medicine": { folders: [] },
+"General Surgery": { folders: [] }
 };
-​function showToast(message, type = "info") {
-const container = document.getElementById("toast-container");
+​function showToast(message, type) {
+type = type || "info";
+var container = document.getElementById("toast-container");
 if (!container) return;
-const toast = document.createElement("div");
-toast.className = pointer-events-auto p-3.5 rounded-xl border text-xs font-semibold shadow-2xl flex items-center gap-2.5 animate-fadeIn transition-all ${ type === "success"  ? "bg-slate-900 border-emerald-500/50 text-emerald-300"  : type === "error"  ? "bg-slate-900 border-rose-500/50 text-rose-300"  : "bg-slate-900 border-blue-500/50 text-blue-300" };
-​const iconClass = type === "success" ? "fa-circle-check text-emerald-400" : type === "error" ? "fa-circle-exclamation text-rose-400" : "fa-circle-info text-blue-400";
-toast.innerHTML = <i class="fa-solid ${iconClass} text-sm"></i><span>${message}</span>;
+var toast = document.createElement("div");
+toast.className = "pointer-events-auto p-3 rounded-xl border text-xs font-semibold shadow-2xl flex items-center gap-2 animate-fadeIn transition-all " +
+(type === "success"
+? "bg-slate-900 border-emerald-500/50 text-emerald-300"
+: type === "error"
+? "bg-slate-900 border-rose-500/50 text-rose-300"
+: "bg-slate-900 border-blue-500/50 text-blue-300");
+​var iconClass = type === "success" ? "fa-circle-check text-emerald-400" : type === "error" ? "fa-circle-exclamation text-rose-400" : "fa-circle-info text-blue-400";
+toast.innerHTML = '<i class="fa-solid ' + iconClass + ' text-sm"></i><span>' + message + '</span>';
 container.appendChild(toast);
-​setTimeout(() => {
+​setTimeout(function() {
 toast.style.opacity = "0";
-setTimeout(() => toast.remove(), 250);
-}, 3500);
+setTimeout(function() { toast.remove(); }, 250);
+}, 3200);
 }
 ​function getAdminCredentials() {
 try {
-const stored = localStorage.getItem(ADMIN_CRED_KEY);
+var stored = localStorage.getItem(ADMIN_CRED_KEY);
 return stored ? JSON.parse(stored) : DEFAULT_ADMIN;
 } catch (e) {
 return DEFAULT_ADMIN;
@@ -719,7 +730,7 @@ return DEFAULT_ADMIN;
 }
 ​function setAdminCredentials(id, pass) {
 try {
-localStorage.setItem(ADMIN_CRED_KEY, JSON.stringify({ id, pass, name: "Administrator" }));
+localStorage.setItem(ADMIN_CRED_KEY, JSON.stringify({ id: id, pass: pass, name: "Administrator" }));
 return true;
 } catch (e) {
 return false;
@@ -727,10 +738,8 @@ return false;
 }
 ​function loadUsersDatabase() {
 try {
-const stored = localStorage.getItem(USERS_DB_STORAGE_KEY);
-if (stored) {
-USERS_DATABASE = JSON.parse(stored);
-}
+var stored = localStorage.getItem(USERS_DB_STORAGE_KEY);
+if (stored) USERS_DATABASE = JSON.parse(stored);
 } catch (e) {}
 ​if (!USERS_DATABASE || USERS_DATABASE.length === 0) {
 USERS_DATABASE = [
@@ -739,7 +748,7 @@ id: "STU-1001",
 pass: "mbbs2026",
 name: "Dr. Demo Candidate",
 username: "@mbbs_candidate",
-created: new Date().toISOString().split('T')[0]
+created: "2026-10-01"
 }
 ];
 saveUsersDatabase();
@@ -752,7 +761,7 @@ localStorage.setItem(USERS_DB_STORAGE_KEY, JSON.stringify(USERS_DATABASE));
 }
 ​function loadStudentAnalytics() {
 try {
-const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
+var stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
 STUDENT_ANALYTICS = stored ? JSON.parse(stored) : {};
 } catch (e) {
 STUDENT_ANALYTICS = {};
@@ -769,12 +778,12 @@ localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(ALL_SUBJECTS));
 } catch (e) {}
 }
 ​function extractAuthParams() {
-let uid = null;
-let key = null;
-let name = null;
-let uname = null;
+var uid = null;
+var key = null;
+var name = null;
+var uname = null;
 ​try {
-const searchParams = new URLSearchParams(window.location.search);
+var searchParams = new URLSearchParams(window.location.search);
 uid = searchParams.get('uid');
 key = searchParams.get('key');
 name = searchParams.get('name');
@@ -782,32 +791,35 @@ uname = searchParams.get('uname');
 } catch (e) {}
 ​if (!uid && window.location.hash) {
 try {
-const rawHash = window.location.hash.replace(/^#??/, '');
-const hashParams = new URLSearchParams(rawHash);
+var rawHash = window.location.hash.replace(/^#??/, '');
+var hashParams = new URLSearchParams(rawHash);
 uid = uid || hashParams.get('uid');
 key = key || hashParams.get('key');
 name = name || hashParams.get('name');
 uname = uname || hashParams.get('uname');
 } catch (e) {}
 }
-​if (!uid && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
-const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+​// Check Telegram WebApp context
+if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+var tgUser = window.Telegram.WebApp.initDataUnsafe.user;
 if (tgUser && tgUser.id) {
-const tgUid = String(tgUser.id);
-const suffix = tgUid.length >= 4 ? tgUid.slice(-4) : tgUid;
-uid = STU-${suffix};
-key = mbbs${suffix};
-name = ${tgUser.first_name || ''} ${tgUser.last_name || ''}.trim() || Dr. ${tgUser.first_name || 'Candidate'};
-uname = tgUser.username ? @${tgUser.username} : "";
+var tgUid = String(tgUser.id);
+// If Telegram user is the admin (ID 8417145295 or username Nothing_0786)
+if (tgUid === "8417145295" || (tgUser.username && tgUser.username.toLowerCase() === "nothing_0786")) {
+return { uid: "admin", key: "149958", name: "Administrator", uname: "@Nothing_0786" };
+}
+if (!uid) {
+var suffix = tgUid.length >= 4 ? tgUid.slice(-4) : tgUid;
+uid = "STU-" + suffix;
+key = key || "mbbs" + suffix;
+name = name || ((tgUser.first_name || '') + " " + (tgUser.last_name || '')).trim() || "Dr. Candidate";
+uname = uname || (tgUser.username ? "@" + tgUser.username : "");
+}
 }
 }
 ​function safeDecode(val) {
 if (!val) return null;
-try {
-return decodeURIComponent(val.trim());
-} catch (e) {
-return val.trim();
-}
+try { return decodeURIComponent(val.trim()); } catch (e) { return val.trim(); }
 }
 ​return {
 uid: uid ? uid.trim() : null,
@@ -817,38 +829,33 @@ uname: safeDecode(uname)
 };
 }
 ​function checkCurrentSession() {
-const { uid: paramUid, key: paramKey, name: paramName, uname: paramUname } = extractAuthParams();
-​if (paramUid) {
-const adminCreds = getAdminCredentials();
-if (paramUid.toLowerCase() === adminCreds.id.toLowerCase() && (!paramKey || paramKey === adminCreds.pass)) {
+var params = extractAuthParams();
+var adminCreds = getAdminCredentials();
+​if (params.uid) {
+if (params.uid.toLowerCase() === adminCreds.id.toLowerCase() && (!params.key || params.key === adminCreds.pass)) {
 currentUser = { id: adminCreds.id, name: adminCreds.name, username: "@admin", role: "admin" };
 saveSessionAndLaunch();
-showToast("Logged in as Administrator.", "success");
+showToast("Welcome, Administrator!", "success");
 return;
 }
-​let cleanId = paramUid.toUpperCase();
+​var cleanId = params.uid.toUpperCase();
 if (!cleanId.startsWith("STU-")) {
-if (/^\d+$/.test(cleanId)) cleanId = STU-${cleanId};
+if (/^\d+$/.test(cleanId)) cleanId = "STU-" + cleanId;
 else if (/^STU/i.test(cleanId)) cleanId = cleanId.replace(/^STU/i, "STU-");
 }
-​if (cleanId.startsWith("STU-") && paramKey && paramKey.length >= 3) {
-let matched = USERS_DATABASE.find(u => u.id.toUpperCase() === cleanId);
-const studentDisplayName = paramName || (matched ? matched.name : Dr. Candidate (${cleanId}));
-const studentUsername = paramUname || (matched ? matched.username : "");
+​if (cleanId.startsWith("STU-")) {
+var matched = USERS_DATABASE.find(function(u) { return u.id.toUpperCase() === cleanId; });
+var studentDisplayName = params.name || (matched ? matched.name : "Dr. Candidate (" + cleanId + ")");
+var studentUsername = params.uname || (matched ? matched.username : "");
 ​if (!matched) {
 matched = {
 id: cleanId,
-pass: paramKey,
+pass: params.key || "mbbs2026",
 name: studentDisplayName,
 username: studentUsername,
-created: new Date().toISOString().split('T')[0]
+created: "2026-10-07"
 };
 USERS_DATABASE.push(matched);
-saveUsersDatabase();
-} else {
-matched.pass = paramKey;
-if (paramName) matched.name = paramName;
-if (paramUname) matched.username = paramUname;
 saveUsersDatabase();
 }
 ​currentUser = {
@@ -858,12 +865,12 @@ username: matched.username,
 role: "student"
 };
 saveSessionAndLaunch();
-showToast(Welcome, ${currentUser.name}! Auto-logged in., "success");
+showToast("Logged in as " + currentUser.name, "success");
 return;
 }
 }
 ​try {
-const session = localStorage.getItem(AUTH_STORAGE_KEY);
+var session = localStorage.getItem(AUTH_STORAGE_KEY);
 if (session) {
 currentUser = JSON.parse(session);
 if (currentUser && currentUser.id) {
@@ -874,34 +881,53 @@ return;
 }
 }
 } catch (e) {}
-​openAuthModal();
+​// Default demo student if no session exists
+currentUser = {
+id: "STU-1001",
+name: "Dr. Demo Candidate",
+username: "@mbbs_candidate",
+role: "student"
+};
+applyUserSessionUI();
+renderBrowseView();
 }
-​function openAuthModal() {
-const modal = document.getElementById('auth-modal');
-if (modal) {
-modal.classList.remove('hidden');
-modal.style.display = 'flex';
-const uInput = document.getElementById('login-user-id');
-const pInput = document.getElementById('login-password');
-if (uInput) uInput.value = "";
-if (pInput) pInput.value = "";
+​function triggerAdminAccess() {
+if (currentUser && currentUser.role === "admin") {
+openAdminPanel();
+} else {
+openAuthModal(true);
 }
+}
+​function openAuthModal(forAdminOnly) {
+var modal = document.getElementById('auth-modal');
+var title = document.getElementById('auth-modal-title');
+var uInput = document.getElementById('login-user-id');
+var pInput = document.getElementById('login-password');
+​if (!modal) return;
+if (forAdminOnly) {
+title.textContent = "Admin Portal Sign-In";
+uInput.value = "admin";
+pInput.value = "";
+pInput.focus();
+} else {
+title.textContent = "Sign In (Student / Admin)";
+uInput.value = "";
+pInput.value = "";
+}
+​modal.style.display = 'flex';
 }
 ​function closeAuthModal() {
-const modal = document.getElementById('auth-modal');
-if (modal) {
-modal.style.display = 'none';
-modal.classList.add('hidden');
-}
+var modal = document.getElementById('auth-modal');
+if (modal) modal.style.display = 'none';
 }
 ​function processUserLogin() {
-let uId = document.getElementById('login-user-id').value.trim();
-let uPass = document.getElementById('login-password').value.trim();
+var uId = document.getElementById('login-user-id').value.trim();
+var uPass = document.getElementById('login-password').value.trim();
 ​if (!uId || !uPass) {
 showToast("Please enter both User ID and Password.", "error");
 return;
 }
-​const adminCreds = getAdminCredentials();
+​var adminCreds = getAdminCredentials();
 ​if (uId.toLowerCase() === adminCreds.id.toLowerCase() && uPass === adminCreds.pass) {
 currentUser = {
 id: adminCreds.id,
@@ -910,27 +936,25 @@ username: "@admin",
 role: "admin"
 };
 saveSessionAndLaunch();
-showToast("Logged in as Administrator.", "success");
+showToast("Welcome back, Administrator!", "success");
+openAdminPanel();
 return;
 }
-​let normalizedId = uId.toUpperCase();
+​var normalizedId = uId.toUpperCase();
 if (!normalizedId.startsWith("STU-")) {
-if (/^\d{3,}/.test(normalizedId)) {
-normalizedId = `STU-${normalizedId}`;
-} else if (/^STU\d+/i.test(normalizedId)) {
-normalizedId = normalizedId.replace(/^STU/i, "STU-");
+if (/^\d{3,}/.test(normalizedId)) normalizedId = "STU-" + normalizedId;
+else if (/^STU\d+/i.test(normalizedId)) normalizedId = normalizedId.replace(/^STU/i, "STU-");
 }
-}
-​let matchedStudent = USERS_DATABASE.find(u =>
-u.id.toUpperCase() === normalizedId && u.pass.toLowerCase() === uPass.toLowerCase()
-);
-​if (!matchedStudent && normalizedId.startsWith("STU-") && uPass.length >= 4) {
+​var matchedStudent = USERS_DATABASE.find(function(u) {
+return u.id.toUpperCase() === normalizedId && u.pass.toLowerCase() === uPass.toLowerCase();
+});
+​if (!matchedStudent && normalizedId.startsWith("STU-") && uPass.length >= 3) {
 matchedStudent = {
 id: normalizedId,
 pass: uPass,
-name: Dr. Candidate (${normalizedId}),
+name: "Dr. Candidate (" + normalizedId + ")",
 username: "",
-created: new Date().toISOString().split('T')[0]
+created: "2026-10-07"
 };
 USERS_DATABASE.push(matchedStudent);
 saveUsersDatabase();
@@ -938,15 +962,15 @@ saveUsersDatabase();
 ​if (matchedStudent) {
 currentUser = {
 id: matchedStudent.id,
-name: matchedStudent.name || Dr. Candidate,
+name: matchedStudent.name || "Dr. Candidate",
 username: matchedStudent.username || "",
 role: "student"
 };
 saveSessionAndLaunch();
-showToast(Welcome back, ${currentUser.name}!, "success");
+showToast("Welcome, " + currentUser.name + "!", "success");
 return;
 }
-​showToast("Access Denied: Invalid credentials or inactive subscription.", "error");
+​showToast("Access Denied: Invalid credentials.", "error");
 }
 ​function saveSessionAndLaunch() {
 try {
@@ -956,732 +980,125 @@ closeAuthModal();
 applyUserSessionUI();
 renderBrowseView();
 }
-​function handleAuthAction() {
-try {
-localStorage.removeItem(AUTH_STORAGE_KEY);
-} catch (e) {}
-currentUser = null;
-showToast("Logged out successfully.", "info");
-openAuthModal();
-}
 ​function applyUserSessionUI() {
-const tag = document.getElementById('header-user-tag');
-const greeting = document.getElementById('user-greeting');
-const adminBtn = document.getElementById('btn-admin-portal');
+var tag = document.getElementById('header-user-tag');
+var greeting = document.getElementById('user-greeting');
+var adminLabel = document.getElementById('admin-btn-label');
+var adminBtn = document.getElementById('btn-admin-portal');
+var sessionText = document.getElementById('session-action-text');
+var sessionIcon = document.getElementById('session-action-icon');
 ​if (!currentUser) return;
 ​if (currentUser.role === "admin") {
 tag.textContent = "Admin";
 tag.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30";
-greeting.innerHTML = Welcome, <b>Administrator</b> • Curated by @Nothing_0786;
-if (adminBtn) adminBtn.classList.remove('hidden');
+greeting.innerHTML = "Welcome, <b>Administrator</b> • Curated by @Nothing_0786";
+adminBtn.className = "px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white border border-amber-500 shadow-md flex items-center gap-1.5 transition cursor-pointer";
+adminLabel.textContent = "Admin Hub";
+sessionText.textContent = "Switch";
+sessionIcon.className = "fa-solid fa-arrows-rotate text-amber-400";
 } else {
 tag.textContent = currentUser.id;
 tag.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30";
-const unameDisplay = currentUser.username ? (${currentUser.username}) : "";
-greeting.innerHTML = Welcome, <b>${currentUser.name}</b> ${unameDisplay} • Full Q-Bank Active;
-if (adminBtn) adminBtn.classList.add('hidden');
+var unameDisplay = currentUser.username ? "(" + currentUser.username + ")" : "";
+greeting.innerHTML = "Candidate: <b>" + currentUser.name + "</b> " + unameDisplay;
+adminBtn.className = "px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition cursor-pointer";
+adminLabel.textContent = "Admin";
+sessionText.textContent = "Logout";
+sessionIcon.className = "fa-solid fa-right-from-bracket text-rose-400";
 }
-}
-​function generateNewStudentAccount() {
-const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-const randomPassNum = Math.floor(1000 + Math.random() * 9000);
-​const newId = STU-${randomSuffix};
-const newPass = mbbs${randomPassNum};
-const newStudent = {
-id: newId,
-pass: newPass,
-name: Dr. Candidate (${newId}),
-username: "",
-created: new Date().toISOString().split('T')[0]
-};
-​USERS_DATABASE.push(newStudent);
-saveUsersDatabase();
-refreshStudentsList();
-​document.getElementById('new-stu-display-id').textContent = newId;
-document.getElementById('new-stu-display-pass').textContent = newPass;
-document.getElementById('new-student-modal').style.display = 'flex';
-showToast(Account ${newId} created!, "success");
-}
-​function closeNewStudentModal() {
-document.getElementById('new-student-modal').style.display = 'none';
-}
-​function copyGeneratedCredentials() {
-const sId = document.getElementById('new-stu-display-id').textContent;
-const sPass = document.getElementById('new-stu-display-pass').textContent;
-const copyText = 🩺 MBBS Master Q-Bank Access:\nApp Link: https://ahteshamneet-gif.github.io/Mbbsbot/index.html\nUser ID: ${sId}\nPassword: ${sPass}\nBest wishes for your preparation!;
-​const tempTextArea = document.createElement("textarea");
-tempTextArea.value = copyText;
-document.body.appendChild(tempTextArea);
-tempTextArea.select();
-document.execCommand("copy");
-document.body.removeChild(tempTextArea);
-showToast("Credentials copied to clipboard!", "success");
-}
-​function deleteStudentAccount(sId) {
-USERS_DATABASE = USERS_DATABASE.filter(u => u.id !== sId);
-saveUsersDatabase();
-refreshStudentsList();
-showToast(User ${sId} removed., "info");
-}
-​function openStudentReportModal(sId) {
-const student = USERS_DATABASE.find(u => u.id === sId);
-if (!student) return;
-​const stats = STUDENT_ANALYTICS[sId] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
-document.getElementById('report-modal-name').textContent = ${student.name} ${student.username || ''};
-document.getElementById('report-modal-id').textContent = ${student.id} • ${stats.testsTaken} tests completed (${stats.avgAccuracy}% avg accuracy);
-​const container = document.getElementById('student-report-history');
-container.innerHTML = "";
-​if (!stats.history || stats.history.length === 0) {
-container.innerHTML = <p class="text-xs text-slate-500 italic p-3 text-center">No test attempts logged yet for this candidate.</p>;
-} else {
-stats.history.forEach(h => {
-const item = document.createElement('div');
-item.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs";
-item.innerHTML = <div> <span class="font-bold text-slate-200 block">${h.testTitle}</span> <span class="text-[10px] text-slate-500">${h.date} • Time: ${h.timeSpent}</span> </div> <div class="text-right"> <span class="font-bold text-sm ${h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${h.accuracy}%</span> <span class="text-[10px] text-slate-400 block">${h.score}/${h.maxScore} marks (${h.correct}/${h.total} correct)</span> </div>;
-container.appendChild(item);
-});
-}
-​document.getElementById('student-report-modal').style.display = 'flex';
-}
-​function closeStudentReportModal() {
-document.getElementById('student-report-modal').style.display = 'none';
-}
-​function refreshStudentsList() {
-const container = document.getElementById('students-list-container');
-const badge = document.getElementById('student-count-badge');
-if (!container) return;
-container.innerHTML = "";
-​if (badge) badge.textContent = ${USERS_DATABASE.length} Paid Students;
-​if (USERS_DATABASE.length === 0) {
-container.innerHTML = <p class="text-xs text-slate-500 italic p-3 text-center">No student accounts registered yet. Students appear here automatically when granted Q-Bank access in your bot.</p>;
-return;
-}
-​USERS_DATABASE.forEach(s => {
-const stats = STUDENT_ANALYTICS[s.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0 };
-const unameDisplay = s.username ? <span class="text-blue-400 font-normal">${s.username}</span> : "";
-const card = document.createElement('div');
-card.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs";
-card.innerHTML = `
-<div class="flex items-center gap-3">
-<div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-<i class="fa-solid fa-user-doctor"></i>
-</div>
-<div>
-<div class="flex items-center gap-2">
-<span class="font-bold text-white font-mono">{s.id}</span>
-<span class="text-[10px] text-slate-400">Pass: <b class="text-emerald-400 font-mono">{s.pass}</b></span>
-</div>
-<p class="text-[11px] text-slate-400">${s.name} ${unameDisplay} • Enrolled: ${s.created}</p>
-</div>
-</div>
-​<div class="flex items-center gap-3">
-<div class="text-right">
-<span class="font-bold text-slate-200 block">{stats.testsTaken} tests taken</span>
-<span class="text-[10px] text-emerald-400 font-bold">{stats.avgAccuracy}% Avg Acc (${stats.mcqsSolved} Qs)</span>
-</div>
-<button onclick="openStudentReportModal('${s.id}')" title="View Full Report" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] font-semibold border border-slate-700">
-<i class="fa-solid fa-chart-line text-blue-400 mr-1"></i> Report
-</button>
-<button onclick="deleteStudentAccount('${s.id}')" title="Revoke User" class="text-rose-400 hover:text-rose-300 p-1">
-<i class="fa-solid fa-trash"></i>
-</button>
-</div>
-`;
-container.appendChild(card);
-});
-}
-​function openChangeAdminCredentialsModal() {
-const creds = getAdminCredentials();
-document.getElementById('admin-cfg-id').value = creds.id;
-document.getElementById('admin-cfg-pass').value = creds.pass;
-document.getElementById('change-admin-modal').style.display = 'flex';
-}
-​function closeChangeAdminModal() {
-document.getElementById('change-admin-modal').style.display = 'none';
-}
-​function saveNewAdminCredentials() {
-const newId = document.getElementById('admin-cfg-id').value.trim();
-const newPass = document.getElementById('admin-cfg-pass').value.trim();
-if (!newId || !newPass) {
-showToast("Admin ID and Password cannot be empty!", "error");
-return;
-}
-setAdminCredentials(newId, newPass);
-if (currentUser && currentUser.role === "admin") {
-currentUser.id = newId;
-try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(currentUser)); } catch (e) {}
-}
-closeChangeAdminModal();
-showToast("Admin credentials updated!", "success");
-}
-​function shuffleQuestionOptions(question) {
-const indexed = question.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
-​for (let i = indexed.length - 1; i > 0; i--) {
-const j = Math.floor(Math.random() * (i + 1));
-[indexed[i], indexed[j]] = [indexed[j], indexed[i]];
-}
-​const newCorrectIndex = indexed.findIndex(item => item.originalIndex === question.correctIndex);
-​return {
-id: question.id,
-qid: question.qid,
-text: question.text,
-options: indexed.map(i => i.text),
-correctIndex: newCorrectIndex,
-explanation: question.explanation
-};
-}
-​function startExam(test) {
-if (!test.questions || test.questions.length === 0) {
-showToast("This test paper has no questions yet.", "error");
-return;
-}
-​activeTest = {
-...test,
-questions: test.questions.map(q => shuffleQuestionOptions(q))
-};
-​currentQuestionIndex = 0;
-userAnswers = {};
-markedForReview.clear();
-timeRemainingSeconds = (test.durationMinutes || 15) * 60;
-timeSpentSeconds = 0;
-​const viewBrowse = document.getElementById('view-browse');
-const viewExam = document.getElementById('view-exam');
-const viewResult = document.getElementById('view-result');
-const viewAdmin = document.getElementById('view-admin');
-​if (viewBrowse) { viewBrowse.classList.add('hidden'); viewBrowse.style.display = 'none'; }
-if (viewExam) { viewExam.classList.remove('hidden'); viewExam.style.display = 'flex'; }
-if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
-if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
-​document.getElementById('exam-test-name').textContent = activeTest.title;
-document.getElementById('total-q-count').textContent = activeTest.questions.length;
-​clearInterval(timerInterval);
-updateTimerDisplay();
-timerInterval = setInterval(() => {
-timeRemainingSeconds--;
-timeSpentSeconds++;
-updateTimerDisplay();
-if (timeRemainingSeconds <= 0) {
-clearInterval(timerInterval);
-finishExam();
-}
-}, 1000);
-​renderCurrentQuestion();
-renderPalette();
-}
-​function updateTimerDisplay() {
-const minutes = Math.floor(timeRemainingSeconds / 60);
-const seconds = timeRemainingSeconds % 60;
-const el = document.getElementById('exam-timer');
-if (el) {
-el.textContent = ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')};
-}
-}
-​function renderCurrentQuestion() {
-const q = activeTest.questions[currentQuestionIndex];
-document.getElementById('current-q-index').textContent = currentQuestionIndex + 1;
-document.getElementById('exam-qid').textContent = QID: ${q.qid || 'MCQ'};
-document.getElementById('question-text').textContent = q.text;
-​const optsContainer = document.getElementById('options-container');
-optsContainer.innerHTML = "";
-​const alphabet = ['A', 'B', 'C', 'D'];
-const currentSelected = userAnswers[q.id];
-​q.options.forEach((optText, idx) => {
-const isSelected = currentSelected === idx;
-const btn = document.createElement('button');
-btn.className = w-full text-left p-3.5 rounded-xl border text-xs md:text-sm font-medium transition flex items-start gap-3 ${ isSelected  ? 'bg-blue-600/15 border-blue-500 text-blue-300 shadow ring-1 ring-blue-500'  : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700' };
-btn.onclick = () => selectOption(idx);
-btn.innerHTML = <span class="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold ${ isSelected ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700' }">${alphabet[idx]}</span> <span class="pt-0.5 leading-relaxed">${optText}</span>;
-optsContainer.appendChild(btn);
-});
-​const prevBtn = document.getElementById('btn-prev-q');
-if (prevBtn) {
-prevBtn.disabled = (currentQuestionIndex === 0);
-prevBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
-}
-​const nextBtn = document.getElementById('btn-next-q');
-if (nextBtn) {
-if (currentQuestionIndex === activeTest.questions.length - 1) {
-nextBtn.innerHTML = Submit Exam <i class="fa-solid fa-flag text-[10px]"></i>;
-} else {
-nextBtn.innerHTML = Next <i class="fa-solid fa-chevron-right text-[10px]"></i>;
-}
-}
-​renderPalette();
-}
-​function selectOption(index) {
-const q = activeTest.questions[currentQuestionIndex];
-userAnswers[q.id] = index;
-renderCurrentQuestion();
-renderPalette();
-}
-​function toggleMarkReview() {
-const q = activeTest.questions[currentQuestionIndex];
-if (markedForReview.has(q.id)) {
-markedForReview.delete(q.id);
-} else {
-markedForReview.add(q.id);
-}
-renderPalette();
-}
-​function navigateQuestion(direction) {
-const target = currentQuestionIndex + direction;
-if (target >= 0 && target < activeTest.questions.length) {
-currentQuestionIndex = target;
-renderCurrentQuestion();
-} else if (target >= activeTest.questions.length) {
-confirmSubmitExam();
-}
-}
-​function jumpToQuestion(idx) {
-currentQuestionIndex = idx;
-renderCurrentQuestion();
-}
-​function renderPalette() {
-const container = document.getElementById('palette-container');
-if (!container) return;
-container.innerHTML = "";
-​activeTest.questions.forEach((q, idx) => {
-const isCurrent = idx === currentQuestionIndex;
-const isAnswered = userAnswers[q.id] !== undefined;
-const isMarked = markedForReview.has(q.id);
-​let bgClass = "bg-slate-800 border-slate-700 text-slate-400";
-if (isAnswered) bgClass = "bg-emerald-600 border-emerald-500 text-white font-bold";
-if (isMarked) bgClass = "bg-amber-600 border-amber-500 text-white font-bold";
-​const btn = document.createElement('button');
-btn.className = w-7 h-7 rounded-lg text-xs flex items-center justify-center border transition ${bgClass} ${ isCurrent ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900 scale-105' : '' };
-btn.textContent = idx + 1;
-btn.onclick = () => jumpToQuestion(idx);
-container.appendChild(btn);
-});
-}
-​function confirmSubmitExam() {
-finishExam();
-}
-​function finishExam() {
-clearInterval(timerInterval);
-​let correctCount = 0;
-let wrongCount = 0;
-let unattempted = 0;
-​activeTest.questions.forEach(q => {
-const userChoice = userAnswers[q.id];
-if (userChoice === undefined) {
-unattempted++;
-} else if (userChoice === q.correctIndex) {
-correctCount++;
-} else {
-wrongCount++;
-}
-});
-​const totalQuestions = activeTest.questions.length;
-const rawScore = (correctCount * 4) - (wrongCount * 1);
-const maxScore = totalQuestions * 4;
-const accuracyPercent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-​const minutesSpent = Math.floor(timeSpentSeconds / 60);
-const secondsSpent = timeSpentSeconds % 60;
-const timeStr = ${String(minutesSpent).padStart(2, '0')}:${String(secondsSpent).padStart(2, '0')};
-​if (currentUser && currentUser.id) {
-if (!STUDENT_ANALYTICS[currentUser.id]) {
-STUDENT_ANALYTICS[currentUser.id] = {
-testsTaken: 0,
-mcqsSolved: 0,
-avgAccuracy: 0,
-history: []
-};
-}
-​const studentRec = STUDENT_ANALYTICS[currentUser.id];
-studentRec.testsTaken += 1;
-studentRec.mcqsSolved += totalQuestions;
-studentRec.history.unshift({
-testTitle: activeTest.title,
-score: rawScore,
-maxScore: maxScore,
-accuracy: accuracyPercent,
-correct: correctCount,
-total: totalQuestions,
-timeSpent: timeStr,
-date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-});
-​const sumAcc = studentRec.history.reduce((acc, h) => acc + h.accuracy, 0);
-studentRec.avgAccuracy = Math.round(sumAcc / studentRec.history.length);
-saveStudentAnalytics();
-}
-​const viewExam = document.getElementById('view-exam');
-const viewResult = document.getElementById('view-result');
-if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
-if (viewResult) { viewResult.classList.remove('hidden'); viewResult.style.display = 'flex'; }
-​document.getElementById('result-test-title').textContent = activeTest.title;
-document.getElementById('res-score').textContent = ${rawScore} / ${maxScore};
-document.getElementById('res-accuracy').textContent = ${accuracyPercent}%;
-document.getElementById('res-correct').textContent = ${correctCount} / ${totalQuestions};
-document.getElementById('res-time').textContent = timeStr;
-​const breakdownContainer = document.getElementById('solution-breakdown');
-breakdownContainer.innerHTML = "";
-const alphabet = ['A', 'B', 'C', 'D'];
-​activeTest.questions.forEach((q, idx) => {
-const userChoice = userAnswers[q.id];
-const isCorrect = userChoice === q.correctIndex;
-const isSkipped = userChoice === undefined;
-​let statusBadge = <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Correct (+4)</span>;
-if (isSkipped) {
-statusBadge = <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Skipped (0)</span>;
-} else if (!isCorrect) {
-statusBadge = <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Incorrect (-1)</span>;
-}
-​const item = document.createElement('div');
-item.className = "p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-2.5 text-xs";
-item.innerHTML = <div class="flex items-start justify-between gap-2"> <span class="font-bold text-slate-200">Q${idx + 1}. ${q.text}</span> ${statusBadge} </div> <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-1"> ${q.options.map((opt, optIdx) => { let optStyle = "border-slate-800 text-slate-400 bg-slate-900"; if (optIdx === q.correctIndex) { optStyle = "border-emerald-500/50 text-emerald-300 bg-emerald-950/30 font-semibold"; } else if (optIdx === userChoice && !isCorrect) { optStyle = "border-rose-500/50 text-rose-300 bg-rose-950/30 line-through"; } return
-<div class="p-2 rounded-lg border ${optStyle} flex items-center gap-2">
-<span class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-slate-800">{alphabet[optIdx]}</span>
-<span>{opt}</span>
-</div>
-; }).join('')} </div> <div class="p-3 rounded-lg bg-blue-950/20 border border-blue-500/20 text-slate-300 text-[11px] leading-relaxed"> <span class="text-blue-400 font-bold block mb-0.5"><i class="fa-solid fa-lightbulb"></i> Clinical Explanation:</span> ${q.explanation} </div> ;
-breakdownContainer.appendChild(item);
-});
-}
-​function retakeCurrentTest() {
-if (activeTest) startExam(activeTest);
-}
-​function returnToBrowse() {
-const viewResult = document.getElementById('view-result');
-const viewAdmin = document.getElementById('view-admin');
-if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
-if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
-renderBrowseView();
-}
-​async function handlePdfFileUpload() {
-const fileInput = document.getElementById('pdf-file-input');
-const statusText = document.getElementById('pdf-status-text');
-const parseBtn = document.getElementById('btn-parse-pdf');
-​if (!fileInput.files || fileInput.files.length === 0) {
-showToast("Please choose a PDF file from your storage first!", "error");
-return;
-}
-​if (!window.pdfjsLib) {
-showToast("PDF parsing library is still loading. Check your internet connection.", "error");
-return;
-}
-​const file = fileInput.files[0];
-parseBtn.disabled = true;
-parseBtn.innerHTML = <i class="fa-solid fa-spinner animate-spin"></i> Reading PDF...;
-statusText.textContent = Extracting text and structure from '${file.name}'...;
-​// Auto-populate Chapter Name from file name if fallback input is default
-const defaultChapInput = document.getElementById('bulk-folder-input');
-const suggestedChapter = file.name.replace(/.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
-if (defaultChapInput && (defaultChapInput.value === "01_Upper Limb" || !defaultChapInput.value.trim())) {
-defaultChapInput.value = suggestedChapter;
-}
-​try {
-const arrayBuffer = await file.arrayBuffer();
-const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-let extractedText = "";
-​for (let i = 1; i <= pdf.numPages; i++) {
-statusText.textContent = Reading page ${i} of ${pdf.numPages}...;
-const page = await pdf.getPage(i);
-const textContent = await page.getTextContent();
-​let lastY = null;
-let pageText = "";
-​for (const item of textContent.items) {
-if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-pageText += "\n";
-} else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
-pageText += " ";
-}
-pageText += item.str;
-lastY = item.transform[5];
-}
-​extractedText += pageText + "\n\n";
-}
-​document.getElementById('bulk-raw-text').value = extractedText;
-statusText.textContent = Extracted ${pdf.numPages} pages! Auto-detecting chapter & topic hierarchy...;
-showToast(Extracted ${pdf.numPages} pages! Analyzing topics..., "success");
-​handleBulkTextParse();
-} catch (err) {
-statusText.textContent = Error reading PDF: ${err.message};
-showToast("Could not read PDF. Ensure it has selectable text.", "error");
-} finally {
-parseBtn.disabled = false;
-parseBtn.innerHTML = <i class="fa-solid fa-bolt"></i> Extract & Auto-Organize Topics;
-}
-}
-​// Comprehensive text normalizer for medical Q-Banks
-function normalizeMcqText(text) {
-let s = text.replace(/\r\n|\r/g, "\n");
-​// Clean running headers, footers and page numbering
-s = s.replace(/Clinical\s+[A-Za-z\s]+Question\s+Bank[^\n]/gi, '');
-s = s.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
-s = s.replace(/(?:^|\n)\s\d+\s*/\s*\d+\s*(?:\n|$)/g, '\n');
-s = s.replace(/\b\d+\s+Clinical\s+&[^\n]*/gi, '');
-​// Detect explicit Chapter / Section markers:
-s = s.replace(/(?:^|\n)\s*(?:CHAPTER|UNIT|SECTION|MODULE|PART)\s*(\d+|[IVXLCDM]+)[:\s.-]+([^\n]+)/gi, '\n###CHAPTER### Chapter $1: $2\n');
-​// Detect document titles at top of page (e.g. "Upper Limb Anatomy — High-Yield Examination MCQs")
-s = s.replace(/^([A-Za-z0-9\s&,-]{4,55}?)(?:\s*—\s*[^\n]*)?(?=\n)/, '\n###CHAPTER### $1\n');
-​// Tag standalone Topic labels placed directly above questions
-s = s.replace(/(?:^|\n)\s*([A-Za-z0-9][A-Za-z0-9\s&,/()-]{2,70})\s*\n\s*(Q(?:uestion)?.?\s*\d+[.:)]|\b\d+[.)]\s+[A-Z])/gi, function(m, topic, qNum) {
-let cleanTopic = topic.trim();
-if (/^(?:Question|Ans|Correct|Page|Explanation|Option)/i.test(cleanTopic) || /^\d+$/.test(cleanTopic)) {
-return '\n\n###QUESTION### ' + qNum;
-}
-return '\n\n###QUESTION###\n###TOPIC### ' + cleanTopic + '\n' + qNum;
-});
-​// Tag any standard question starters:
-s = s.replace(/(?:^|\n|\s)(?<!###QUESTION###[\s\n])(Q(?:uestion)?.?\s\d+[.:)]|\b\d+[.)]\s+(?=[A-Z]))/gi, '\n\n###QUESTION### $1 ');
-​// Tag options A, B, C, D:
-s = s.replace(/[\s\n]+[([]?([A-D])[)].:-]\s+/gi, "\n###OPT### $1) ");
-​// Tag answers & keys:
-s = s.replace(/[\s\n]+((?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[:\s*-.]+)/gi, "\n###ANSWER### $1");
-​// Tag explanations & rationales:
-s = s.replace(/[\s\n]+((?:Explanation|Rationale|Note|Solution|Review\s+Pearls)[:\s*-]+)/gi, "\n###EXP### $1");
-​return s;
-}
-​// Converts ALL-CAPS topic pill to Clean Title Case
-function formatTopicTitle(raw) {
-if (!raw) return "General Practice";
-return raw.toLowerCase().replace(/[^a-z0-9&,\s-]/g, ' ').split(/\s+/).filter(Boolean).map(w => {
-if (['and', '&', 'of', 'in', 'the', 'for'].includes(w)) return w;
-return w.charAt(0).toUpperCase() + w.slice(1);
-}).join(' ');
-}
-​function handleBulkTextParse() {
-const raw = document.getElementById('bulk-raw-text').value.trim();
-const sName = document.getElementById('bulk-subject-sel').value || activeSubjectName;
-const fallbackChapter = document.getElementById('bulk-folder-input').value.trim() || "01_Upper Limb";
-​if (!raw) {
-showToast("Please paste question text or upload a PDF first!", "error");
-return;
-}
-​if (!ALL_SUBJECTS[sName]) {
-ALL_SUBJECTS[sName] = { folders: [] };
-}
-​const subj = ALL_SUBJECTS[sName];
-const normalized = normalizeMcqText(raw);
-const rawBlocks = normalized.split("###QUESTION###").filter(b => b.trim().length > 15);
-​if (rawBlocks.length === 0) {
-showToast("No 4-option MCQs recognized. Please verify the PDF text.", "error");
-return;
-}
-​// Detect initial chapter from document preamble if present
-let activeChapterName = fallbackChapter;
-const initialChapMatch = rawBlocks[0].match(/###CHAPTER###\s*([^\n]+)/);
-if (initialChapMatch) {
-activeChapterName = formatTopicTitle(initialChapMatch[1]);
-}
-​// Group questions by Chapter -> Topics
-// chaptersMap: { [chapterName]: { topics: { [topicName]: [questions] }, all: [questions] } }
-const chaptersMap = {};
-let activeTopicName = "General High-Yield Practice";
-​let totalParsed = 0;
-​for (let block of rawBlocks) {
-// Update Chapter if this block introduces a new chapter
-const blockChapMatch = block.match(/###CHAPTER###\s*([^\n]+)/);
-if (blockChapMatch) {
-activeChapterName = formatTopicTitle(blockChapMatch[1]);
-}
-​// Update Topic if this block has a topic tag
-const blockTopicMatch = block.match(/###TOPIC###\s*([^\n]+)/);
-if (blockTopicMatch) {
-activeTopicName = formatTopicTitle(blockTopicMatch[1]);
-}
-​const firstOptIndex = block.indexOf("###OPT###");
-if (firstOptIndex === -1) continue;
-​let qText = block.substring(0, firstOptIndex).trim();
-qText = qText.replace(/###CHAPTER###[^\n]+/g, '');
-qText = qText.replace(/###TOPIC###[^\n]+/g, '');
-qText = qText.replace(/^(?:Q(?:uestion)?.?\s*\d+[.:)]|\b\d+[.)])\s*/i, '');
-qText = qText.replace(/\n+/g, ' ').trim();
-​const optAMatch = block.match(/###OPT###\sA)\s([\s\S]+?)(?=###OPT###\sB)|$)/i);
-const optBMatch = block.match(/###OPT###\sB)\s*([\s\S]+?)(?=###OPT###\sC)|$)/i);
-const optCMatch = block.match(/###OPT###\sC)\s*([\s\S]+?)(?=###OPT###\sD)|$)/i);
-const optDMatch = block.match(/###OPT###\sD)\s*([\s\S]+?)(?=###ANSWER###|###EXP###|###OPT###|$)/i);
-​if (optAMatch && optBMatch && optCMatch && optDMatch) {
-const optA = optAMatch[1].replace(/\n+/g, ' ').trim();
-const optB = optBMatch[1].replace(/\n+/g, ' ').trim();
-const optC = optCMatch[1].replace(/\n+/g, ' ').trim();
-const optD = optDMatch[1].replace(/\n+/g, ' ').trim();
-​const ansMatch = block.match(/(?:###ANSWER###[\s\S]?|(?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[:\s*-.]+)(?:Option\s)?[([]?([A-D])[)]]?/i);
-const correctLetter = ansMatch ? ansMatch[1].toUpperCase() : "A";
-const letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
-const correctIndex = letterMap[correctLetter] !== undefined ? letterMap[correctLetter] : 0;
-​const expMatch = block.match(/(?:###EXP###[\s\S]*?|Explanation|Rationale|Note|Solution|Review\s+Pearls)[:\s*-]+([\s\S]+?)(?=$)/i);
-let explanation = expMatch ? expMatch[1].replace(/###[A-Z]+###/g, '').replace(/\n+/g, ' ').trim() : "High-yield clinical review concept.";
-​const newQ = {
-id: q_${Date.now()}_${totalParsed + 1},
-qid: ${sName.slice(0, 3).toUpperCase()}-${String(totalParsed + 1).padStart(3, '0')},
-text: qText,
-options: [optA, optB, optC, optD],
-correctIndex: correctIndex,
-explanation: explanation,
-topic: activeTopicName,
-chapter: activeChapterName,
-correctLetter: correctLetter
-};
-​if (!chaptersMap[activeChapterName]) {
-chaptersMap[activeChapterName] = { topics: {}, all: [] };
-}
-if (!chaptersMap[activeChapterName].topics[activeTopicName]) {
-chaptersMap[activeChapterName].topics[activeTopicName] = [];
-}
-​chaptersMap[activeChapterName].topics[activeTopicName].push(newQ);
-chaptersMap[activeChapterName].all.push(newQ);
-totalParsed++;
-}
-}
-​if (totalParsed === 0) {
-showToast("No 4-option MCQs recognized. Verify PDF layout.", "error");
-return;
-}
-​// Organize detected Chapters and Topics into ALL_SUBJECTS data model
-const summaryList = [];
-let totalTopicsCount = 0;
-​for (const [chapterName, chapterData] of Object.entries(chaptersMap)) {
-let targetFolder = subj.folders.find(f => f.name.toLowerCase() === chapterName.toLowerCase());
-if (!targetFolder) {
-targetFolder = {
-id: chapterName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-name: chapterName,
-description: ${chapterName} Question Bank,
-testCount: 0,
-tests: []
-};
-subj.folders.push(targetFolder);
-}
-​const topicEntries = Object.entries(chapterData.topics);
-totalTopicsCount += topicEntries.length;
-​// 1. Build individual Topic Tests
-for (const [topicName, qList] of topicEntries) {
-let topicTest = targetFolder.tests.find(t => t.topicName === topicName || t.title.toLowerCase() === ${topicName.toLowerCase()} mcqs);
-if (!topicTest) {
-topicTest = {
-id: test_${targetFolder.id}_${topicName.toLowerCase().replace(/[^a-z0-9_]/g, '_')}_${Date.now()},
-qid: ${sName.slice(0, 3).toUpperCase()}-${String(targetFolder.tests.length + 1).padStart(3, '0')},
-title: ${topicName} MCQs,
-topicName: topicName,
-totalQuestions: 0,
-totalMarks: 0,
-durationMinutes: 15,
-questions: []
-};
-targetFolder.tests.push(topicTest);
-}
-​// Append questions
-topicTest.questions.push(...qList);
-topicTest.totalQuestions = topicTest.questions.length;
-topicTest.totalMarks = topicTest.questions.length * 4;
-topicTest.durationMinutes = Math.max(5, Math.round(topicTest.questions.length * 1.5));
-​summaryList.push({
-chapter: chapterName,
-topic: topicName,
-qid: topicTest.qid,
-count: qList.length
-});
-}
-​// 2. Build or Update Comprehensive Chapter Mock (if more than 1 topic exists)
-if (topicEntries.length > 1) {
-let fullMockTest = targetFolder.tests.find(t => t.isFullMock || t.title.includes("Complete Chapter Mock"));
-if (!fullMockTest) {
-fullMockTest = {
-id: test_${targetFolder.id}_mock_${Date.now()},
-qid: ${sName.slice(0, 3).toUpperCase()}-MOCK,
-title: ${chapterName} — Complete Chapter Mock Exam,
-topicName: "All Topics Combined",
-isFullMock: true,
-totalQuestions: 0,
-totalMarks: 0,
-durationMinutes: 30,
-questions: []
-};
-targetFolder.tests.push(fullMockTest);
-}
-​fullMockTest.questions = [...chapterData.all];
-fullMockTest.totalQuestions = fullMockTest.questions.length;
-fullMockTest.totalMarks = fullMockTest.questions.length * 4;
-fullMockTest.durationMinutes = Math.max(10, Math.round(fullMockTest.questions.length * 1.5));
-}
-​targetFolder.testCount = targetFolder.tests.length;
-}
-​persistDatabase();
-refreshAdminTree();
-refreshAdminSelectors();
-​// Render Rich Visual Summary in Admin Panel
-const prevBox = document.getElementById('bulk-preview-container');
-const summaryBadge = document.getElementById('bulk-summary-badge');
-const previewList = document.getElementById('bulk-preview-list');
-​if (summaryBadge) {
-summaryBadge.innerHTML = <div class="flex items-center gap-2 font-bold text-white text-xs"> <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i> <span>Successfully Extracted ${totalParsed} MCQs across ${Object.keys(chaptersMap).length} Chapter(s) and ${totalTopicsCount} Clinical Topics!</span> </div> <div class="text-[11px] text-slate-300 mt-1 flex flex-wrap gap-x-4 gap-y-1"> <span><b>Subject:</b> ${sName}</span> <span><b>Chapters:</b> ${Object.keys(chaptersMap).join(', ')}</span> <span><b>Topic Tests:</b> ${totalTopicsCount} generated</span> <span><b>Status:</b> Saved to Local Storage & Ready to Retake</span> </div>;
-}
-​if (previewList) {
-previewList.innerHTML = "";
-summaryList.forEach(item => {
-const card = document.createElement('div');
-card.className = "p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs";
-card.innerHTML = <div class="flex items-center gap-2.5"> <span class="font-mono text-blue-400 font-bold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[10px]">${item.qid}</span> <div> <span class="font-bold text-slate-200 block">${item.topic}</span> <span class="text-[10px] text-slate-400">${item.chapter}</span> </div> </div> <span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold"> ${item.count} Questions </span>;
-previewList.appendChild(card);
-});
-}
-​if (prevBox) {
-prevBox.classList.remove('hidden');
-prevBox.style.display = 'flex';
-}
-​showToast(🎉 Extracted ${totalParsed} MCQs across ${totalTopicsCount} topics!, "success");
 }
 ​function renderBrowseView() {
-const viewBrowse = document.getElementById('view-browse');
-const viewExam = document.getElementById('view-exam');
-const viewResult = document.getElementById('view-result');
-const viewAdmin = document.getElementById('view-admin');
+var viewBrowse = document.getElementById('view-browse');
+var viewExam = document.getElementById('view-exam');
+var viewResult = document.getElementById('view-result');
+var viewAdmin = document.getElementById('view-admin');
 ​if (viewBrowse) { viewBrowse.classList.remove('hidden'); viewBrowse.style.display = 'flex'; }
 if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
 if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
 if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
-​const container = document.getElementById('tests-container');
-const upBtn = document.getElementById('btn-up-level');
-const breadcrumb = document.getElementById('breadcrumb-subject');
-const heroSubj = document.getElementById('hero-subject-tag');
-const heroTitle = document.getElementById('hero-title');
-const heroMeta = document.getElementById('hero-meta');
+​var container = document.getElementById('tests-container');
+var upBtn = document.getElementById('btn-up-level');
+var breadcrumb = document.getElementById('breadcrumb-subject');
+var heroSubj = document.getElementById('hero-subject-tag');
+var heroTitle = document.getElementById('hero-title');
+var heroMeta = document.getElementById('hero-meta');
 ​if (!container) return;
 container.innerHTML = "";
 if (heroSubj) heroSubj.textContent = activeSubjectName;
-​const subjectData = ALL_SUBJECTS[activeSubjectName] || { folders: [] };
+​var subjectData = ALL_SUBJECTS[activeSubjectName] || { folders: [] };
 ​if (!currentFolder) {
 if (upBtn) upBtn.classList.add('hidden');
 if (breadcrumb) breadcrumb.textContent = activeSubjectName;
-if (heroTitle) heroTitle.textContent = ${activeSubjectName} Question Bank;
+if (heroTitle) heroTitle.textContent = activeSubjectName + " Question Bank";
 if (heroMeta) {
-heroMeta.innerHTML = <span><i class="fa-solid fa-folder-open mr-1 text-blue-400"></i>${subjectData.folders.length} Chapter Topics</span> <span><i class="fa-solid fa-shuffle mr-1 text-indigo-400"></i>Randomized Choices</span> <span><i class="fa-solid fa-award mr-1 text-amber-400"></i>+4 / -1 Marking Scheme</span>;
+heroMeta.innerHTML =
+'<span><i class="fa-solid fa-folder-open mr-1 text-blue-400"></i>' + subjectData.folders.length + ' Chapter Topics</span>' +
+'<span><i class="fa-solid fa-shuffle mr-1 text-indigo-400"></i>Randomized Choices</span>' +
+'<span><i class="fa-solid fa-award mr-1 text-amber-400"></i>+4 / -1 Marking Scheme</span>';
 }
 ​if (subjectData.folders.length === 0) {
-container.innerHTML =  <div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2"> <i class="fa-solid fa-folder-open text-2xl text-slate-600"></i> <span>No chapters created in <b>${activeSubjectName}</b> yet.</span> </div>;
+container.innerHTML =
+'<div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2">' +
+'<i class="fa-solid fa-folder-open text-2xl text-slate-600"></i>' +
+'<span>No chapters added in <b>' + activeSubjectName + '</b> yet. Upload a PDF in the Admin Hub!</span>' +
+'</div>';
 return;
 }
-​subjectData.folders.forEach(folder => {
-const card = document.createElement('div');
-card.className = "p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex items-center justify-between group";
-card.onclick = () => openFolder(folder.id);
-card.innerHTML = <div class="flex items-center gap-3.5"> <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-lg group-hover:scale-105 transition"> <i class="fa-solid fa-folder-open"></i> </div> <div> <h4 class="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition">${folder.name}</h4> <p class="text-[11px] text-slate-400 mt-0.5">${folder.testCount || folder.tests?.length || 0} practice mocks • ${folder.description || 'Topic review'}</p> </div> </div> <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition"></i>;
+​subjectData.folders.forEach(function(folder) {
+var card = document.createElement('div');
+card.className = "p-3.5 sm:p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex items-center justify-between group";
+card.onclick = function() { openFolder(folder.id); };
+card.innerHTML =
+'<div class="flex items-center gap-3">' +
+'<div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-base group-hover:scale-105 transition">' +
+'<i class="fa-solid fa-folder-open"></i>' +
+'</div>' +
+'<div>' +
+'<h4 class="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-blue-400 transition">' + folder.name + '</h4>' +
+'<p class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">' + (folder.tests ? folder.tests.length : 0) + ' practice mocks • ' + (folder.description || 'Topic review') + '</p>' +
+'</div>' +
+'</div>' +
+'<i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-blue-400 transition"></i>';
 container.appendChild(card);
 });
 ​} else {
 if (upBtn) upBtn.classList.remove('hidden');
-if (breadcrumb) breadcrumb.textContent = ${activeSubjectName} ➔ ${currentFolder.name};
+if (breadcrumb) breadcrumb.textContent = activeSubjectName + " ➔ " + currentFolder.name;
 if (heroTitle) heroTitle.textContent = currentFolder.name;
-if (heroMeta) heroMeta.innerHTML = <span class="text-slate-400">${currentFolder.description || ''}</span>;
+if (heroMeta) heroMeta.innerHTML = '<span class="text-slate-400">' + (currentFolder.description || 'High-Yield Clinical Question Bank') + '</span>';
 ​if (!currentFolder.tests || currentFolder.tests.length === 0) {
-container.innerHTML =  <div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2"> <i class="fa-solid fa-file-lines text-2xl text-slate-600"></i> <span>No test papers added inside <b>${currentFolder.name}</b> yet.</span> </div>;
+container.innerHTML =
+'<div class="p-8 col-span-2 text-center bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-400 text-xs flex flex-col items-center gap-2">' +
+'<i class="fa-solid fa-file-lines text-2xl text-slate-600"></i>' +
+'<span>No test papers inside <b>' + currentFolder.name + '</b> yet.</span>' +
+'</div>';
 return;
 }
-​(currentFolder.tests || []).forEach(test => {
-const card = document.createElement('div');
-card.className = "p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex flex-col justify-between gap-3 group";
-card.onclick = () => startExam(test);
-card.innerHTML = <div> <div class="flex items-center justify-between gap-2 mb-1.5"> <span class="text-[10px] font-mono text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">${test.qid}</span> ${test.isFullMock ? '<span class="text-[10px] font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20"><i class="fa-solid fa-star mr-1"></i>Full Mock</span>' : ''} </div> <h4 class="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition leading-snug">${test.title}</h4> </div> <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80"> <span class="flex items-center gap-1"><i class="fa-regular fa-file-lines text-slate-500"></i> ${test.totalQuestions || test.questions.length} Questions</span> <span class="flex items-center gap-1"><i class="fa-solid fa-award text-slate-500"></i> ${test.totalMarks} Marks</span> <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-slate-500"></i> ${test.durationMinutes} min</span> </div>;
+​currentFolder.tests.forEach(function(test) {
+var card = document.createElement('div');
+card.className = "p-3.5 sm:p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 cursor-pointer transition shadow-md flex flex-col justify-between gap-2.5 group";
+card.onclick = function() { startExam(test); };
+card.innerHTML =
+'<div>' +
+'<div class="flex items-center justify-between gap-2 mb-1">' +
+'<span class="text-[10px] font-mono text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">' + test.qid + '</span>' +
+(test.isFullMock ? '<span class="text-[10px] font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20"><i class="fa-solid fa-star mr-1"></i>Full Mock</span>' : '') +
+'</div>' +
+'<h4 class="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-blue-400 transition leading-snug">' + test.title + '</h4>' +
+'</div>' +
+'<div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">' +
+'<span class="flex items-center gap-1"><i class="fa-regular fa-file-lines text-slate-500"></i> ' + (test.questions ? test.questions.length : 0) + ' Qs</span>' +
+'<span class="flex items-center gap-1"><i class="fa-solid fa-award text-slate-500"></i> ' + (test.totalMarks || (test.questions ? test.questions.length * 4 : 0)) + ' Marks</span>' +
+'<span class="flex items-center gap-1"><i class="fa-regular fa-clock text-slate-500"></i> ' + (test.durationMinutes || 15) + ' min</span>' +
+'</div>';
 container.appendChild(card);
 });
 }
 }
 ​function openFolder(folderId) {
-const subj = ALL_SUBJECTS[activeSubjectName];
+var subj = ALL_SUBJECTS[activeSubjectName];
 if (subj) {
-currentFolder = subj.folders.find(f => f.id === folderId);
+currentFolder = subj.folders.find(function(f) { return f.id === folderId; });
 renderBrowseView();
 }
 }
@@ -1695,15 +1112,536 @@ activeSubjectName = newSubj;
 currentFolder = null;
 renderBrowseView();
 }
-​function openAdminPanel() {
-if (!currentUser || currentUser.role !== "admin") {
-showToast("Admin credentials required.", "error");
+​function shuffleQuestionOptions(question) {
+var indexed = question.options.map(function(opt, idx) { return { text: opt, originalIndex: idx }; });
+for (var i = indexed.length - 1; i > 0; i--) {
+var j = Math.floor(Math.random() * (i + 1));
+var temp = indexed[i];
+indexed[i] = indexed[j];
+indexed[j] = temp;
+}
+var newCorrectIndex = indexed.findIndex(function(item) { return item.originalIndex === question.correctIndex; });
+return {
+id: question.id,
+qid: question.qid,
+text: question.text,
+options: indexed.map(function(item) { return item.text; }),
+correctIndex: newCorrectIndex,
+explanation: question.explanation
+};
+}
+​function startExam(test) {
+if (!test.questions || test.questions.length === 0) {
+showToast("This test paper has no questions yet.", "error");
 return;
 }
-const viewBrowse = document.getElementById('view-browse');
-const viewExam = document.getElementById('view-exam');
-const viewResult = document.getElementById('view-result');
-const adminView = document.getElementById('view-admin');
+​activeTest = {
+id: test.id,
+qid: test.qid,
+title: test.title,
+durationMinutes: test.durationMinutes || 15,
+questions: test.questions.map(function(q) { return shuffleQuestionOptions(q); })
+};
+​currentQuestionIndex = 0;
+userAnswers = {};
+markedForReview.clear();
+timeRemainingSeconds = (activeTest.durationMinutes || 15) * 60;
+timeSpentSeconds = 0;
+​var viewBrowse = document.getElementById('view-browse');
+var viewExam = document.getElementById('view-exam');
+var viewResult = document.getElementById('view-result');
+var viewAdmin = document.getElementById('view-admin');
+​if (viewBrowse) { viewBrowse.classList.add('hidden'); viewBrowse.style.display = 'none'; }
+if (viewExam) { viewExam.classList.remove('hidden'); viewExam.style.display = 'flex'; }
+if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
+​document.getElementById('exam-test-name').textContent = activeTest.title;
+document.getElementById('total-q-count').textContent = activeTest.questions.length;
+​clearInterval(timerInterval);
+updateTimerDisplay();
+timerInterval = setInterval(function() {
+timeRemainingSeconds--;
+timeSpentSeconds++;
+updateTimerDisplay();
+if (timeRemainingSeconds <= 0) {
+clearInterval(timerInterval);
+finishExam();
+}
+}, 1000);
+​renderCurrentQuestion();
+renderPalette();
+}
+​function updateTimerDisplay() {
+var minutes = Math.floor(timeRemainingSeconds / 60);
+var seconds = timeRemainingSeconds % 60;
+var el = document.getElementById('exam-timer');
+if (el) {
+el.textContent = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+}
+}
+​function renderCurrentQuestion() {
+var q = activeTest.questions[currentQuestionIndex];
+document.getElementById('current-q-index').textContent = currentQuestionIndex + 1;
+document.getElementById('exam-qid').textContent = "QID: " + (q.qid || 'MCQ');
+document.getElementById('question-text').textContent = q.text;
+​var optsContainer = document.getElementById('options-container');
+optsContainer.innerHTML = "";
+​var alphabet = ['A', 'B', 'C', 'D'];
+var currentSelected = userAnswers[q.id];
+​q.options.forEach(function(optText, idx) {
+var isSelected = currentSelected === idx;
+var btn = document.createElement('button');
+btn.className = "w-full text-left p-3 rounded-xl border text-xs sm:text-sm font-medium transition flex items-start gap-2.5 " +
+(isSelected
+? "bg-blue-600/15 border-blue-500 text-blue-300 shadow ring-1 ring-blue-500"
+: "bg-slate-950/70 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700");
+btn.onclick = function() { selectOption(idx); };
+btn.innerHTML =
+'<span class="w-5 h-5 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold ' +
+(isSelected ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700') +
+'">' + alphabet[idx] + '</span>' +
+'<span class="pt-0.5 leading-relaxed">' + optText + '</span>';
+optsContainer.appendChild(btn);
+});
+​var prevBtn = document.getElementById('btn-prev-q');
+if (prevBtn) {
+prevBtn.disabled = (currentQuestionIndex === 0);
+prevBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+}
+​var nextBtn = document.getElementById('btn-next-q');
+if (nextBtn) {
+if (currentQuestionIndex === activeTest.questions.length - 1) {
+nextBtn.innerHTML = 'Submit <i class="fa-solid fa-flag text-[10px]"></i>';
+} else {
+nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right text-[10px]"></i>';
+}
+}
+​renderPalette();
+}
+​function selectOption(index) {
+var q = activeTest.questions[currentQuestionIndex];
+userAnswers[q.id] = index;
+renderCurrentQuestion();
+renderPalette();
+}
+​function toggleMarkReview() {
+var q = activeTest.questions[currentQuestionIndex];
+if (markedForReview.has(q.id)) {
+markedForReview.delete(q.id);
+} else {
+markedForReview.add(q.id);
+}
+renderPalette();
+}
+​function navigateQuestion(direction) {
+var target = currentQuestionIndex + direction;
+if (target >= 0 && target < activeTest.questions.length) {
+currentQuestionIndex = target;
+renderCurrentQuestion();
+} else if (target >= activeTest.questions.length) {
+confirmSubmitExam();
+}
+}
+​function jumpToQuestion(idx) {
+currentQuestionIndex = idx;
+renderCurrentQuestion();
+}
+​function renderPalette() {
+var container = document.getElementById('palette-container');
+if (!container) return;
+container.innerHTML = "";
+​activeTest.questions.forEach(function(q, idx) {
+var isCurrent = idx === currentQuestionIndex;
+var isAnswered = userAnswers[q.id] !== undefined;
+var isMarked = markedForReview.has(q.id);
+​var bgClass = "bg-slate-800 border-slate-700 text-slate-400";
+if (isAnswered) bgClass = "bg-emerald-600 border-emerald-500 text-white font-bold";
+if (isMarked) bgClass = "bg-amber-600 border-amber-500 text-white font-bold";
+​var btn = document.createElement('button');
+btn.className = "w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-xs flex items-center justify-center border transition " + bgClass +
+(isCurrent ? ' ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900 scale-105' : '');
+btn.textContent = idx + 1;
+btn.onclick = function() { jumpToQuestion(idx); };
+container.appendChild(btn);
+});
+}
+​function confirmSubmitExam() {
+finishExam();
+}
+​function finishExam() {
+clearInterval(timerInterval);
+​var correctCount = 0;
+var wrongCount = 0;
+var unattempted = 0;
+​activeTest.questions.forEach(function(q) {
+var userChoice = userAnswers[q.id];
+if (userChoice === undefined) {
+unattempted++;
+} else if (userChoice === q.correctIndex) {
+correctCount++;
+} else {
+wrongCount++;
+}
+});
+​var totalQuestions = activeTest.questions.length;
+var rawScore = (correctCount * 4) - (wrongCount * 1);
+var maxScore = totalQuestions * 4;
+var accuracyPercent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+​var minutesSpent = Math.floor(timeSpentSeconds / 60);
+var secondsSpent = timeSpentSeconds % 60;
+var timeStr = (minutesSpent < 10 ? "0" : "") + minutesSpent + ":" + (secondsSpent < 10 ? "0" : "") + secondsSpent;
+​if (currentUser && currentUser.id) {
+if (!STUDENT_ANALYTICS[currentUser.id]) {
+STUDENT_ANALYTICS[currentUser.id] = { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
+}
+var studentRec = STUDENT_ANALYTICS[currentUser.id];
+studentRec.testsTaken += 1;
+studentRec.mcqsSolved += totalQuestions;
+studentRec.history.unshift({
+testTitle: activeTest.title,
+score: rawScore,
+maxScore: maxScore,
+accuracy: accuracyPercent,
+correct: correctCount,
+total: totalQuestions,
+timeSpent: timeStr,
+date: "Oct 7, 2026"
+});
+​var sumAcc = studentRec.history.reduce(function(acc, h) { return acc + h.accuracy; }, 0);
+studentRec.avgAccuracy = Math.round(sumAcc / studentRec.history.length);
+saveStudentAnalytics();
+}
+​var viewExam = document.getElementById('view-exam');
+var viewResult = document.getElementById('view-result');
+if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
+if (viewResult) { viewResult.classList.remove('hidden'); viewResult.style.display = 'flex'; }
+​document.getElementById('result-test-title').textContent = activeTest.title;
+document.getElementById('res-score').textContent = rawScore + " / " + maxScore;
+document.getElementById('res-accuracy').textContent = accuracyPercent + "%";
+document.getElementById('res-correct').textContent = correctCount + " / " + totalQuestions;
+document.getElementById('res-time').textContent = timeStr;
+​var breakdownContainer = document.getElementById('solution-breakdown');
+breakdownContainer.innerHTML = "";
+var alphabet = ['A', 'B', 'C', 'D'];
+​activeTest.questions.forEach(function(q, idx) {
+var userChoice = userAnswers[q.id];
+var isCorrect = userChoice === q.correctIndex;
+var isSkipped = userChoice === undefined;
+​var statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Correct (+4)</span>';
+if (isSkipped) {
+statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Skipped (0)</span>';
+} else if (!isCorrect) {
+statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Incorrect (-1)</span>';
+}
+​var item = document.createElement('div');
+item.className = "p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-2 text-xs";
+​var optionsHtml = q.options.map(function(opt, optIdx) {
+var optStyle = "border-slate-800 text-slate-400 bg-slate-900";
+if (optIdx === q.correctIndex) {
+optStyle = "border-emerald-500/50 text-emerald-300 bg-emerald-950/30 font-semibold";
+} else if (optIdx === userChoice && !isCorrect) {
+optStyle = "border-rose-500/50 text-rose-300 bg-rose-950/30 line-through";
+}
+return '<div class="p-2 rounded-lg border ' + optStyle + ' flex items-center gap-2">' +
+'<span class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-slate-800">' + alphabet[optIdx] + '</span>' +
+'<span>' + opt + '</span>' +
+'</div>';
+}).join('');
+​item.innerHTML =
+'<div class="flex items-start justify-between gap-2">' +
+'<span class="font-bold text-slate-200">Q' + (idx + 1) + '. ' + q.text + '</span>' +
+statusBadge +
+'</div>' +
+'<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-1">' + optionsHtml + '</div>' +
+'<div class="p-2.5 rounded-lg bg-blue-950/20 border border-blue-500/20 text-slate-300 text-[11px] leading-relaxed">' +
+'<span class="text-blue-400 font-bold block mb-0.5"><i class="fa-solid fa-lightbulb"></i> Clinical Explanation:</span>' +
+q.explanation +
+'</div>';
+breakdownContainer.appendChild(item);
+});
+}
+​function retakeCurrentTest() {
+if (activeTest) startExam(activeTest);
+}
+​function returnToBrowse() {
+var viewResult = document.getElementById('view-result');
+var viewAdmin = document.getElementById('view-admin');
+if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
+if (viewAdmin) { viewAdmin.classList.add('hidden'); viewAdmin.style.display = 'none'; }
+renderBrowseView();
+}
+​// ================= MOBILE-SAFE PDF TEXT EXTRACTION & NORMALIZATION =================
+async function handlePdfFileUpload() {
+var fileInput = document.getElementById('pdf-file-input');
+var statusText = document.getElementById('pdf-status-text');
+var parseBtn = document.getElementById('btn-parse-pdf');
+​if (!fileInput.files || fileInput.files.length === 0) {
+showToast("Please choose a PDF file first!", "error");
+return;
+}
+​if (!window.pdfjsLib) {
+showToast("PDF parser is still loading. Please check internet connection.", "error");
+return;
+}
+​var file = fileInput.files[0];
+parseBtn.disabled = true;
+parseBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Reading PDF...';
+statusText.textContent = "Reading " + file.name + "...";
+​var defaultChapInput = document.getElementById('bulk-folder-input');
+var suggestedChapter = file.name.replace(/.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
+if (defaultChapInput && (defaultChapInput.value === "01_Upper Limb" || !defaultChapInput.value.trim())) {
+defaultChapInput.value = suggestedChapter;
+}
+​try {
+var arrayBuffer = await file.arrayBuffer();
+var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+var extractedText = "";
+​for (var i = 1; i <= pdf.numPages; i++) {
+statusText.textContent = "Reading page " + i + " of " + pdf.numPages + "...";
+var page = await pdf.getPage(i);
+var textContent = await page.getTextContent();
+var lastY = null;
+var pageText = "";
+​for (var j = 0; j < textContent.items.length; j++) {
+var item = textContent.items[j];
+if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+pageText += "\n";
+} else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+pageText += " ";
+}
+pageText += item.str;
+lastY = item.transform[5];
+}
+​extractedText += pageText + "\n\n";
+}
+​document.getElementById('bulk-raw-text').value = extractedText;
+statusText.textContent = "Extracted " + pdf.numPages + " pages! Parsing topics...";
+showToast("Extracted " + pdf.numPages + " pages!", "success");
+​handleBulkTextParse();
+} catch (err) {
+statusText.textContent = "Error reading PDF: " + err.message;
+showToast("Could not read PDF.", "error");
+} finally {
+parseBtn.disabled = false;
+parseBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Extract & Organize Topics';
+}
+}
+​// SAFE NORMALIZER - NO LOOKBEHINDS (Works on all mobile WebViews)
+function normalizeMcqTextSafe(text) {
+var s = text.replace(/\r\n|\r/g, "\n");
+​// Remove headers/footers
+s = s.replace(/Clinical\s+[A-Za-z\s]+Question\s+Bank[^\n]/gi, '');
+s = s.replace(/Page\s+\d+\s+of\s+\d+/gi, '');
+s = s.replace(/(?:^|\n)\s\d+\s*/\s*\d+\s*(?:\n|$)/g, '\n');
+​// Tag chapter headers
+s = s.replace(/(?:^|\n)\s*(?:CHAPTER|UNIT|SECTION|MODULE)\s*(\d+|[IVXLCDM]+)[:\s.-]+([^\n]+)/gi, '\n###CHAPTER### Chapter $1: $2\n');
+s = s.replace(/^([A-Za-z0-9\s&,-]{4,55}?)(?:\s*—\s*[^\n]*)?(?=\n)/, '\n###CHAPTER### $1\n');
+​// Tag topic headers directly above questions
+s = s.replace(/(?:^|\n)\s*([A-Za-z0-9][A-Za-z0-9\s&,/()-]{2,70})\s*\n\s*(Q(?:uestion)?.?\s*\d+[.:)]|\b\d+[.)]\s+[A-Z])/gi, function(m, topic, qNum) {
+var cleanTopic = topic.trim();
+if (/^(?:Question|Ans|Correct|Page|Explanation|Option)/i.test(cleanTopic) || /^\d+$/.test(cleanTopic)) {
+return '\n\n###QUESTION### ' + qNum;
+}
+return '\n\n###QUESTION###\n###TOPIC### ' + cleanTopic + '\n' + qNum;
+});
+​// Split questions cleanly without variable-length lookbehind
+s = s.replace(/(?:^|\n)\s*(Q(?:uestion)?.?\s*\d+[.:)]|\b\d+[.)]\s+)/gi, "\n\n###QUESTION### $1");
+​// Options
+s = s.replace(/[\s\n]+[([]?([A-D])[)].:-]\s+/gi, "\n###OPT### $1) ");
+​// Answers
+s = s.replace(/[\s\n]+((?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[:\s*-.]+)/gi, "\n###ANSWER### $1");
+​// Explanations
+s = s.replace(/[\s\n]+((?:Explanation|Rationale|Note|Solution|Review\s+Pearls)[:\s*-]+)/gi, "\n###EXP### $1");
+​return s;
+}
+​function formatTopicTitle(raw) {
+if (!raw) return "General Practice";
+return raw.toLowerCase().replace(/[^a-z0-9&,\s-]/g, ' ').split(/\s+/).filter(Boolean).map(function(w) {
+if (['and', '&', 'of', 'in', 'the', 'for'].indexOf(w) !== -1) return w;
+return w.charAt(0).toUpperCase() + w.slice(1);
+}).join(' ');
+}
+​function handleBulkTextParse() {
+var raw = document.getElementById('bulk-raw-text').value.trim();
+var sName = document.getElementById('bulk-subject-sel').value || activeSubjectName;
+var fallbackChapter = document.getElementById('bulk-folder-input').value.trim() || "01_Upper Limb";
+​if (!raw) {
+showToast("Please paste question text or upload a PDF first!", "error");
+return;
+}
+​if (!ALL_SUBJECTS[sName]) ALL_SUBJECTS[sName] = { folders: [] };
+​var subj = ALL_SUBJECTS[sName];
+var normalized = normalizeMcqTextSafe(raw);
+var rawBlocks = normalized.split("###QUESTION###").filter(function(b) { return b.trim().length > 15; });
+​if (rawBlocks.length === 0) {
+showToast("No 4-option MCQs recognized in this text.", "error");
+return;
+}
+​var activeChapterName = fallbackChapter;
+var initialChapMatch = rawBlocks[0].match(/###CHAPTER###\s*([^\n]+)/);
+if (initialChapMatch) activeChapterName = formatTopicTitle(initialChapMatch[1]);
+​var chaptersMap = {};
+var activeTopicName = "General High-Yield Practice";
+var totalParsed = 0;
+​rawBlocks.forEach(function(block) {
+var blockChapMatch = block.match(/###CHAPTER###\s*([^\n]+)/);
+if (blockChapMatch) activeChapterName = formatTopicTitle(blockChapMatch[1]);
+​var blockTopicMatch = block.match(/###TOPIC###\s*([^\n]+)/);
+if (blockTopicMatch) activeTopicName = formatTopicTitle(blockTopicMatch[1]);
+​var firstOptIndex = block.indexOf("###OPT###");
+if (firstOptIndex === -1) return;
+​var qText = block.substring(0, firstOptIndex).trim();
+qText = qText.replace(/###CHAPTER###[^\n]+/g, '');
+qText = qText.replace(/###TOPIC###[^\n]+/g, '');
+qText = qText.replace(/^(?:Q(?:uestion)?.?\s*\d+[.:)]|\b\d+[.)])\s*/i, '');
+qText = qText.replace(/\n+/g, ' ').trim();
+​var optAMatch = block.match(/###OPT###\sA)\s([\s\S]+?)(?=###OPT###\sB)|$)/i);
+var optBMatch = block.match(/###OPT###\sB)\s*([\s\S]+?)(?=###OPT###\sC)|$)/i);
+var optCMatch = block.match(/###OPT###\sC)\s*([\s\S]+?)(?=###OPT###\sD)|$)/i);
+var optDMatch = block.match(/###OPT###\sD)\s*([\s\S]+?)(?=###ANSWER###|###EXP###|###OPT###|$)/i);
+​if (optAMatch && optBMatch && optCMatch && optDMatch) {
+var optA = optAMatch[1].replace(/\n+/g, ' ').trim();
+var optB = optBMatch[1].replace(/\n+/g, ' ').trim();
+var optC = optCMatch[1].replace(/\n+/g, ' ').trim();
+var optD = optDMatch[1].replace(/\n+/g, ' ').trim();
+​var ansMatch = block.match(/(?:###ANSWER###[\s\S]?|(?:Correct\s+Answer|Ans(?:wer)?|Key|Right\s+Answer)[:\s*-.]+)(?:Option\s)?[([]?([A-D])[)]]?/i);
+var correctLetter = ansMatch ? ansMatch[1].toUpperCase() : "A";
+var letterMap = { "A": 0, "B": 1, "C": 2, "D": 3 };
+var correctIndex = letterMap[correctLetter] !== undefined ? letterMap[correctLetter] : 0;
+​var expMatch = block.match(/(?:###EXP###[\s\S]*?|Explanation|Rationale|Note|Solution|Review\s+Pearls)[:\s*-]+([\s\S]+?)(?=$)/i);
+var explanation = expMatch ? expMatch[1].replace(/###[A-Z]+###/g, '').replace(/\n+/g, ' ').trim() : "High-yield clinical review concept.";
+​var newQ = {
+id: "q_" + Date.now() + "_" + (totalParsed + 1),
+qid: sName.slice(0, 3).toUpperCase() + "-" + String(totalParsed + 1).padStart(3, '0'),
+text: qText,
+options: [optA, optB, optC, optD],
+correctIndex: correctIndex,
+explanation: explanation,
+topic: activeTopicName,
+chapter: activeChapterName
+};
+​if (!chaptersMap[activeChapterName]) chaptersMap[activeChapterName] = { topics: {}, all: [] };
+if (!chaptersMap[activeChapterName].topics[activeTopicName]) chaptersMap[activeChapterName].topics[activeTopicName] = [];
+​chaptersMap[activeChapterName].topics[activeTopicName].push(newQ);
+chaptersMap[activeChapterName].all.push(newQ);
+totalParsed++;
+}
+});
+​if (totalParsed === 0) {
+showToast("No MCQs could be parsed. Check question format.", "error");
+return;
+}
+​var summaryList = [];
+var totalTopicsCount = 0;
+​for (var chapterName in chaptersMap) {
+var chapterData = chaptersMap[chapterName];
+var targetFolder = subj.folders.find(function(f) { return f.name.toLowerCase() === chapterName.toLowerCase(); });
+if (!targetFolder) {
+targetFolder = {
+id: chapterName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+name: chapterName,
+description: chapterName + " Question Bank",
+testCount: 0,
+tests: []
+};
+subj.folders.push(targetFolder);
+}
+​var topicEntries = Object.entries(chapterData.topics);
+totalTopicsCount += topicEntries.length;
+​topicEntries.forEach(function(entry) {
+var topicName = entry[0];
+var qList = entry[1];
+var topicTest = targetFolder.tests.find(function(t) { return t.topicName === topicName; });
+if (!topicTest) {
+topicTest = {
+id: "test_" + targetFolder.id + "" + topicName.toLowerCase().replace(/[^a-z0-9]/g, '') + "" + Date.now(),
+qid: sName.slice(0, 3).toUpperCase() + "-" + String(targetFolder.tests.length + 1).padStart(3, '0'),
+title: topicName + " MCQs",
+topicName: topicName,
+totalQuestions: 0,
+totalMarks: 0,
+durationMinutes: 15,
+questions: []
+};
+targetFolder.tests.push(topicTest);
+}
+​topicTest.questions.push.apply(topicTest.questions, qList);
+topicTest.totalQuestions = topicTest.questions.length;
+topicTest.totalMarks = topicTest.questions.length * 4;
+topicTest.durationMinutes = Math.max(5, Math.round(topicTest.questions.length * 1.5));
+​summaryList.push({
+chapter: chapterName,
+topic: topicName,
+qid: topicTest.qid,
+count: qList.length
+});
+});
+​if (topicEntries.length > 1) {
+var fullMockTest = targetFolder.tests.find(function(t) { return t.isFullMock; });
+if (!fullMockTest) {
+fullMockTest = {
+id: "test_" + targetFolder.id + "mock" + Date.now(),
+qid: sName.slice(0, 3).toUpperCase() + "-MOCK",
+title: chapterName + " — Complete Chapter Mock Exam",
+topicName: "All Topics Combined",
+isFullMock: true,
+totalQuestions: 0,
+totalMarks: 0,
+durationMinutes: 30,
+questions: []
+};
+targetFolder.tests.push(fullMockTest);
+}
+fullMockTest.questions = chapterData.all.slice();
+fullMockTest.totalQuestions = fullMockTest.questions.length;
+fullMockTest.totalMarks = fullMockTest.questions.length * 4;
+fullMockTest.durationMinutes = Math.max(10, Math.round(fullMockTest.questions.length * 1.5));
+}
+​targetFolder.testCount = targetFolder.tests.length;
+}
+​persistDatabase();
+refreshAdminTree();
+refreshAdminSelectors();
+​var prevBox = document.getElementById('bulk-preview-container');
+var summaryBadge = document.getElementById('bulk-summary-badge');
+var previewList = document.getElementById('bulk-preview-list');
+​if (summaryBadge) {
+summaryBadge.innerHTML =
+'<div class="flex items-center gap-1.5 font-bold text-white text-xs">' +
+'<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>' +
+'<span>Successfully Extracted ' + totalParsed + ' MCQs across ' + Object.keys(chaptersMap).length + ' Chapter(s) and ' + totalTopicsCount + ' Topics!</span>' +
+'</div>';
+}
+​if (previewList) {
+previewList.innerHTML = "";
+summaryList.forEach(function(item) {
+var card = document.createElement('div');
+card.className = "p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs";
+card.innerHTML =
+'<div class="flex items-center gap-2">' +
+'<span class="font-mono text-blue-400 font-bold px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[10px]">' + item.qid + '</span>' +
+'<div>' +
+'<span class="font-bold text-slate-200 block">' + item.topic + '</span>' +
+'<span class="text-[10px] text-slate-400">' + item.chapter + '</span>' +
+'</div>' +
+'</div>' +
+'<span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold">' +
+item.count + ' Qs' +
+'</span>';
+previewList.appendChild(card);
+});
+}
+​if (prevBox) {
+prevBox.classList.remove('hidden');
+prevBox.style.display = 'flex';
+}
+​showToast("Extracted " + totalParsed + " MCQs across " + totalTopicsCount + " topics!", "success");
+}
+​function openAdminPanel() {
+var viewBrowse = document.getElementById('view-browse');
+var viewExam = document.getElementById('view-exam');
+var viewResult = document.getElementById('view-result');
+var adminView = document.getElementById('view-admin');
 ​if (viewBrowse) { viewBrowse.classList.add('hidden'); viewBrowse.style.display = 'none'; }
 if (viewExam) { viewExam.classList.add('hidden'); viewExam.style.display = 'none'; }
 if (viewResult) { viewResult.classList.add('hidden'); viewResult.style.display = 'none'; }
@@ -1713,7 +1651,7 @@ refreshAdminSelectors();
 refreshStudentsList();
 }
 ​function closeAdminPanel() {
-const adminView = document.getElementById('view-admin');
+var adminView = document.getElementById('view-admin');
 if (adminView) {
 adminView.classList.add('hidden');
 adminView.style.display = 'none';
@@ -1722,127 +1660,264 @@ populateSubjectDropdown();
 renderBrowseView();
 }
 ​function switchAdminTab(tabName) {
-const tabs = ['students', 'bulk', 'tree'];
-tabs.forEach(t => {
-const pane = document.getElementById(admin-tab-${t});
-const btn = document.getElementById(tab-btn-${t});
+['students', 'bulk', 'tree'].forEach(function(t) {
+var pane = document.getElementById('admin-tab-' + t);
+var btn = document.getElementById('tab-btn-' + t);
 if (!pane || !btn) return;
-​if (t === tabName) {
+if (t === tabName) {
 pane.classList.remove('hidden');
 pane.style.display = 'flex';
-btn.className = "px-3.5 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap";
+btn.className = "px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-400 flex items-center gap-1.5 whitespace-nowrap";
 } else {
 pane.classList.add('hidden');
 pane.style.display = 'none';
-btn.className = "px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap";
+btn.className = "px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap";
 }
 });
 }
 ​function refreshAdminSelectors() {
-const targetSubj = document.getElementById('admin-target-subject');
-const bulkSubj = document.getElementById('bulk-subject-sel');
+var targetSubj = document.getElementById('admin-target-subject');
+var bulkSubj = document.getElementById('bulk-subject-sel');
 if (!targetSubj || !bulkSubj) return;
-​targetSubj.innerHTML = "";
+targetSubj.innerHTML = "";
 bulkSubj.innerHTML = "";
-​const subjects = Object.keys(ALL_SUBJECTS);
-subjects.forEach(s => {
+var subjects = Object.keys(ALL_SUBJECTS);
+subjects.forEach(function(s) {
 targetSubj.appendChild(new Option(s, s));
 bulkSubj.appendChild(new Option(s, s));
 });
-​if (subjects.length > 0) {
+if (subjects.length > 0) {
 targetSubj.value = subjects[0];
 bulkSubj.value = activeSubjectName || subjects[0];
 }
 }
 ​function refreshAdminTree() {
-const container = document.getElementById('admin-tree-display');
+var container = document.getElementById('admin-tree-display');
 if (!container) return;
 container.innerHTML = "";
-let totalTests = 0;
-const subjects = Object.keys(ALL_SUBJECTS);
-​subjects.forEach(sName => {
-const subj = ALL_SUBJECTS[sName];
-const sDiv = document.createElement('div');
-sDiv.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex flex-col gap-2";
-​let folderListHtml = "";
-(subj.folders || []).forEach(f => {
+var totalTests = 0;
+var subjects = Object.keys(ALL_SUBJECTS);
+​subjects.forEach(function(sName) {
+var subj = ALL_SUBJECTS[sName];
+var sDiv = document.createElement('div');
+sDiv.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex flex-col gap-1.5";
+​var folderListHtml = "";
+(subj.folders || []).forEach(function(f) {
 totalTests += (f.tests || []).length;
-folderListHtml += <div class="ml-3 mt-1.5 pl-2 border-l border-slate-700 flex flex-col gap-1.5"> <span class="font-semibold text-amber-400"><i class="fa-regular fa-folder mr-1"></i>${f.name}</span> <div class="ml-3 flex flex-col gap-1"> ${(f.tests || []).map(t =>
-<div class="text-[11px] text-slate-300 flex items-center justify-between bg-slate-900/60 p-1.5 rounded">
-<span><i class="fa-solid fa-file-lines text-blue-400 mr-1"></i><b>{t.qid}</b>:{t.title}</span>
-<span class="text-slate-500 font-mono">${t.questions?.length || 0} Qs</span>
-</div>
-).join('')} </div> </div> ;
+folderListHtml +=
+'<div class="ml-3 mt-1 pl-2 border-l border-slate-700 flex flex-col gap-1">' +
+'<span class="font-semibold text-amber-400"><i class="fa-regular fa-folder mr-1"></i>' + f.name + '</span>' +
+'<div class="ml-2 flex flex-col gap-1">' +
+(f.tests || []).map(function(t) {
+return '<div class="text-[11px] text-slate-300 flex items-center justify-between bg-slate-900/60 p-1.5 rounded">' +
+'<span><i class="fa-solid fa-file-lines text-blue-400 mr-1"></i><b>' + t.qid + '</b>: ' + t.title + '</span>' +
+'<span class="text-slate-500 font-mono">' + (t.questions ? t.questions.length : 0) + ' Qs</span>' +
+'</div>';
+}).join('') +
+'</div>' +
+'</div>';
 });
-​sDiv.innerHTML = <div class="flex items-center justify-between font-bold text-white border-b border-slate-800/80 pb-1.5"> <span class="flex items-center gap-1.5"><i class="fa-solid fa-book-medical text-blue-400"></i>${sName}</span> <span class="text-[10px] text-slate-500 font-normal">${subj.folders?.length || 0} chapters</span> </div> ${folderListHtml || '<p class="text-[10px] text-slate-600 ml-3">No chapters created yet</p>'};
+​sDiv.innerHTML =
+'<div class="flex items-center justify-between font-bold text-white border-b border-slate-800/80 pb-1">' +
+'<span class="flex items-center gap-1.5"><i class="fa-solid fa-book-medical text-blue-400"></i>' + sName + '</span>' +
+'<span class="text-[10px] text-slate-500 font-normal">' + (subj.folders ? subj.folders.length : 0) + ' chapters</span>' +
+'</div>' +
+(folderListHtml || '<p class="text-[10px] text-slate-600 ml-3">No chapters yet</p>');
 container.appendChild(sDiv);
 });
-​const badge = document.getElementById('tree-stats-badge');
-if (badge) badge.textContent = ${subjects.length} Subjects • ${totalTests} Tests;
+​var badge = document.getElementById('tree-stats-badge');
+if (badge) badge.textContent = subjects.length + " Subjects • " + totalTests + " Tests";
 }
 ​function adminAddSubject() {
-const name = document.getElementById('new-subj-name').value.trim();
+var name = document.getElementById('new-subj-name').value.trim();
 if (!name) return showToast("Enter subject name.", "error");
 if (ALL_SUBJECTS[name]) return showToast("Subject already exists!", "error");
-​ALL_SUBJECTS[name] = { folders: [] };
+ALL_SUBJECTS[name] = { folders: [] };
 persistDatabase();
 document.getElementById('new-subj-name').value = "";
 refreshAdminTree();
 populateSubjectDropdown();
 refreshAdminSelectors();
-showToast(Subject '${name}' created!, "success");
+showToast("Subject '" + name + "' created!", "success");
 }
 ​function adminAddFolder() {
-const sName = document.getElementById('admin-target-subject').value;
-const fName = document.getElementById('new-folder-name').value.trim();
+var sName = document.getElementById('admin-target-subject').value;
+var fName = document.getElementById('new-folder-name').value.trim();
 if (!sName || !fName) return showToast("Enter folder name!", "error");
-​const subj = ALL_SUBJECTS[sName];
+var subj = ALL_SUBJECTS[sName];
 if (!subj) return;
-​subj.folders.push({
+subj.folders.push({
 id: fName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
 name: fName,
-description: ${sName} topic,
+description: sName + " topic",
 testCount: 0,
 tests: []
 });
-​persistDatabase();
+persistDatabase();
 document.getElementById('new-folder-name').value = "";
 refreshAdminTree();
-showToast(Chapter '${fName}' added!, "success");
+showToast("Chapter '" + fName + "' added!", "success");
+}
+​function generateNewStudentAccount() {
+var randomSuffix = Math.floor(1000 + Math.random() * 9000);
+var randomPassNum = Math.floor(1000 + Math.random() * 9000);
+var newId = "STU-" + randomSuffix;
+var newPass = "mbbs" + randomPassNum;
+​var newStudent = {
+id: newId,
+pass: newPass,
+name: "Dr. Candidate (" + newId + ")",
+username: "",
+created: "2026-10-07"
+};
+​USERS_DATABASE.push(newStudent);
+saveUsersDatabase();
+refreshStudentsList();
+​document.getElementById('new-stu-display-id').textContent = newId;
+document.getElementById('new-stu-display-pass').textContent = newPass;
+document.getElementById('new-student-modal').style.display = 'flex';
+showToast("Account " + newId + " created!", "success");
+}
+​function closeNewStudentModal() {
+document.getElementById('new-student-modal').style.display = 'none';
+}
+​function copyGeneratedCredentials() {
+var sId = document.getElementById('new-stu-display-id').textContent;
+var sPass = document.getElementById('new-stu-display-pass').textContent;
+var copyText = "🩺 MBBS Master Q-Bank Access:\nApp Link: https://ahteshamneet-gif.github.io/Mbbsbot/index.html\nUser ID: " + sId + "\nPassword: " + sPass + "\nBest wishes for your preparation!";
+​var tempTextArea = document.createElement("textarea");
+tempTextArea.value = copyText;
+document.body.appendChild(tempTextArea);
+tempTextArea.select();
+document.execCommand("copy");
+document.body.removeChild(tempTextArea);
+showToast("Credentials copied to clipboard!", "success");
+}
+​function deleteStudentAccount(sId) {
+USERS_DATABASE = USERS_DATABASE.filter(function(u) { return u.id !== sId; });
+saveUsersDatabase();
+refreshStudentsList();
+showToast("User " + sId + " removed.", "info");
+}
+​function openStudentReportModal(sId) {
+var student = USERS_DATABASE.find(function(u) { return u.id === sId; });
+if (!student) return;
+​var stats = STUDENT_ANALYTICS[sId] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
+document.getElementById('report-modal-name').textContent = student.name + " " + (student.username || '');
+document.getElementById('report-modal-id').textContent = student.id + " • " + stats.testsTaken + " tests (" + stats.avgAccuracy + "% avg)";
+​var container = document.getElementById('student-report-history');
+container.innerHTML = "";
+​if (!stats.history || stats.history.length === 0) {
+container.innerHTML = '<p class="text-xs text-slate-500 italic p-3 text-center">No tests completed yet.</p>';
+} else {
+stats.history.forEach(function(h) {
+var item = document.createElement('div');
+item.className = "p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs";
+item.innerHTML =
+'<div>' +
+'<span class="font-bold text-slate-200 block">' + h.testTitle + '</span>' +
+'<span class="text-[10px] text-slate-500">' + h.date + ' • ' + h.timeSpent + '</span>' +
+'</div>' +
+'<div class="text-right">' +
+'<span class="font-bold text-xs ' + (h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400') + '">' + h.accuracy + '%</span>' +
+'<span class="text-[10px] text-slate-400 block">' + h.score + '/' + h.maxScore + ' marks</span>' +
+'</div>';
+container.appendChild(item);
+});
+}
+​document.getElementById('student-report-modal').style.display = 'flex';
+}
+​function closeStudentReportModal() {
+document.getElementById('student-report-modal').style.display = 'none';
+}
+​function refreshStudentsList() {
+var container = document.getElementById('students-list-container');
+var badge = document.getElementById('student-count-badge');
+if (!container) return;
+container.innerHTML = "";
+​if (badge) badge.textContent = USERS_DATABASE.length + " Paid Students";
+​if (USERS_DATABASE.length === 0) {
+container.innerHTML = '<p class="text-xs text-slate-500 italic p-3 text-center">No student accounts registered yet.</p>';
+return;
+}
+​USERS_DATABASE.forEach(function(s) {
+var stats = STUDENT_ANALYTICS[s.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0 };
+var card = document.createElement('div');
+card.className = "p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 text-xs";
+card.innerHTML =
+'<div class="flex items-center gap-2.5">' +
+'<div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">' +
+'<i class="fa-solid fa-user-graduate"></i>' +
+'</div>' +
+'<div>' +
+'<div class="flex items-center gap-2">' +
+'<span class="font-bold text-white font-mono">' + s.id + '</span>' +
+'<span class="text-[10px] text-slate-400">Pass: <b class="text-emerald-400 font-mono">' + s.pass + '</b></span>' +
+'</div>' +
+'<p class="text-[10px] text-slate-400 truncate max-w-[160px] sm:max-w-none">' + s.name + ' • ' + stats.testsTaken + ' tests (' + stats.avgAccuracy + '%)</p>' +
+'</div>' +
+'</div>' +
+'<div class="flex items-center gap-1.5">' +
+'<button onclick="openStudentReportModal(\'' + s.id + '\')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-semibold border border-slate-700">' +
+'Report' +
+'</button>' +
+'<button onclick="deleteStudentAccount(\'' + s.id + '\')" class="text-rose-400 hover:text-rose-300 p-1">' +
+'<i class="fa-solid fa-trash text-xs"></i>' +
+'</button>' +
+'</div>';
+container.appendChild(card);
+});
+}
+​function openChangeAdminCredentialsModal() {
+var creds = getAdminCredentials();
+document.getElementById('admin-cfg-id').value = creds.id;
+document.getElementById('admin-cfg-pass').value = creds.pass;
+document.getElementById('change-admin-modal').style.display = 'flex';
+}
+​function closeChangeAdminModal() {
+document.getElementById('change-admin-modal').style.display = 'none';
+}
+​function saveNewAdminCredentials() {
+var newId = document.getElementById('admin-cfg-id').value.trim();
+var newPass = document.getElementById('admin-cfg-pass').value.trim();
+if (!newId || !newPass) return showToast("ID and password cannot be empty.", "error");
+setAdminCredentials(newId, newPass);
+closeChangeAdminModal();
+showToast("Admin credentials updated!", "success");
 }
 ​function exportUpdatedJson() {
-const fullDb = {
+var fullDb = {
 version: "1.0",
 subjects: ALL_SUBJECTS,
 users: USERS_DATABASE,
 analytics: STUDENT_ANALYTICS
 };
-const blob = new Blob([JSON.stringify(fullDb, null, 2)], { type: "application/json" });
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
+var blob = new Blob([JSON.stringify(fullDb, null, 2)], { type: "application/json" });
+var url = URL.createObjectURL(blob);
+var a = document.createElement("a");
 a.href = url;
 a.download = "qbank.json";
 a.click();
 URL.revokeObjectURL(a);
-showToast("qbank.json downloaded!", "success");
+showToast("qbank.json exported!", "success");
 }
 ​function triggerJsonImport() {
 document.getElementById('json-file-input').click();
 }
 ​function handleJsonFileSelect(event) {
-const file = event.target.files[0];
+var file = event.target.files[0];
 if (!file) return;
-​const reader = new FileReader();
-reader.onload = (e) => {
+var reader = new FileReader();
+reader.onload = function(e) {
 try {
-const parsed = JSON.parse(e.target.result);
+var parsed = JSON.parse(e.target.result);
 if (parsed && parsed.subjects) ALL_SUBJECTS = parsed.subjects;
 if (parsed && parsed.users) USERS_DATABASE = parsed.users;
 if (parsed && parsed.analytics) STUDENT_ANALYTICS = parsed.analytics;
-​persistDatabase();
+persistDatabase();
 saveUsersDatabase();
 saveStudentAnalytics();
-​refreshAdminTree();
+refreshAdminTree();
 populateSubjectDropdown();
 refreshStudentsList();
 showToast("Imported database successfully!", "success");
@@ -1854,12 +1929,14 @@ reader.readAsText(file);
 }
 ​function handleQidSearch(e) {
 e.preventDefault();
-const val = document.getElementById('qid-input').value.trim().toUpperCase();
+var val = document.getElementById('qid-input').value.trim().toUpperCase();
 if (!val) return;
-​const subj = ALL_SUBJECTS[activeSubjectName];
+var subj = ALL_SUBJECTS[activeSubjectName];
 if (!subj) return;
-​for (const folder of subj.folders) {
-for (const test of folder.tests) {
+​for (var i = 0; i < subj.folders.length; i++) {
+var folder = subj.folders[i];
+for (var j = 0; j < folder.tests.length; j++) {
+var test = folder.tests[j];
 if (test.qid.toUpperCase() === val) {
 currentFolder = folder;
 startExam(test);
@@ -1868,51 +1945,57 @@ return;
 }
 }
 }
-showToast("QID not found.", "info");
-}
-​function setThemeAccent(name, hexColor) {
-document.documentElement.style.setProperty('--accent-color', hexColor);
+showToast("QID not found in " + activeSubjectName, "info");
 }
 ​function showAnalyticsModal() {
-const modal = document.getElementById('analytics-modal');
+var modal = document.getElementById('analytics-modal');
 if (!modal) return;
-​const studentRec = currentUser ? (STUDENT_ANALYTICS[currentUser.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] }) : { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
+var studentRec = currentUser ? (STUDENT_ANALYTICS[currentUser.id] || { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] }) : { testsTaken: 0, mcqsSolved: 0, avgAccuracy: 0, history: [] };
 ​document.getElementById('stat-total-tests').textContent = studentRec.testsTaken;
 document.getElementById('stat-total-solved').textContent = studentRec.mcqsSolved;
-document.getElementById('stat-avg-accuracy').textContent = ${studentRec.avgAccuracy}%;
-​const logsContainer = document.getElementById('history-logs-container');
+document.getElementById('stat-avg-accuracy').textContent = studentRec.avgAccuracy + "%";
+​var logsContainer = document.getElementById('history-logs-container');
 logsContainer.innerHTML = "";
 ​if (studentRec.history.length === 0) {
-logsContainer.innerHTML = <p class="text-xs text-slate-500 italic p-3 text-center">No tests completed yet. Practice any chapter to log your progress!</p>;
+logsContainer.innerHTML = '<p class="text-xs text-slate-500 italic p-3 text-center">No tests completed yet.</p>';
 } else {
-studentRec.history.forEach(h => {
-const logCard = document.createElement('div');
-logCard.className = "p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between text-xs";
-logCard.innerHTML = <div> <span class="font-bold text-slate-200 block">${h.testTitle}</span> <span class="text-[10px] text-slate-400">${h.date} • Score: ${h.score}/${h.maxScore}</span> </div> <div class="text-right"> <span class="font-bold text-sm ${h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${h.accuracy}%</span> <span class="text-[10px] text-slate-500 block">${h.correct}/${h.total} correct</span> </div>;
+studentRec.history.forEach(function(h) {
+var logCard = document.createElement('div');
+logCard.className = "p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between text-xs";
+logCard.innerHTML =
+'<div>' +
+'<span class="font-bold text-slate-200 block">' + h.testTitle + '</span>' +
+'<span class="text-[10px] text-slate-400">' + h.date + ' • Score: ' + h.score + '/' + h.maxScore + '</span>' +
+'</div>' +
+'<div class="text-right">' +
+'<span class="font-bold text-xs ' + (h.accuracy >= 70 ? 'text-emerald-400' : 'text-amber-400') + '">' + h.accuracy + '%</span>' +
+'<span class="text-[10px] text-slate-500 block">' + h.correct + '/' + h.total + ' correct</span>' +
+'</div>';
 logsContainer.appendChild(logCard);
 });
 }
 ​modal.style.display = 'flex';
 }
 ​function closeAnalyticsModal() {
-document.getElementById('analytics-modal').style.display = 'none';
+var modal = document.getElementById('analytics-modal');
+if (modal) modal.style.display = 'none';
 }
 ​function populateSubjectDropdown() {
-const sel = document.getElementById('subject-select');
+var sel = document.getElementById('subject-select');
 if (!sel) return;
 sel.innerHTML = "";
-const subjects = Object.keys(ALL_SUBJECTS);
-subjects.forEach(s => sel.appendChild(new Option(s, s)));
+var subjects = Object.keys(ALL_SUBJECTS);
+subjects.forEach(function(s) { sel.appendChild(new Option(s, s)); });
 if (!ALL_SUBJECTS[activeSubjectName]) activeSubjectName = subjects[0] || "Anatomy";
 sel.value = activeSubjectName;
 }
-​async function loadDatabase() {
+​function loadDatabase() {
 loadUsersDatabase();
 loadStudentAnalytics();
 ​try {
-const localData = localStorage.getItem(DB_STORAGE_KEY);
+var localData = localStorage.getItem(DB_STORAGE_KEY);
 if (localData) {
-const parsed = JSON.parse(localData);
+var parsed = JSON.parse(localData);
 if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
 ALL_SUBJECTS = parsed;
 }
@@ -1925,7 +2008,12 @@ persistDatabase();
 ​populateSubjectDropdown();
 checkCurrentSession();
 }
-​window.addEventListener('DOMContentLoaded', loadDatabase);
+​// Run initialization immediately and on events to prevent timing issues
+if (document.readyState === "loading") {
+document.addEventListener("DOMContentLoaded", loadDatabase);
+} else {
+loadDatabase();
+}
 </script>
 </body>
 </html>
