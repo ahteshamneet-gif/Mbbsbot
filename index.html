@@ -35,7 +35,6 @@
   <header id="main-header" class="sticky top-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
-      <!-- Brand & Profile -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
           <i class="fa-solid fa-brain text-lg"></i>
@@ -49,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Action Portal Buttons -->
       <div class="flex items-center gap-2">
         <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-sliders"></i>
@@ -124,7 +122,6 @@
 
     <!-- VIEW 1: CANDIDATE PORTAL BROWSE -->
     <section id="view-browse" class="hidden">
-      <!-- Subject Header Card -->
       <div class="glass-panel rounded-3xl p-6 sm:p-7 mb-8 border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/30 shadow-xl">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -145,7 +142,6 @@
         </div>
       </div>
 
-      <!-- Modules Grid -->
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Curated Tests & Topic Banks</h3>
       </div>
@@ -262,15 +258,10 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Content Management, Staged PDF Importer & Global Sync</p>
+            <p class="text-[11px] text-slate-400">Content Management & Instant GitHub Auto-Push</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <!-- 1-Tap Export to Github Button -->
-          <button onclick="openSyncModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Export to All Students</span>
-          </button>
           <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
             <i class="fa-solid fa-xmark text-sm"></i>
           </button>
@@ -288,6 +279,9 @@
         <button onclick="switchAdminTab('students')" id="tab-btn-students" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
           <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Performance Tracker
         </button>
+        <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+          <i class="fa-solid fa-key mr-1.5"></i> Auto-Push Settings
+        </button>
       </div>
 
       <!-- Scrollable Tab Container -->
@@ -295,8 +289,6 @@
 
         <!-- TAB 1: SUBJECTS, TOPICS & DIRECT MCQ EDITOR -->
         <div id="admin-tab-content" class="space-y-6">
-          
-          <!-- Subject Controls Strip -->
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
             <div>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
@@ -315,7 +307,6 @@
             </div>
           </div>
 
-          <!-- Active Subject Modules & MCQ Editor -->
           <div>
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-blue-400">Anatomy</span></h4>
@@ -325,17 +316,16 @@
             <div id="admin-modules-container" class="space-y-3">
             </div>
           </div>
-
         </div>
 
-        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH PRE-PUBLISH STAGING -->
+        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH AUTO-PUSH -->
         <div id="admin-tab-importer" class="hidden space-y-5">
           <div class="bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
             <div class="flex items-center gap-2 font-bold text-blue-400 mb-1">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>High-Yield Automated Parsing & Review Stage</span>
+              <span>High-Yield Automated Parsing & Real-Time Global Publish</span>
             </div>
-            Upload your MCQ PDF. Questions are automatically segregated into clinical topic tests and placed in a <strong>Preview Stage</strong> below. You can inspect, modify choices or answer keys, and delete any unwanted items before publishing.
+            Upload your MCQ PDF. Questions are automatically segregated into clinical topic tests. When you tap <strong>Confirm & Auto-Publish</strong>, the questions are instantly saved to GitHub and appear on all students' phones without any manual steps!
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -373,11 +363,11 @@
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Questions Review (<span id="staged-count" class="text-blue-400">0</span>)</h4>
-                <p class="text-[11px] text-slate-400">Review, edit, or delete items prior to publishing into the active question bank.</p>
+                <p class="text-[11px] text-slate-400">Review or edit items. Tapping below automatically pushes them to all students!</p>
               </div>
-              <button onclick="commitStagedQuestionsToDatabase()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>Confirm & Publish to Bank</span>
+              <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Confirm & Auto-Publish Live</span>
               </button>
             </div>
 
@@ -388,7 +378,6 @@
 
         <!-- TAB 3: CANDIDATE PERFORMANCE AUDIT TRACKER -->
         <div id="admin-tab-students" class="hidden space-y-5">
-          
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
@@ -402,7 +391,6 @@
             </div>
           </div>
 
-          <!-- Overall Summary Metric Cards -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
               <div class="text-[10px] font-bold uppercase text-slate-500">Tests Completed</div>
@@ -422,7 +410,6 @@
             </div>
           </div>
 
-          <!-- Performance Records Table -->
           <div class="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/50">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs text-slate-300">
@@ -442,7 +429,27 @@
               </table>
             </div>
           </div>
+        </div>
 
+        <!-- TAB 4: GITHUB AUTO-PUSH CONFIGURATION -->
+        <div id="admin-tab-settings" class="hidden space-y-4">
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-lock text-amber-400"></i>
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Paste your GitHub Personal Access Token once below. When you import or edit MCQs, the app directly updates <code class="text-emerald-400 font-mono">data.json</code> in your repository automatically.
+            </p>
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">GitHub Token (Classic with 'repo' scope)</label>
+              <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="flex items-center justify-between pt-2">
+              <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
+              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">Save Key</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -504,48 +511,6 @@
         <button onclick="saveActiveMcqEdits()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-600/20">
           Save Changes
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= 1-TAP REPO SYNC MODAL ================= -->
-  <div id="sync-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
-      <button onclick="closeSyncModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
-
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-        </div>
-        <div>
-          <h3 class="text-base font-extrabold text-white">Publish MCQs to All Students</h3>
-          <p class="text-xs text-slate-400">Save questions directly into your GitHub repository</p>
-        </div>
-      </div>
-
-      <p class="text-xs text-slate-300 leading-relaxed mb-4">
-        To make all uploaded and edited MCQs visible on all student devices, save your bank into a file named <code class="text-emerald-400 font-mono">data.json</code> in your GitHub repository:
-      </p>
-
-      <div class="space-y-3 mb-5">
-        <button onclick="downloadCurriculumJson()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-          <i class="fa-solid fa-download"></i>
-          <span>1. Download data.json File</span>
-        </button>
-
-        <button onclick="copyCurriculumJson()" id="copy-json-btn" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-copy"></i>
-          <span>Or Copy JSON to Clipboard</span>
-        </button>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-[11px] text-slate-400 space-y-1.5">
-        <div class="font-bold text-slate-200">How to push to GitHub (30 seconds):</div>
-        <div>1. Open <a href="https://github.com/ahteshamneet-gif/Mbbsbot" target="_blank" class="text-blue-400 underline">github.com/ahteshamneet-gif/Mbbsbot</a></div>
-        <div>2. Tap <strong>Add file ➔ Upload files</strong> and drop the downloaded <code class="text-emerald-400 font-mono">data.json</code>.</div>
-        <div>3. Click <strong>Commit changes</strong>. All students immediately receive all questions!</div>
       </div>
     </div>
   </div>
@@ -660,10 +625,10 @@
     window.addEventListener("DOMContentLoaded", async () => {
       await loadDatabaseWithGlobalFallback();
       processAuthenticationPipeline();
+      initTokenUI();
     });
 
     async function loadDatabaseWithGlobalFallback() {
-      // 1. Try local cache
       try {
         const stored = localStorage.getItem("mbbs_cbt_curriculum");
         if (stored) {
@@ -671,32 +636,34 @@
         }
       } catch (err) {}
 
-      // 2. Fetch the central global data.json published in the repository
+      // Fetch the globally deployed data.json file from the repo
       try {
         const res = await fetch("./data.json?v=" + Date.now());
         if (res.ok) {
           const globalData = await res.json();
           if (globalData && typeof globalData === "object" && Object.keys(globalData).length > 0) {
             DB = globalData;
-            commitDatabase();
+            commitDatabase(false);
           }
         }
       } catch (e) {
-        console.log("data.json not yet in repo, using current cache.");
+        console.log("data.json not found yet, falling back to local/seed.");
       }
 
-      // 3. Fallback to seed data if empty
       if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"] || !DB["Anatomy"].chapters || DB["Anatomy"].chapters.length === 0) {
         DB = JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
-        commitDatabase();
+        commitDatabase(false);
       }
     }
 
-    function commitDatabase() {
+    function commitDatabase(autoPushToGitHub = true) {
       try {
         localStorage.setItem("mbbs_cbt_curriculum", JSON.stringify(DB));
       } catch (e) {
         console.error("Storage commit error:", e);
+      }
+      if (autoPushToGitHub && activeUser && activeUser.role === "admin") {
+        pushCurriculumToGitHubDirect();
       }
     }
 
@@ -1131,6 +1098,7 @@
       document.getElementById("admin-modal").classList.remove("hidden");
       renderAdminContentManager();
       renderAdminStudentAnalytics();
+      initTokenUI();
     }
 
     function closeAdminModal() {
@@ -1141,10 +1109,12 @@
       const isContent = tabKey === 'content';
       const isImporter = tabKey === 'importer';
       const isStudents = tabKey === 'students';
+      const isSettings = tabKey === 'settings';
 
       document.getElementById("admin-tab-content").classList.toggle("hidden", !isContent);
       document.getElementById("admin-tab-importer").classList.toggle("hidden", !isImporter);
       document.getElementById("admin-tab-students").classList.toggle("hidden", !isStudents);
+      document.getElementById("admin-tab-settings").classList.toggle("hidden", !isSettings);
 
       document.getElementById("tab-btn-content").className = isContent
         ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
@@ -1155,6 +1125,10 @@
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
       document.getElementById("tab-btn-students").className = isStudents
+        ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
+        : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
+
+      document.getElementById("tab-btn-settings").className = isSettings
         ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
@@ -1458,7 +1432,7 @@
       renderStagedReviewList();
     }
 
-    function commitStagedQuestionsToDatabase() {
+    async function commitStagedQuestionsWithAutoPush() {
       if (stagedModules.length === 0) return;
       const targetSub = document.getElementById("import-target-subject").value;
       if (!DB[targetSub]) DB[targetSub] = { name: targetSub, chapters: [] };
@@ -1467,18 +1441,28 @@
         DB[targetSub].chapters.unshift(mod);
       });
 
-      commitDatabase();
+      const btn = document.getElementById("auto-publish-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Pushing to GitHub...</span>';
+
       stagedModules = [];
       document.getElementById("pdf-staging-preview").classList.add("hidden");
-      document.getElementById("pdf-import-live-log").textContent = `🎉 Successfully published to ${targetSub}!`;
 
       currentSubjectKey = targetSub;
       syncSubjectDropdowns();
       renderBrowsePortal();
       renderAdminContentManager();
 
-      // Show sync prompt so admin exports to all students
-      openSyncModal();
+      // Trigger Direct Push to GitHub
+      const success = await pushCurriculumToGitHubDirect();
+      if (success) {
+        document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new MCQs.`;
+      } else {
+        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Set up your GitHub Token in 'Auto-Push Settings' tab for automatic global publishing.`;
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Confirm & Auto-Publish Live</span>';
     }
 
     // ================= SINGLE MCQ MODAL EDITOR =================
@@ -1554,6 +1538,83 @@
       }
 
       closeEditMcqModal();
+    }
+
+    // ================= DIRECT GITHUB REST API AUTO-PUSH =================
+    const GITHUB_REPO = "ahteshamneet-gif/Mbbsbot";
+    const GITHUB_FILE = "data.json";
+
+    function initTokenUI() {
+      const token = localStorage.getItem("mbbs_gh_token") || "";
+      const input = document.getElementById("gh-token-input");
+      const status = document.getElementById("gh-token-status");
+      if (input) input.value = token;
+      if (status) {
+        status.textContent = token ? "✅ Auto-Push Key is active" : "⚠️ No key saved (Required for auto-upload)";
+        status.className = token ? "text-xs text-emerald-400 font-mono" : "text-xs text-amber-400 font-mono";
+      }
+    }
+
+    function saveGitHubToken() {
+      const token = document.getElementById("gh-token-input").value.trim();
+      if (!token) return;
+      localStorage.setItem("mbbs_gh_token", token);
+      initTokenUI();
+      alert("GitHub Auto-Push Key saved successfully!");
+    }
+
+    async function pushCurriculumToGitHubDirect() {
+      const token = localStorage.getItem("mbbs_gh_token");
+      if (!token) return false;
+
+      try {
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+        
+        // 1. Get current file sha (if it already exists on github)
+        let sha = null;
+        try {
+          const getRes = await fetch(url, {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Accept": "application/vnd.github.v3+json"
+            }
+          });
+          if (getRes.ok) {
+            const fileInfo = await getRes.json();
+            sha = fileInfo.sha;
+          }
+        } catch (e) {}
+
+        // 2. Put file to repo
+        const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
+        const payload = {
+          message: "Auto-sync question bank via Admin Panel",
+          content: contentBase64
+        };
+        if (sha) payload.sha = sha;
+
+        const putRes = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Accept": "application/vnd.github.v3+json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (putRes.ok) {
+          console.log("Successfully pushed to GitHub repository!");
+          return true;
+        } else {
+          const errData = await putRes.json();
+          console.error("GitHub API error:", errData);
+          return false;
+        }
+      } catch (err) {
+        console.error("Auto-push network failed:", err);
+        return false;
+      }
     }
 
     // ================= STUDENT PERFORMANCE AUDIT TRACKER =================
@@ -1648,36 +1709,6 @@
 
     function closeStudentStatsModal() {
       document.getElementById("student-stats-modal").classList.add("hidden");
-    }
-
-    // ================= 1-TAP REPO SYNC ENGINE =================
-    function openSyncModal() {
-      document.getElementById("sync-modal").classList.remove("hidden");
-    }
-
-    function closeSyncModal() {
-      document.getElementById("sync-modal").classList.add("hidden");
-    }
-
-    function downloadCurriculumJson() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "data.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function copyCurriculumJson() {
-      const str = JSON.stringify(DB, null, 2);
-      navigator.clipboard.writeText(str).then(() => {
-        const btn = document.getElementById("copy-json-btn");
-        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Copied to Clipboard!';
-        setTimeout(() => {
-          btn.innerHTML = '<i class="fa-solid fa-copy"></i> Or Copy JSON to Clipboard';
-        }, 2000);
-      });
     }
 
     function promptCreateNewSubject() {
