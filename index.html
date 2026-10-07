@@ -19,9 +19,9 @@
       -webkit-tap-highlight-color: transparent;
     }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #0c1322; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 6px; }
     .glass-panel {
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
@@ -35,6 +35,7 @@
   <header id="main-header" class="sticky top-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
+      <!-- Brand & Profile -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
           <i class="fa-solid fa-brain text-lg"></i>
@@ -48,6 +49,7 @@
         </div>
       </div>
 
+      <!-- Action Portal Buttons -->
       <div class="flex items-center gap-2">
         <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-sliders"></i>
@@ -94,7 +96,7 @@
       </div>
       <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Authorized Access Only</h2>
       <p class="text-xs sm:text-sm text-slate-400 mt-2 mb-6 leading-relaxed">
-        This computer-based training test engine is restricted to enrolled candidates. Please sign in with your auto-generated Student ID and password.
+        This computer-based training test engine is restricted to enrolled candidates. Please sign in with your assigned Student ID and password.
       </p>
 
       <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left">
@@ -318,14 +320,14 @@
           </div>
         </div>
 
-        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH AUTO-PUSH -->
+        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH PRE-PUBLISH STAGING -->
         <div id="admin-tab-importer" class="hidden space-y-5">
           <div class="bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
             <div class="flex items-center gap-2 font-bold text-blue-400 mb-1">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
               <span>High-Yield Automated Parsing & Real-Time Global Publish</span>
             </div>
-            Upload your MCQ PDF. Questions are automatically segregated into clinical topic tests. When you tap <strong>Confirm & Auto-Publish</strong>, the questions are instantly saved to GitHub and appear on all students' phones without any manual steps!
+            Upload your MCQ PDF. Questions are automatically detected and segregated into clinical topic tests. You can preview, edit, or delete items in the review area, and clicking <strong>Confirm & Auto-Publish Live</strong> saves the test directly to GitHub for all students!
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -636,7 +638,7 @@
         }
       } catch (err) {}
 
-      // Fetch the globally deployed data.json file from the repo
+      // Fetch the globally deployed data.json file from the repository
       try {
         const res = await fetch("./data.json?v=" + Date.now());
         if (res.ok) {
@@ -895,7 +897,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE =================
+    // ================= CBT EXAM ENGINE (RANDOMIZED OPTIONS) =================
     function launchExamSession(chapterId) {
       if (!activeUser) {
         lockPortalDisplay();
@@ -1261,7 +1263,7 @@
       }
     }
 
-    // --- TAB 2: PDF IMPORTER WITH PRE-PUBLISH STAGING ---
+    // --- TAB 2: RESILIENT PDF IMPORTER WITH PRE-PUBLISH STAGING ---
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1276,7 +1278,8 @@
 
       const log = document.getElementById("pdf-import-live-log");
       log.classList.remove("hidden");
-      log.textContent = "⏳ Extracting vertical text coordinates from PDF...";
+      log.className = "text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono leading-relaxed";
+      log.textContent = "⏳ Reading PDF text stream across all pages...";
 
       try {
         const buffer = await stagedPdfFile.arrayBuffer();
@@ -1305,16 +1308,32 @@
           accumulatedText += pageText + "\n\n";
         }
 
-        log.textContent = `✅ Extracted ${doc.numPages} pages. Populating Staged Review Area below...`;
-
         const override = document.getElementById("import-chapter-override").value.trim();
-        const baseName = override || stagedPdfFile.name.replace(".pdf", "");
+        const cleanDocName = stagedPdfFile.name.replace(/\.pdf$/i, "").replace(/[\(\)\_\-]+/g, " ").trim();
+        const baseName = override || cleanDocName;
 
         stagedModules = extractTopicTestsFromText(accumulatedText, baseName);
+        
+        let totalExtracted = 0;
+        stagedModules.forEach(m => totalExtracted += m.questions.length);
+
+        if (totalExtracted === 0) {
+          log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
+          log.textContent = `⚠️ Extracted ${doc.numPages} pages, but no MCQs could be matched. Ensure questions have options A), B), C), D) and an answer key (e.g., 'Correct Answer: B' or 'Ans: B').`;
+          return;
+        }
+
+        log.className = "text-xs text-emerald-400 bg-slate-950 p-4 rounded-xl border border-emerald-500/30 font-mono";
+        log.textContent = `✅ Successfully extracted ${totalExtracted} questions across ${stagedModules.length} topic set(s)! Scroll down to preview.`;
+
         renderStagedReviewList();
+
+        const stagePreview = document.getElementById("pdf-staging-preview");
+        stagePreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       } catch (err) {
         console.error("PDF Parsing Failure:", err);
+        log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
         log.textContent = `❌ Import Failed: ${err.message}`;
       }
     }
@@ -1322,54 +1341,61 @@
     function extractTopicTestsFromText(rawText, baseTitle) {
       let formatted = rawText
         .replace(/\r/g, "")
-        .replace(/([0-9]+)\s*\.\s*/g, "\nQ$1. ")
-        .replace(/\b([A-D])\s*[\)\.\-]\s*/g, "\n$1) ")
-        .replace(/(Correct\s*Answer\s*[:\-]\s*[A-D])/gi, "\n$1")
-        .replace(/(Explanation\s*[:\-])/gi, "\n$1");
+        .replace(/(?:^|\n)\s*(?:Q(?:uestion)?\.?\s*(\d+)|\((\d+)\)|(\d+)\s*[\.\:\)])/gi, "\n###MCQ_START### Q$1$2$3. ")
+        .replace(/(?:^|\n|\s)\s*(?:\(?([A-D])\)|\b([A-D])[\.\:\-])\s+/g, "\n$1$2) ")
+        .replace(/(?:^|\n|\s)\s*(?:Correct\s*Answer|Answer|Ans)\s*[\:\-\=]\s*\(?([A-D])\)?/gi, "\nCorrect Answer: $1")
+        .replace(/(?:^|\n|\s)\s*(?:Explanation|Rationale|Note|Ref)\s*[\:\-\=]/gi, "\nExplanation:");
 
-      const questionBlocks = formatted.split(/\n(?=Q\d+\.\s+)/i).filter(b => b.trim().length > 35);
-      const topicBuckets = {};
+      const questionBlocks = formatted.split(/###MCQ_START###\s*/i).filter(b => b.trim().length > 30);
+      const questionsList = [];
+      let defaultTopic = baseTitle;
 
       questionBlocks.forEach((block, i) => {
-        const qMatch = block.match(/Q\d+\.\s+([\s\S]+?)(?=\n[A-D]\))/i);
+        const qMatch = block.match(/Q\d+\.?\s+([\s\S]+?)(?=\n[A-D]\))/i);
         const aMatch = block.match(/\nA\)\s*([\s\S]+?)(?=\nB\))/i);
         const bMatch = block.match(/\nB\)\s*([\s\S]+?)(?=\nC\))/i);
         const cMatch = block.match(/\nC\)\s*([\s\S]+?)(?=\nD\))/i);
         const dMatch = block.match(/\nD\)\s*([\s\S]+?)(?=\nCorrect Answer:|\nExplanation:|$)/i);
-        const ansMatch = block.match(/Correct Answer\s*[:\-]\s*([A-D])/i);
-        const expMatch = block.match(/Explanation\s*[:\-]\s*([\s\S]+?)$/i);
+        const ansMatch = block.match(/Correct Answer:\s*([A-D])/i);
+        const expMatch = block.match(/Explanation:\s*([\s\S]+?)$/i);
 
-        if (qMatch && aMatch && bMatch && cMatch && dMatch && ansMatch) {
+        if (qMatch && aMatch && bMatch && cMatch && dMatch) {
           const map = {
             "A": aMatch[1].trim(),
             "B": bMatch[1].trim(),
             "C": cMatch[1].trim(),
             "D": dMatch[1].trim()
           };
-          const letter = ansMatch[1].toUpperCase();
+          const letter = ansMatch ? ansMatch[1].toUpperCase() : "A";
 
-          let topicTag = "Clinical Topic Test";
-          const headerMatch = block.match(/([A-Z\s]{4,30}(?:PLEXUS|FRACTURE|NERVE|TUNNEL|MUSCLE|ROTATOR|JOINT|LIMB|ARTERY|VEIN))/);
-          if (headerMatch) topicTag = headerMatch[1].trim();
+          let specificTopic = defaultTopic;
+          const topicMatch = block.match(/(?:Topic|Module|Chapter)\s*[\:\-]\s*([^\n\r]+)/i) || block.match(/\[([A-Za-z\s]{3,35})\]/);
+          if (topicMatch) specificTopic = topicMatch[1].trim();
 
-          if (!topicBuckets[topicTag]) topicBuckets[topicTag] = [];
-
-          topicBuckets[topicTag].push({
+          questionsList.push({
             id: `PDF-${i + 1}`,
-            topic: topicTag,
+            topic: specificTopic,
             question: qMatch[1].trim(),
             options: [map["A"], map["B"], map["C"], map["D"]],
             answer: map[letter] || map["A"],
-            explanation: expMatch ? expMatch[1].trim() : "High-yield guideline pearl."
+            explanation: expMatch ? expMatch[1].trim() : "High-yield MBBS guideline pearl."
           });
         }
+      });
+
+      if (questionsList.length === 0) return [];
+
+      const topicBuckets = {};
+      questionsList.forEach(q => {
+        if (!topicBuckets[q.topic]) topicBuckets[q.topic] = [];
+        topicBuckets[q.topic].push(q);
       });
 
       const modules = [];
       Object.keys(topicBuckets).forEach((tName, idx) => {
         modules.push({
           id: `mod_${Date.now()}_${idx}`,
-          title: `${baseTitle} - ${tName}`,
+          title: tName === baseTitle ? baseTitle : `${baseTitle} - ${tName}`,
           topic: tName,
           questions: topicBuckets[tName]
         });
@@ -1453,7 +1479,6 @@
       renderBrowsePortal();
       renderAdminContentManager();
 
-      // Trigger Direct Push to GitHub
       const success = await pushCurriculumToGitHubDirect();
       if (success) {
         document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new MCQs.`;
@@ -1570,7 +1595,6 @@
       try {
         const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
         
-        // 1. Get current file sha (if it already exists on github)
         let sha = null;
         try {
           const getRes = await fetch(url, {
@@ -1585,7 +1609,6 @@
           }
         } catch (e) {}
 
-        // 2. Put file to repo
         const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
         const payload = {
           message: "Auto-sync question bank via Admin Panel",
