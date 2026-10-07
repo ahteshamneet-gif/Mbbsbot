@@ -3,66 +3,6 @@
     "name": "Anatomy",
     "chapters": [
       {
-        "id": "mod_1791391738870_0",
-        "title": "Lower Limb Anatomy MCQs & Explanations  1 - GLUTEAL REGION & PELVIC BIOMECHANICS",
-        "topic": "GLUTEAL REGION & PELVIC BIOMECHANICS",
-        "questions": [
-          {
-            "id": "PDF-2",
-            "topic": "GLUTEAL REGION & PELVIC BIOMECHANICS",
-            "question": ".  Which structure passes through the femoral ring into the femoral canal?",
-            "options": [
-              "Femoral nerve",
-              "Femoral artery",
-              "Deep inguinal lymph node (Cloquet)",
-              "Genitofemoral nerve"
-            ],
-            "answer": "Deep inguinal lymph node (Cloquet)",
-            "explanation": "High-yield MBBS guideline pearl."
-          }
-        ]
-      },
-      {
-        "id": "mod_1791389846284_2",
-        "title": "Upper_Limb_Anatomy_MCQs_with_Explanations - BRACHIAL PLEXUS",
-        "topic": "BRACHIAL PLEXUS",
-        "questions": [
-          {
-            "id": "PDF-8",
-            "topic": "BRACHIAL PLEXUS",
-            "question": "From medial to lateral, what is the correct anatomical sequence of the deep contents located\nwithin the cubital fossa?",
-            "options": [
-              "Radial nerve → Biceps tendon → Brachial artery → Median nerve",
-              "Median nerve → Brachial artery → Biceps brachii tendon → Radial nerve",
-              "Brachial artery → Median nerve → Biceps tendon → Radial nerve",
-              "Biceps tendon → Brachial artery → Median nerve → Ulnar nerve"
-            ],
-            "answer": "Median nerve → Brachial artery → Biceps brachii tendon → Radial nerve",
-            "explanation": "From  medial to lateral , the mnemonic  \"MBBR\"  (Median nerve, Brachial artery, Biceps tendon,\nRadial nerve [deep between brachialis and brachioradialis]) outlines the contents. Clinically, the bicipital\naponeurosis separates these deep contents from the superficial median cubital vein, protecting the artery during\nvenipuncture.\n Clinical Anatomy: Upper Limb Question Bank  Page 3 of 7\n\nBRACHIAL PLEXUS & NERVE INJURY\n Q"
-          }
-        ]
-      },
-      {
-        "id": "mod_1791389846284_1",
-        "title": "Upper_Limb_Anatomy_MCQs_with_Explanations - HUMERUS FRACTURE",
-        "topic": "HUMERUS FRACTURE",
-        "questions": [
-          {
-            "id": "PDF-3",
-            "topic": "HUMERUS FRACTURE",
-            "question": "A 52-year-old painter reports severe pain when abducting the right arm, especially between 60°\nand 120°. On examination, he is completely unable to initiate the first 15° of abduction. Which\nmuscle is most likely torn?",
-            "options": [
-              "Infraspinatus",
-              "Subscapularis",
-              "Supraspinatus",
-              "Teres minor"
-            ],
-            "answer": "Supraspinatus",
-            "explanation": "The  supraspinatus  muscle (innervated by the suprascapular nerve, C5–C6) initiates the first 0°–\n15° of arm abduction at the glenohumeral joint. The deltoid muscle continues abduction from 15° to 90°, while\nthe trapezius and serratus anterior rotate the scapula upwards beyond 90°. Supraspinatus is the most\ncommonly torn rotator cuff tendon due to subacromial impingement.\n Clinical Anatomy: Upper Limb Question Bank  Page 1 of 7\n\nHUMERUS FRACTURES & PERIPHERAL NERVES\n Q"
-          }
-        ]
-      },
-      {
         "id": "mod_1791389846284_0",
         "title": "Upper_Limb_Anatomy_MCQs_with_Explanations - Clinical Topic Test",
         "topic": "Clinical Topic Test",
