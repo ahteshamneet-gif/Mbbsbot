@@ -1,1 +1,271 @@
-
+{
+  "Anatomy": {
+    "name": "Anatomy",
+    "chapters": [
+      {
+        "id": "mod_1791400687299",
+        "title": "Upper Limb Anatomy MCQs with Explanations",
+        "topic": "Upper Limb Anatomy MCQs with Explanations",
+        "questions": [
+          {
+            "id": "PDF-2",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  A 24-year-old motorcyclist is thrown from his bike, landing violently on his shoulder while his\nhead is forced to the opposite side. Examination reveals an adducted, internally rotated arm\nwith an extended elbow and pronated forearm (\"waiter's tip\" posture). Which roots of the\nbrachial plexus are most likely injured?",
+            "options": [
+              "C8 and T1",
+              "C5 and C6",
+              "C7 and C8",
+              "C5, C6, and C7"
+            ],
+            "answer": "C5 and C6",
+            "explanation": "This presentation describes  Erb-Duchenne palsy (Erb's palsy) , caused by traction or rupture of\nthe upper trunk (roots C5 and C6) due to an excessive increase in the angle between neck and shoulder.\nDamage to the suprascapular, axillary, and musculocutaneous nerves paralyzes the abductors (deltoid,\nsupraspinatus), lateral rotators (infraspinatus, teres minor), elbow flexors (biceps, brachialis), and supinators\n(biceps brachii), producing the classic \"waiter's tip\" limb posture.\n SHOULDER & ROTATOR CUFF"
+          },
+          {
+            "id": "PDF-3",
+            "topic": "HUMERUS FRACTURE",
+            "question": ".  A 52-year-old painter reports severe pain when abducting the right arm, especially between 60°\nand 120°. On examination, he is completely unable to initiate the first 15° of abduction. Which\nmuscle is most likely torn?",
+            "options": [
+              "Infraspinatus",
+              "Subscapularis",
+              "Supraspinatus",
+              "Teres minor"
+            ],
+            "answer": "Supraspinatus",
+            "explanation": "The  supraspinatus  muscle (innervated by the suprascapular nerve, C5–C6) initiates the first 0°–\n15° of arm abduction at the glenohumeral joint. The deltoid muscle continues abduction from 15° to 90°, while\nthe trapezius and serratus anterior rotate the scapula upwards beyond 90°. Supraspinatus is the most\ncommonly torn rotator cuff tendon due to subacromial impingement.\n Clinical Anatomy: Upper Limb Question Bank  Page 1 of 7\n\nHUMERUS FRACTURES & PERIPHERAL NERVES"
+          },
+          {
+            "id": "PDF-4",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  A mid-shaft fracture of the humerus is most likely to injure which nerve and associated blood\nvessel located along the radial (spiral) groove?",
+            "options": [
+              "Axillary nerve and posterior circumflex humeral artery",
+              "Radial nerve and profunda brachii artery",
+              "Median nerve and brachial artery",
+              "Ulnar nerve and superior ulnar collateral artery"
+            ],
+            "answer": "Radial nerve and profunda brachii artery",
+            "explanation": "The  radial nerve  and  profunda brachii artery  (deep artery of the arm) course together along the\nspiral groove on the posterior surface of the humeral shaft. Mid-shaft fractures frequently lacerate or entrap the\nradial nerve, leading to \"wrist drop\" (loss of wrist and finger extension) and sensory loss on the dorsum of the\nfirst web space.\n WRIST & HAND ANATOMY"
+          },
+          {
+            "id": "PDF-5",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  A 45-year-old computer programmer presents with nocturnal tingling, numbness, and burning\npain over the palmar aspect of the lateral three and a half digits. Thenar muscle wasting is\nnoted. Which structure is spared because its branch does not pass through the carpal tunnel?",
+            "options": [
+              "Flexor pollicis longus tendon",
+              "Median nerve proper",
+              "Flexor digitorum profundus tendons",
+              "Palmar cutaneous branch of the median nerve"
+            ],
+            "answer": "Palmar cutaneous branch of the median nerve",
+            "explanation": "In  carpal tunnel syndrome , structures traversing deep to the flexor retinaculum (median nerve, 4\nFDS tendons, 4 FDP tendons, 1 FPL tendon) are compressed. However, the  palmar cutaneous branch  of the\nmedian nerve branches off approximately 5 cm proximal to the flexor retinaculum and passes  superficial  to it,\npreserving cutaneous sensation over the central palm.\n Clinical Anatomy: Upper Limb Question Bank  Page 2 of 7\n\nCARPAL BONES & CLINICAL PATHOLOGY"
+          },
+          {
+            "id": "PDF-6",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  Following a fall onto an outstretched hand (FOOSH), a 21-year-old athlete has tenderness in the\nanatomical snuffbox. Radiographs confirm a fracture across the waist of the scaphoid. What is\nthe most significant clinical risk associated with this fracture?",
+            "options": [
+              "Avascular necrosis of the proximal pole",
+              "Radial artery thrombosis",
+              "Acute ulnar nerve entrapment",
+              "Volkmann ischemic contracture"
+            ],
+            "answer": "Avascular necrosis of the proximal pole",
+            "explanation": "The blood supply to the  scaphoid bone  is retrograde, entering primarily via distal branches of the\nradial artery and flowing from distal to proximal. A fracture across the scaphoid waist interrupts blood flow to the\nproximal segment, predisposing it to nonunion and  avascular necrosis (AVN) .\n ANATOMICAL SPACES"
+          },
+          {
+            "id": "PDF-7",
+            "topic": "CUBITAL FOSSA",
+            "question": ".  Which structure traverses the quadrangular space of the posterior scapular region alongside\nthe axillary nerve?",
+            "options": [
+              "Circumflex scapular artery",
+              "Profunda brachii artery",
+              "Posterior circumflex humeral artery",
+              "Suprascapular artery"
+            ],
+            "answer": "Posterior circumflex humeral artery",
+            "explanation": "The  quadrangular space  is bounded superiorly by teres minor (or subscapularis), inferiorly by\nteres major, medially by the long head of triceps brachii, and laterally by the surgical neck of the humerus. It\ntransmits the  axillary nerve  and  posterior circumflex humeral artery . Fractures of the surgical neck or\nanterior shoulder dislocations can compromise both structures.\n CUBITAL FOSSA RELATIONS"
+          },
+          {
+            "id": "PDF-8",
+            "topic": "BRACHIAL PLEXUS",
+            "question": ".  From medial to lateral, what is the correct anatomical sequence of the deep contents located\nwithin the cubital fossa?",
+            "options": [
+              "Radial nerve → Biceps tendon → Brachial artery → Median nerve",
+              "Median nerve → Brachial artery → Biceps brachii tendon → Radial nerve",
+              "Brachial artery → Median nerve → Biceps tendon → Radial nerve",
+              "Biceps tendon → Brachial artery → Median nerve → Ulnar nerve"
+            ],
+            "answer": "Median nerve → Brachial artery → Biceps brachii tendon → Radial nerve",
+            "explanation": "From  medial to lateral , the mnemonic  \"MBBR\"  (Median nerve, Brachial artery, Biceps tendon,\nRadial nerve [deep between brachialis and brachioradialis]) outlines the contents. Clinically, the bicipital\naponeurosis separates these deep contents from the superficial median cubital vein, protecting the artery during\nvenipuncture.\n Clinical Anatomy: Upper Limb Question Bank  Page 3 of 7\n\nBRACHIAL PLEXUS & NERVE INJURY"
+          },
+          {
+            "id": "PDF-9",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  A difficult breech delivery involving excessive upward traction on the upper limb damages the\nlower trunk of the brachial plexus (C8–T1). The infant demonstrates a \"claw hand\" posture and\nipsilateral Horner syndrome. What is this clinical condition called?",
+            "options": [
+              "Erb-Duchenne palsy",
+              "Klumpke palsy",
+              "Parsonage-Turner syndrome",
+              "Thoracic outlet syndrome"
+            ],
+            "answer": "Klumpke palsy",
+            "explanation": "Klumpke palsy  results from lower trunk (C8–T1) brachial plexus injury, typically due to upward\npulling on an abducted arm (e.g., breech delivery or grabbing a tree branch while falling). It paralyzes intrinsic\nhand muscles (lumbricals, interossei, thenar/hypothenar), producing a total claw hand. Concomitant injury to the\nT1 sympathetic fibers leads to  Horner syndrome  (ptosis, miosis, anhidrosis).\n AXILLA & CHEST WALL"
+          },
+          {
+            "id": "PDF-10",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ".  During a radical mastectomy with axillary lymph node dissection, the long thoracic nerve of Bell\nis accidentally severed. Which deformity will become apparent upon pushing forward against a\nwall?",
+            "options": [
+              "Wrist drop",
+              "Ape-hand deformity",
+              "Winging of the scapula",
+              "Loss of shoulder abduction initiation"
+            ],
+            "answer": "Winging of the scapula",
+            "explanation": "The  long thoracic nerve  (roots C5, C6, C7 — \"C5, 6, 7 raise your arms to heaven\") courses\nalong the superficial surface of the  serratus anterior  muscle. Denervation impairs scapular protraction and\nupward rotation, causing the medial border and inferior angle of the scapula to project posteriorly (\"winged\nscapula\"), especially when pushing against resistance.\n Clinical Anatomy: Upper Limb Question Bank  Page 4 of 7\n\nFOREARM & HAND KINEMATICS"
+          },
+          {
+            "id": "PDF-11",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". Which pair of muscles is responsible for adducting the fingers toward the axial line of the hand\n(third digit) and abducting them away from it, respectively?",
+            "options": [
+              "Lumbricals and Palmar interossei",
+              "Palmar interossei and Dorsal interossei",
+              "Dorsal interossei and Palmar interossei",
+              "Flexor digitorum profundus and Extensor digitorum"
+            ],
+            "answer": "Palmar interossei and Dorsal interossei",
+            "explanation": "Remember the mnemonic  PAD & DAB :  P almar interossei  AD duct the digits toward the midline\n(3rd digit), and  D orsal interossei  AB duct the digits away from the midline. All interossei are innervated by the\ndeep branch of the  ulnar nerve  (C8, T1).\n SURFACE ANATOMY & SPACES"
+          },
+          {
+            "id": "PDF-12",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". Which tendon forms the medial boundary of the anatomical snuffbox when viewed in the\nanatomical position?",
+            "options": [
+              "Abductor pollicis longus",
+              "Extensor pollicis brevis",
+              "Extensor pollicis longus",
+              "Flexor carpi radialis"
+            ],
+            "answer": "Extensor pollicis longus",
+            "explanation": "The  anatomical snuffbox  is bounded medially (posteriorly) by the tendon of  extensor pollicis\nlongus (EPL) , which hooks around Lister's tubercle on the radius. The lateral (anterior) boundary is formed by\nthe tendons of  abductor pollicis longus (APL)  and  extensor pollicis brevis (EPB) . The floor contains the\nscaphoid, trapezium, and the radial artery.\n ELBOW PATHOLOGY & NERVES"
+          },
+          {
+            "id": "PDF-13",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". A 19-year-old sustains a medial epicondyle avulsion fracture of the humerus. Which motor and\nsensory deficits are most characteristic of this nerve injury?",
+            "options": [
+              "Loss of pronation and sensory loss over the thenar eminence",
+              "Clawing of digits 4 and 5 with sensory loss over the medial 1.5 fingers",
+              "Wrist drop with sensory loss over the anatomical snuffbox",
+              "Inability to abduct the arm past 15° with deltoid anesthesia"
+            ],
+            "answer": "Clawing of digits 4 and 5 with sensory loss over the medial 1.5 fingers",
+            "explanation": "The  ulnar nerve  runs immediately behind the medial epicondyle in the cubital tunnel. Fractures\nor direct trauma cause motor loss to flexor carpi ulnaris, medial half of FDP, hypothenar muscles, interossei,\nand medial 2 lumbricals, culminating in ulnar claw hand (more pronounced in distal lesions: \"ulnar paradox\")\nand anesthesia of the palmar and dorsal aspects of the medial 1.5 fingers.\n Clinical Anatomy: Upper Limb Question Bank  Page 5 of 7\n\nAXILLARY ARTERY BRANCHES"
+          },
+          {
+            "id": "PDF-14",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". The pectoralis minor muscle divides the axillary artery into three anatomical parts. Which\nbranch arises from the second part of the axillary artery?",
+            "options": [
+              "Superior thoracic artery",
+              "Thoracoacromial artery",
+              "Subscapular artery",
+              "Anterior circumflex humeral artery"
+            ],
+            "answer": "Thoracoacromial artery",
+            "explanation": "The rule of branches per part of the axillary artery: Part 1 (proximal to pectoralis minor) has  1\nbranch : Superior thoracic artery.\nPart 2 (deep to pectoralis minor) has  2 branches :  Thoracoacromial artery  and Lateral thoracic artery.\nPart 3 (distal to pectoralis minor) has  3 branches : Subscapular artery, Anterior circumflex humeral artery, and\nPosterior circumflex humeral artery.\n FOREARM & HAND INNERVATION"
+          },
+          {
+            "id": "PDF-15",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". A patient is unable to make the \"OK\" sign; instead, when attempting to pinch index finger to\nthumb, the distal phalanges remain flat in an abnormal pad-to-pad pinch. Which nerve is\ncompressed or damaged?",
+            "options": [
+              "Superficial branch of radial nerve",
+              "Deep branch of ulnar nerve",
+              "Anterior interosseous nerve",
+              "Posterior interosseous nerve"
+            ],
+            "answer": "Anterior interosseous nerve",
+            "explanation": "The  anterior interosseous nerve (AIN)  is a pure motor branch of the median nerve supplying 3\ndeep flexors:  flexor pollicis longus ,  lateral half of flexor digitorum profundus  (digits 2 and 3), and  pronator\nquadratus . Inability to flex the DIP joint of the index finger and IP joint of the thumb produces a characteristic\npinch deformity rather than a circular \"OK\" gesture. No cutaneous sensory loss occurs.\n Clinical Anatomy: Upper Limb Question Bank  Page 6 of 7\n\nJOINTS & LIGAMENTS"
+          },
+          {
+            "id": "PDF-16",
+            "topic": "Upper Limb Anatomy MCQs with Explanations",
+            "question": ". A 2-year-old child is lifted abruptly by the wrist by an older sibling. The child cries out and holds\nthe forearm pronated and slightly flexed, refusing to move it (\"nursemaid's elbow\"). Which\nligament has subluxated over the radial head?",
+            "options": [
+              "Radial collateral ligament",
+              "Ulnar collateral ligament",
+              "Annular ligament",
+              "Quadrate ligament"
+            ],
+            "answer": "Annular ligament",
+            "explanation": "In young children, the head of the radius is relatively small and cone-shaped. Sudden axial\ntraction on an extended, pronated forearm causes the radial head to slip out from the  annular ligament ,\nbecoming partially trapped between the radial head and the capitulum of the humerus. Gentle supination with\nelbow flexion typically reduces the subluxation.\n Clinical Anatomy: Upper Limb Question Bank  Page 7 of 7"
+          }
+        ]
+      },
+      {
+        "id": "ch_upper_limb_clinical",
+        "title": "Upper Limb Anatomy MCQs & Explanations",
+        "topic": "Upper Limb",
+        "questions": [
+          {
+            "id": "ANA-UL-001",
+            "topic": "Carpal Tunnel & Hand",
+            "question": "A 45-year-old female presents with nocturnal paresthesia in the lateral three and a half digits. Physical exam reveals thenar wasting. Which anatomical structure is spared because its branch does NOT pass through the carpal tunnel?",
+            "options": [
+              "Palmar cutaneous branch of median nerve",
+              "Flexor pollicis longus tendon",
+              "Flexor digitorum profundus tendons",
+              "Main trunk of median nerve"
+            ],
+            "answer": "Palmar cutaneous branch of median nerve",
+            "explanation": "The palmar cutaneous branch of the median nerve arises proximal to the flexor retinaculum and passes superficial to it, sparing sensation over the thenar eminence."
+          },
+          {
+            "id": "ANA-UL-002",
+            "topic": "Brachial Plexus & Nerve Injury",
+            "question": "A motorcyclist suffers traction injury of the upper trunk (C5-C6) of the brachial plexus (Erb-Duchenne palsy). Which classic limb posture is produced?",
+            "options": [
+              "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
+              "Claw hand with loss of hypothenar eminence",
+              "Wrist drop with inability to extend digits",
+              "Ape hand deformity with thenar atrophy"
+            ],
+            "answer": "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
+            "explanation": "Loss of abductors (deltoid, supraspinatus) and lateral rotators produces adduction and internal rotation. Loss of biceps causes forearm pronation."
+          },
+          {
+            "id": "ANA-UL-003",
+            "topic": "Shoulder & Rotator Cuff",
+            "question": "Which tendon of the rotator cuff is most commonly involved in impingement syndrome and degenerative tears?",
+            "options": [
+              "Supraspinatus tendon",
+              "Infraspinatus tendon",
+              "Subscapularis tendon",
+              "Teres minor tendon"
+            ],
+            "answer": "Supraspinatus tendon",
+            "explanation": "The supraspinatus tendon passes directly beneath the rigid coracoacromial arch in a critical hypovascular zone, making it most vulnerable to impingement."
+          }
+        ]
+      }
+    ]
+  },
+  "Physiology": {
+    "name": "Physiology",
+    "chapters": []
+  },
+  "Biochemistry": {
+    "name": "Biochemistry",
+    "chapters": []
+  },
+  "Pharmacology": {
+    "name": "Pharmacology",
+    "chapters": []
+  },
+  "Pathology": {
+    "name": "Pathology",
+    "chapters": []
+  }
+}
