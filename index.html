@@ -35,7 +35,6 @@
   <header id="main-header" class="sticky top-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
-      <!-- Brand & Profile -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
           <i class="fa-solid fa-brain text-lg"></i>
@@ -49,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Action Portal Buttons -->
       <div class="flex items-center gap-2">
         <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-sliders"></i>
@@ -57,8 +55,8 @@
         </button>
 
         <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-chart-pie text-emerald-400"></i>
-          <span class="hidden sm:inline">My Analytics</span>
+          <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
+          <span class="hidden sm:inline">Test History & Mistake Bank</span>
         </button>
 
         <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5">
@@ -180,10 +178,19 @@
           </div>
         </div>
 
+        <!-- Question Prompt Card with Distinct Module & Topic Badges -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-5 shadow-inner">
-          <div class="flex items-center gap-2 mb-2.5">
-            <span id="exam-q-topic-badge" class="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 px-2 py-0.5 rounded border border-slate-700">General</span>
-            <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
+          <div class="flex flex-wrap items-center gap-2 mb-3 pb-2.5 border-b border-slate-800/80">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-folder-open text-blue-400"></i> Module:
+              <strong id="exam-q-module-pill" class="text-white">General Anatomy</strong>
+            </span>
+            <span class="text-slate-600">•</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-tag text-indigo-400"></i> Topic:
+              <strong id="exam-q-topic-badge" class="text-indigo-300">General</strong>
+            </span>
+            <span class="ml-auto text-[10px] font-mono text-slate-500" id="exam-q-id-badge">QID-001</span>
           </div>
           <p id="exam-q-statement" class="text-sm sm:text-base font-medium text-slate-100 leading-relaxed">Loading question...</p>
         </div>
@@ -213,7 +220,7 @@
 
     <!-- VIEW 3: SCORECARD SUMMARY -->
     <section id="view-result" class="hidden">
-      <div class="glass-panel rounded-3xl border border-slate-800 p-6 sm:p-10 max-w-md mx-auto text-center shadow-2xl">
+      <div class="glass-panel rounded-3xl border border-slate-800 p-6 sm:p-10 max-w-lg mx-auto text-center shadow-2xl">
         <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4">
           <i class="fa-solid fa-award"></i>
         </div>
@@ -235,7 +242,12 @@
           </div>
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2.5">
+          <button id="review-mistakes-direct-btn" onclick="openStudentStatsModal(true)" class="hidden w-full py-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Review Incorrect MCQs (<span id="result-wrong-count">0</span>)</span>
+          </button>
+          
           <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/20">
             Retake Exam (Fresh Shuffle)
           </button>
@@ -252,7 +264,6 @@
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
       
-      <!-- Admin Modal Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800/90 bg-slate-900/60">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
@@ -270,7 +281,6 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
       <div class="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-bold overflow-x-auto custom-scroll">
         <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap">
           <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects, Topics & MCQs
@@ -286,7 +296,6 @@
         </button>
       </div>
 
-      <!-- Scrollable Tab Container -->
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
 
         <!-- TAB 1: SUBJECTS, TOPICS & DIRECT MCQ EDITOR -->
@@ -327,7 +336,7 @@
               <i class="fa-solid fa-wand-magic-sparkles"></i>
               <span>High-Yield Automated Parsing & Real-Time Global Publish</span>
             </div>
-            Upload your MCQ PDF. Questions are automatically detected and segregated into clinical topic tests. You can preview, edit, or delete items in the review area, and clicking <strong>Confirm & Auto-Publish Live</strong> saves the test directly to GitHub for all students!
+            Upload your MCQ PDF. Questions are automatically detected and segregated into clinical topic tests with explicit module and topic markers. You can preview, edit, or delete items in the review area, and clicking <strong>Confirm & Auto-Publish Live</strong> saves the test directly to GitHub for all students!
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -517,35 +526,68 @@
     </div>
   </div>
 
-  <!-- ================= STUDENT PERSONAL ANALYTICS MODAL ================= -->
-  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-      <button onclick="closeStudentStatsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
-        <i class="fa-solid fa-xmark"></i>
+  <!-- ================= COMPREHENSIVE TEST HISTORY & MISTAKE BANK MODAL ================= -->
+  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative overflow-hidden">
+      <button onclick="closeStudentStatsModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
-      <div class="text-center mb-5">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2">
-          <i class="fa-solid fa-chart-line"></i>
+      <div class="mb-5 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-clock-rotate-left"></i>
         </div>
-        <h3 class="text-base font-extrabold text-white">Your Assessment Progress</h3>
-        <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5">Performance Record</p>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Tests Taken</div>
-          <div id="self-tests-taken" class="text-xl font-black text-white mt-1">0</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Avg Accuracy</div>
-          <div id="self-avg-accuracy" class="text-xl font-black text-emerald-400 mt-1">0%</div>
+        <div>
+          <h3 class="text-base font-extrabold text-white">Candidate Progress & Mistake Bank</h3>
+          <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5">Test History Audit</p>
         </div>
       </div>
 
-      <button onclick="closeStudentStatsModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition">
-        Dismiss
-      </button>
+      <!-- Quick Metrics Strip -->
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 text-center">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Tests Attempted</div>
+          <div id="self-tests-taken" class="text-lg font-black text-white mt-1">0</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 text-center">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Overall Accuracy</div>
+          <div id="self-avg-accuracy" class="text-lg font-black text-emerald-400 mt-1">0%</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 text-center">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Saved Mistakes</div>
+          <div id="self-mistakes-count" class="text-lg font-black text-rose-400 mt-1">0</div>
+        </div>
+      </div>
+
+      <!-- Tab switcher for History vs Mistakes -->
+      <div class="flex border-b border-slate-800 text-xs font-bold mb-4">
+        <button id="btn-tab-history" onclick="switchStudentModalTab('history')" class="pb-2.5 px-3 text-blue-400 border-b-2 border-blue-500 transition">
+          <i class="fa-solid fa-list-check mr-1.5"></i> Test Attempts History
+        </button>
+        <button id="btn-tab-mistakes" onclick="switchStudentModalTab('mistakes')" class="pb-2.5 px-3 text-slate-400 hover:text-slate-200 transition">
+          <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-400"></i> Incorrect MCQs Bank
+        </button>
+      </div>
+
+      <div class="overflow-y-auto custom-scroll flex-1 pr-1 space-y-4">
+        
+        <!-- Sub-View 1: Test Attempts History -->
+        <div id="subview-history" class="space-y-2.5">
+          <!-- Dynamically populated rows -->
+        </div>
+
+        <!-- Sub-View 2: Incorrect MCQs Review List -->
+        <div id="subview-mistakes" class="hidden space-y-3">
+          <!-- Dynamically populated mistake cards -->
+        </div>
+
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 mt-3 flex justify-end">
+        <button onclick="closeStudentStatsModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
@@ -638,7 +680,6 @@
         }
       } catch (err) {}
 
-      // Fetch the globally deployed data.json file from the repository
       try {
         const res = await fetch("./data.json?v=" + Date.now());
         if (res.ok) {
@@ -897,7 +938,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE (RANDOMIZED OPTIONS) =================
+    // ================= CBT EXAM ENGINE WITH PROMINENT MODULE & TOPIC TITLES =================
     function launchExamSession(chapterId) {
       if (!activeUser) {
         lockPortalDisplay();
@@ -920,6 +961,7 @@
 
         return {
           id: q.id || `Q-${idx + 1}`,
+          moduleTitle: test.title,
           topic: q.topic || test.topic || "Clinical Core",
           question: q.question,
           options: shuffledOptions,
@@ -963,6 +1005,8 @@
       document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / total) * 100}%`;
       document.getElementById("exam-live-tally").textContent = `Answered: ${Object.keys(activeExam.answers).length} / ${total}`;
 
+      // Set the dynamic Module Name and Topic banner on the question card
+      document.getElementById("exam-q-module-pill").textContent = q.moduleTitle || activeExam.test.title;
       document.getElementById("exam-q-topic-badge").textContent = q.topic;
       document.getElementById("exam-q-id-badge").textContent = q.id;
       document.getElementById("exam-q-statement").textContent = q.question;
@@ -1021,7 +1065,36 @@
 
     function recordExamAnswer(qIdx, optionText) {
       activeExam.answers[qIdx] = optionText;
+      const q = activeExam.questions[qIdx];
+      
+      // If student marks the wrong answer, record it immediately into their Mistake Bank
+      if (optionText !== q.correctText) {
+        logMistakeToCandidateHistory(q, optionText);
+      }
+      
       renderActiveExamCard();
+    }
+
+    function logMistakeToCandidateHistory(questionObj, chosenWrongText) {
+      if (!activeUser) return;
+      try {
+        let mistakes = JSON.parse(localStorage.getItem(`mbbs_mistakes_${activeUser.uid}`) || "[]");
+        // Avoid duplicate entry if student retries in same session
+        const exists = mistakes.find(m => m.question === questionObj.question);
+        if (!exists) {
+          mistakes.unshift({
+            id: questionObj.id,
+            module: questionObj.moduleTitle || activeExam.test.title,
+            topic: questionObj.topic,
+            question: questionObj.question,
+            chosenWrong: chosenWrongText,
+            correctAnswer: questionObj.correctText,
+            explanation: questionObj.explanation,
+            date: new Date().toLocaleDateString()
+          });
+          localStorage.setItem(`mbbs_mistakes_${activeUser.uid}`, JSON.stringify(mistakes));
+        }
+      } catch (e) {}
     }
 
     function stepExam(direction) {
@@ -1038,8 +1111,13 @@
       clearInterval(activeExam.timer);
 
       let correct = 0;
+      let wrongCount = 0;
       activeExam.questions.forEach((q, idx) => {
-        if (activeExam.answers[idx] === q.correctText) correct++;
+        if (activeExam.answers[idx] === q.correctText) {
+          correct++;
+        } else if (activeExam.answers.hasOwnProperty(idx)) {
+          wrongCount++;
+        }
       });
 
       const total = activeExam.questions.length;
@@ -1051,6 +1129,16 @@
       document.getElementById("result-stat-score").textContent = `${correct} / ${total}`;
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
       document.getElementById("result-stat-time").textContent = `${m}:${s}`;
+
+      // Show the direct review button if student committed mistakes
+      const reviewMistakesBtn = document.getElementById("review-mistakes-direct-btn");
+      const wrongCountEl = document.getElementById("result-wrong-count");
+      if (wrongCount > 0) {
+        wrongCountEl.textContent = wrongCount;
+        reviewMistakesBtn.classList.remove("hidden");
+      } else {
+        reviewMistakesBtn.classList.add("hidden");
+      }
 
       storeExamAnalytics(activeExam.test.title, correct, total, accuracy);
 
@@ -1640,7 +1728,7 @@
       }
     }
 
-    // ================= STUDENT PERFORMANCE AUDIT TRACKER =================
+    // ================= STUDENT PERFORMANCE AUDIT & MISTAKE BOOK ENGINE =================
     function renderAdminStudentAnalytics() {
       let audit = [];
       try {
@@ -1709,7 +1797,7 @@
       });
     }
 
-    function openStudentStatsModal() {
+    function openStudentStatsModal(openDirectToMistakes = false) {
       if (!activeUser) return;
       let audit = [];
       try {
@@ -1727,7 +1815,125 @@
         document.getElementById("self-avg-accuracy").textContent = "0%";
       }
 
+      // Load Incorrect MCQs Mistake Bank
+      let mistakes = [];
+      try {
+        mistakes = JSON.parse(localStorage.getItem(`mbbs_mistakes_${activeUser.uid}`) || "[]");
+      } catch (e) {}
+      document.getElementById("self-mistakes-count").textContent = mistakes.length;
+
+      renderStudentHistoryList(userRecords);
+      renderStudentMistakesList(mistakes);
+
+      if (openDirectToMistakes) {
+        switchStudentModalTab('mistakes');
+      } else {
+        switchStudentModalTab('history');
+      }
+
       document.getElementById("student-stats-modal").classList.remove("hidden");
+    }
+
+    function switchStudentModalTab(tabKey) {
+      const isHistory = tabKey === 'history';
+      document.getElementById("subview-history").classList.toggle("hidden", !isHistory);
+      document.getElementById("subview-mistakes").classList.toggle("hidden", isHistory);
+
+      document.getElementById("btn-tab-history").className = isHistory
+        ? "pb-2.5 px-3 text-blue-400 border-b-2 border-blue-500 transition"
+        : "pb-2.5 px-3 text-slate-400 hover:text-slate-200 transition";
+
+      document.getElementById("btn-tab-mistakes").className = !isHistory
+        ? "pb-2.5 px-3 text-blue-400 border-b-2 border-blue-500 transition"
+        : "pb-2.5 px-3 text-slate-400 hover:text-slate-200 transition";
+    }
+
+    function renderStudentHistoryList(records) {
+      const container = document.getElementById("subview-history");
+      container.innerHTML = "";
+
+      if (records.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">No tests completed yet. Start a test to see your history!</div>`;
+        return;
+      }
+
+      records.slice().reverse().forEach(rec => {
+        const div = document.createElement("div");
+        div.className = "p-3.5 bg-slate-900/60 border border-slate-800 rounded-2xl flex items-center justify-between gap-3 text-xs";
+        div.innerHTML = `
+          <div>
+            <h5 class="font-bold text-white">${rec.test}</h5>
+            <p class="text-[11px] text-slate-500 mt-0.5">${rec.timestamp}</p>
+          </div>
+          <div class="text-right">
+            <span class="font-mono font-bold text-emerald-400">${rec.accuracy}%</span>
+            <span class="text-slate-400 font-mono text-[11px] ml-1">(${rec.score})</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderStudentMistakesList(mistakes) {
+      const container = document.getElementById("subview-mistakes");
+      container.innerHTML = "";
+
+      if (mistakes.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
+            <i class="fa-solid fa-circle-check text-2xl text-emerald-500/50 mb-2"></i>
+            <p class="font-bold text-slate-300">Clean Sheet!</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">No incorrect MCQs recorded. Whenever you mark an option wrong, it appears here with full explanations.</p>
+          </div>
+        `;
+        return;
+      }
+
+      mistakes.forEach((m, idx) => {
+        const card = document.createElement("div");
+        card.className = "p-4 bg-slate-900/90 border border-rose-500/20 rounded-2xl space-y-2.5 text-xs";
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider">${m.module || "Exam"}</span>
+              <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">${m.topic || "Topic"}</span>
+            </div>
+            <button onclick="clearSingleMistake(${idx})" class="text-[11px] text-slate-500 hover:text-emerald-400 transition" title="Mark as Mastered">
+              <i class="fa-solid fa-check-double mr-1"></i> Mastered
+            </button>
+          </div>
+
+          <p class="font-semibold text-slate-100 leading-relaxed">${m.question}</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+            <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300">
+              <span class="font-bold block text-rose-400 mb-0.5"><i class="fa-solid fa-xmark mr-1"></i> Your Selection:</span>
+              ${m.chosenWrong}
+            </div>
+            <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+              <span class="font-bold block text-emerald-400 mb-0.5"><i class="fa-solid fa-check mr-1"></i> Correct Answer:</span>
+              ${m.correctAnswer}
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 leading-relaxed">
+            <span class="font-bold text-amber-400 block mb-1"><i class="fa-solid fa-lightbulb mr-1"></i> High-Yield Pearl:</span>
+            ${m.explanation || "No additional explanation provided."}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function clearSingleMistake(index) {
+      if (!activeUser) return;
+      try {
+        let mistakes = JSON.parse(localStorage.getItem(`mbbs_mistakes_${activeUser.uid}`) || "[]");
+        mistakes.splice(index, 1);
+        localStorage.setItem(`mbbs_mistakes_${activeUser.uid}`, JSON.stringify(mistakes));
+        document.getElementById("self-mistakes-count").textContent = mistakes.length;
+        renderStudentMistakesList(mistakes);
+      } catch (e) {}
     }
 
     function closeStudentStatsModal() {
