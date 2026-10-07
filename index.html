@@ -262,12 +262,19 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Content Management, Staged PDF Importer & Candidate Auditing</p>
+            <p class="text-[11px] text-slate-400">Content Management, Staged PDF Importer & Global Sync</p>
           </div>
         </div>
-        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <!-- 1-Tap Export to Github Button -->
+          <button onclick="openSyncModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Export to All Students</span>
+          </button>
+          <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Navigation Tabs -->
@@ -316,7 +323,6 @@
             </div>
 
             <div id="admin-modules-container" class="space-y-3">
-              <!-- Rendered dynamically as interactive modules with expandable MCQ lists -->
             </div>
           </div>
 
@@ -376,7 +382,6 @@
             </div>
 
             <div id="staged-questions-list" class="space-y-3">
-              <!-- Staged Question Cards dynamically injected here -->
             </div>
           </div>
         </div>
@@ -433,7 +438,6 @@
                   </tr>
                 </thead>
                 <tbody id="student-analytics-records" class="divide-y divide-slate-800/60 font-medium">
-                  <!-- Dynamically populated -->
                 </tbody>
               </table>
             </div>
@@ -504,6 +508,48 @@
     </div>
   </div>
 
+  <!-- ================= 1-TAP REPO SYNC MODAL ================= -->
+  <div id="sync-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="closeSyncModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-white">Publish MCQs to All Students</h3>
+          <p class="text-xs text-slate-400">Save questions directly into your GitHub repository</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed mb-4">
+        To make all uploaded and edited MCQs visible on all student devices, save your bank into a file named <code class="text-emerald-400 font-mono">data.json</code> in your GitHub repository:
+      </p>
+
+      <div class="space-y-3 mb-5">
+        <button onclick="downloadCurriculumJson()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+          <i class="fa-solid fa-download"></i>
+          <span>1. Download data.json File</span>
+        </button>
+
+        <button onclick="copyCurriculumJson()" id="copy-json-btn" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-copy"></i>
+          <span>Or Copy JSON to Clipboard</span>
+        </button>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-[11px] text-slate-400 space-y-1.5">
+        <div class="font-bold text-slate-200">How to push to GitHub (30 seconds):</div>
+        <div>1. Open <a href="https://github.com/ahteshamneet-gif/Mbbsbot" target="_blank" class="text-blue-400 underline">github.com/ahteshamneet-gif/Mbbsbot</a></div>
+        <div>2. Tap <strong>Add file ➔ Upload files</strong> and drop the downloaded <code class="text-emerald-400 font-mono">data.json</code>.</div>
+        <div>3. Click <strong>Commit changes</strong>. All students immediately receive all questions!</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= STUDENT PERSONAL ANALYTICS MODAL ================= -->
   <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
@@ -538,7 +584,6 @@
 
   <!-- ================= CORE LOGIC SCRIPTS ================= -->
   <script>
-    // --- FOUNDATIONAL SEED CURRICULUM ---
     const DEFAULT_SEED_DATA = {
       "Anatomy": {
         name: "Anatomy",
@@ -597,12 +642,11 @@
       "Pathology": { name: "Pathology", chapters: [] }
     };
 
-    // --- APPLICATION STATE ---
     let DB = {};
     let currentSubjectKey = "Anatomy";
     let activeUser = null;
-    let stagedModules = []; // Temp storage for PDF MCQs before publishing
-    let editingContext = null; // { moduleId, questionIndex, isStaged: bool }
+    let stagedModules = [];
+    let editingContext = null;
     let activeExam = {
       test: null,
       questions: [],
@@ -612,22 +656,36 @@
       timer: null
     };
 
-    // ================= INITIALIZATION =================
-    window.addEventListener("DOMContentLoaded", () => {
-      loadDatabase();
+    // ================= INITIALIZATION & GLOBAL SYNC =================
+    window.addEventListener("DOMContentLoaded", async () => {
+      await loadDatabaseWithGlobalFallback();
       processAuthenticationPipeline();
     });
 
-    function loadDatabase() {
+    async function loadDatabaseWithGlobalFallback() {
+      // 1. Try local cache
       try {
         const stored = localStorage.getItem("mbbs_cbt_curriculum");
         if (stored) {
           DB = JSON.parse(stored);
         }
-      } catch (err) {
-        console.error("Storage load error:", err);
+      } catch (err) {}
+
+      // 2. Fetch the central global data.json published in the repository
+      try {
+        const res = await fetch("./data.json?v=" + Date.now());
+        if (res.ok) {
+          const globalData = await res.json();
+          if (globalData && typeof globalData === "object" && Object.keys(globalData).length > 0) {
+            DB = globalData;
+            commitDatabase();
+          }
+        }
+      } catch (e) {
+        console.log("data.json not yet in repo, using current cache.");
       }
 
+      // 3. Fallback to seed data if empty
       if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"] || !DB["Anatomy"].chapters || DB["Anatomy"].chapters.length === 0) {
         DB = JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
         commitDatabase();
@@ -1104,7 +1162,7 @@
       if (isStudents) renderAdminStudentAnalytics();
     }
 
-    // --- TAB 1: MODULAR CONTENT, TOPIC & MCQ HIERARCHY MANAGER ---
+    // --- TAB 1: MODULAR CONTENT & MCQ MANAGER ---
     function renderAdminContentManager() {
       const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
       document.getElementById("admin-cur-subject-name").textContent = curSub.name;
@@ -1118,7 +1176,7 @@
         return;
       }
 
-      curSub.chapters.forEach((ch, chIdx) => {
+      curSub.chapters.forEach((ch) => {
         const modCard = document.createElement("div");
         modCard.className = "bg-slate-900/60 border border-slate-800 rounded-2xl p-4 transition";
         modCard.innerHTML = `
@@ -1145,13 +1203,12 @@
             </div>
           </div>
 
-          <!-- Expandable MCQ Container -->
           <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-slate-800/80 space-y-3">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
               <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-blue-400 hover:underline font-bold">+ Add Question</button>
             </div>
-            <div class="space-y-2.5" id="mcq-items-container-${ch.id}">
+            <div class="space-y-2.5">
               ${renderMcqItemRows(ch)}
             </div>
           </div>
@@ -1230,7 +1287,7 @@
       }
     }
 
-    // --- TAB 2: PDF IMPORTER WITH STAGING & PREVIEW ---
+    // --- TAB 2: PDF IMPORTER WITH PRE-PUBLISH STAGING ---
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1413,14 +1470,15 @@
       commitDatabase();
       stagedModules = [];
       document.getElementById("pdf-staging-preview").classList.add("hidden");
-      document.getElementById("pdf-import-live-log").textContent = `🎉 Successfully committed all modules to ${targetSub}!`;
+      document.getElementById("pdf-import-live-log").textContent = `🎉 Successfully published to ${targetSub}!`;
 
       currentSubjectKey = targetSub;
       syncSubjectDropdowns();
       renderBrowsePortal();
       renderAdminContentManager();
 
-      setTimeout(() => closeAdminModal(), 1200);
+      // Show sync prompt so admin exports to all students
+      openSyncModal();
     }
 
     // ================= SINGLE MCQ MODAL EDITOR =================
@@ -1590,6 +1648,36 @@
 
     function closeStudentStatsModal() {
       document.getElementById("student-stats-modal").classList.add("hidden");
+    }
+
+    // ================= 1-TAP REPO SYNC ENGINE =================
+    function openSyncModal() {
+      document.getElementById("sync-modal").classList.remove("hidden");
+    }
+
+    function closeSyncModal() {
+      document.getElementById("sync-modal").classList.add("hidden");
+    }
+
+    function downloadCurriculumJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "data.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function copyCurriculumJson() {
+      const str = JSON.stringify(DB, null, 2);
+      navigator.clipboard.writeText(str).then(() => {
+        const btn = document.getElementById("copy-json-btn");
+        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Copied to Clipboard!';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-solid fa-copy"></i> Or Copy JSON to Clipboard';
+        }, 2000);
+      });
     }
 
     function promptCreateNewSubject() {
