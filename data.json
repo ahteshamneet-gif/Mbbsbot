@@ -3,6 +3,208 @@
     "name": "Anatomy",
     "chapters": [
       {
+        "id": "mod_1791400759775",
+        "title": "Lower Limb Anatomy MCQs & Explanations  1",
+        "topic": "Lower Limb Anatomy MCQs & Explanations  1",
+        "questions": [
+          {
+            "id": "PDF-2",
+            "topic": "GLUTEAL REGION & PELVIC BIOMECHANICS",
+            "question": ".  Which structure passes through the femoral ring into the femoral canal?",
+            "options": [
+              "Femoral nerve",
+              "Femoral artery",
+              "Deep inguinal lymph node (Cloquet)",
+              "Genitofemoral nerve"
+            ],
+            "answer": "Deep inguinal lymph node (Cloquet)",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-3",
+            "topic": "KNEE JOINT & LIGAMENTOUS ARCHITECTURE",
+            "question": ".  A patient presents with a positive Trendelenburg sign on the right side when standing on the right leg. Which nerve\nis most likely damaged?",
+            "options": [
+              "Right inferior gluteal nerve",
+              "Right superior gluteal nerve",
+              "Left superior gluteal nerve",
+              "Right obturator nerve"
+            ],
+            "answer": "Right superior gluteal nerve",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-4",
+            "topic": "POPLITEAL FOSSA & KNEE KINEMATICS",
+            "question": ".  During an anterior cruciate ligament (ACL) reconstruction, the surgeon identi fi es its bony attachments. The ACL\nprimarily attaches to the:",
+            "options": [
+              "Medial aspect of the lateral femoral condyle",
+              "Lateral aspect of the medial femoral condyle",
+              "Posterior intercondylar area of the tibia",
+              "Anterior margin of the medial meniscus"
+            ],
+            "answer": "Medial aspect of the lateral femoral condyle",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-5",
+            "topic": "LEG COMPARTMENTS & PERIPHERAL NERVE ENTRAPMENTS",
+            "question": ".  Which muscle is the primary \"unlocker\" of the fully extended knee joint at the beginning of  fl exion?",
+            "options": [
+              "Biceps femoris",
+              "Semimembranosus",
+              "Popliteus",
+              "Plantaris"
+            ],
+            "answer": "Popliteus",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-6",
+            "topic": "THIGH MUSCULATURE & DUAL INNERVATION",
+            "question": ".  Fractures of the neck of the  fi bula pose the highest risk of iatrogenic or trauma-induced paralysis to which nerve?",
+            "options": [
+              "Tibial nerve",
+              "Common  fi bular (peroneal) nerve",
+              "Saphenous nerve",
+              "Sural nerve"
+            ],
+            "answer": "Common  fi bular (peroneal) nerve",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-7",
+            "topic": "ANKLE RETINACULA & TARSAL TUNNEL",
+            "question": ".  Which of the following muscles is a dual-innervated component of the lower limb?",
+            "options": [
+              "Rectus femoris",
+              "Pectineus",
+              "Gracilis",
+              "Sartorius"
+            ],
+            "answer": "Pectineus",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-8",
+            "topic": "KNEE SPORTS INJURIES & MENISCAL PATHOLOGY",
+            "question": ".  In tarsal tunnel syndrome, which nerve is entrapped beneath the  fl exor retinaculum on the medial side of the ankle?",
+            "options": [
+              "Deep  fi bular nerve",
+              "Super fi cial  fi bular nerve",
+              "Tibial nerve",
+              "Sural nerve"
+            ],
+            "answer": "Tibial nerve",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-9",
+            "topic": "POSTERIOR LEG & TENDON BIOMECHANICS",
+            "question": ".  The \"unhappy triad\" of O'Donoghue classically involves traumatic tearing of which three structural elements?",
+            "options": [
+              "ACL, Medial Meniscus, Tibial (Medial) Collateral Ligament",
+              "PCL, Lateral Meniscus, Fibular Collateral Ligament",
+              "ACL, Lateral Meniscus, Patellar Ligament",
+              "PCL, Medial Meniscus, Arcuate Popliteal Ligament"
+            ],
+            "answer": "ACL, Medial Meniscus, Tibial (Medial) Collateral Ligament",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-10",
+            "topic": "ANTERIOR LEG & DORSAL FOOT INNERVATION",
+            "question": ".  An athlete experiences sudden, sharp pain in the calf accompanied by an inability to plantar fl ex against resistance.\nAn intact Thompson test is absent. The ruptured tendon is formed by:",
+            "options": [
+              "Tibialis posterior and  fl exor digitorum longus",
+              "Gastrocnemius, soleus, and plantaris",
+              "Peroneus longus and brevis",
+              "Popliteus and soleus"
+            ],
+            "answer": "Gastrocnemius, soleus, and plantaris",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-11",
+            "topic": "HIP JOINT & FEMORAL HEAD VASCULATURE",
+            "question": ".  A patient cannot dorsi fl ex the great toe (hallux) or feel sensation in the  fi rst dorsal web space. Which speci fi c\nnerve is compromised?",
+            "options": [
+              "Super fi cial  fi bular nerve",
+              "Deep  fi bular nerve",
+              "Saphenous nerve",
+              "Medial plantar nerve"
+            ],
+            "answer": "Deep  fi bular nerve",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-12",
+            "topic": "LATERAL LEG COMPARTMENT & METATARSAL ATTACHMENTS",
+            "question": ".  The main arterial supply to the head of the femur in adults, whose disruption causes avascular necrosis after\nfemoral neck fractures, is derived primarily from:",
+            "options": [
+              "Artery of the ligamentum teres",
+              "Medial circum fl ex femoral artery",
+              "Inferior gluteal artery",
+              "Deep external pudendal artery"
+            ],
+            "answer": "Medial circum fl ex femoral artery",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-13",
+            "topic": "ARCHES OF THE FOOT & PLANTAR LIGAMENTS",
+            "question": ".  Which muscle inserts into the base of the  fi fth metatarsal bone and acts to evert the foot?",
+            "options": [
+              "Fibularis (peroneus) tertius",
+              "Fibularis (peroneus) brevis",
+              "Tibialis anterior",
+              "Abductor digiti minimi"
+            ],
+            "answer": "Fibularis (peroneus) brevis",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-14",
+            "topic": "ADDUCTOR (HUNTER'S) CANAL & NEUROVASCULAR PASSAGE",
+            "question": ".  The primary dynamic and static stabilizer maintaining the medial longitudinal arch of the human foot is the:",
+            "options": [
+              "Long plantar ligament and  fi bularis longus",
+              "Plantar calcaneonavicular (spring) ligament and tibialis\nposterior tendon",
+              "Short plantar ligament and  fl exor hallucis brevis",
+              "Deltoid ligament and quadratus plantae"
+            ],
+            "answer": "Plantar calcaneonavicular (spring) ligament and tibialis\nposterior tendon",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-15",
+            "topic": "PELVIC BONY LANDMARKS & MUSCULAR ORIGINS",
+            "question": ".  What forms the lateral boundary of the adductor (Hunter ’ s) canal?",
+            "options": [
+              "Sartorius",
+              "Adductor longus",
+              "Vastus medialis",
+              "Rectus femoris"
+            ],
+            "answer": "Vastus medialis",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          },
+          {
+            "id": "PDF-16",
+            "topic": "Lower Limb Anatomy MCQs & Explanations  1",
+            "question": ".  An avulsion fracture of the anterior inferior iliac spine (AIIS) involves the detachment of the proximal origin of\nwhich muscle?",
+            "options": [
+              "Sartorius",
+              "Rectus femoris (straight head)",
+              "Tensor fasciae latae",
+              "Pectineus"
+            ],
+            "answer": "Rectus femoris (straight head)",
+            "explanation": "High-yield guideline pearl & comprehensive explanation."
+          }
+        ]
+      },
+      {
         "id": "mod_1791400687299",
         "title": "Upper Limb Anatomy MCQs with Explanations",
         "topic": "Upper Limb Anatomy MCQs with Explanations",
