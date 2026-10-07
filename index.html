@@ -131,7 +131,7 @@
               <span>CBT Standard Simulator</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">Topic-segregated practice sets with randomized A/B/C/D option delivery.</p>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">Practice high-yield modules with randomized A/B/C/D option delivery.</p>
           </div>
           <div class="flex items-center gap-2.5">
             <div class="bg-slate-900/90 border border-slate-700/80 px-4 py-2 rounded-2xl text-right">
@@ -143,7 +143,7 @@
       </div>
 
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Curated Tests & Topic Banks</h3>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Curated Test Modules</h3>
       </div>
 
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -178,17 +178,17 @@
           </div>
         </div>
 
-        <!-- Question Prompt Card with Distinct Module & Topic Badges -->
+        <!-- Question Prompt Card with Dynamic Module & Question-Specific Topic -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-5 shadow-inner">
           <div class="flex flex-wrap items-center gap-2 mb-3 pb-2.5 border-b border-slate-800/80">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <i class="fa-solid fa-folder-open text-blue-400"></i> Module:
-              <strong id="exam-q-module-pill" class="text-white">General Anatomy</strong>
+              <strong id="exam-q-module-pill" class="text-white">Clinical Module</strong>
             </span>
             <span class="text-slate-600">•</span>
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <i class="fa-solid fa-tag text-indigo-400"></i> Topic:
-              <strong id="exam-q-topic-badge" class="text-indigo-300">General</strong>
+              <strong id="exam-q-topic-badge" class="text-indigo-300">Clinical Focus</strong>
             </span>
             <span class="ml-auto text-[10px] font-mono text-slate-500" id="exam-q-id-badge">QID-001</span>
           </div>
@@ -283,10 +283,10 @@
 
       <div class="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-bold overflow-x-auto custom-scroll">
         <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap">
-          <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects, Topics & MCQs
+          <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects, Modules & MCQs
         </button>
         <button onclick="switchAdminTab('importer')" id="tab-btn-importer" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-file-pdf mr-1.5"></i> Auto-Topic PDF Importer
+          <i class="fa-solid fa-file-pdf mr-1.5"></i> PDF Module Importer
         </button>
         <button onclick="switchAdminTab('students')" id="tab-btn-students" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
           <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Performance Tracker
@@ -298,7 +298,7 @@
 
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
 
-        <!-- TAB 1: SUBJECTS, TOPICS & DIRECT MCQ EDITOR -->
+        <!-- TAB 1: SUBJECTS, MODULES & MCQ EDITOR -->
         <div id="admin-tab-content" class="space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
             <div>
@@ -329,14 +329,14 @@
           </div>
         </div>
 
-        <!-- TAB 2: SMART AUTO-TOPIC PDF IMPORTER WITH PRE-PUBLISH STAGING -->
+        <!-- TAB 2: COMPLETE PDF MODULE IMPORTER -->
         <div id="admin-tab-importer" class="hidden space-y-5">
           <div class="bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
             <div class="flex items-center gap-2 font-bold text-blue-400 mb-1">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>High-Yield Automated Parsing & Real-Time Global Publish</span>
+              <span>Complete PDF Upload as a Unified Module</span>
             </div>
-            Upload your MCQ PDF. Questions are automatically detected and segregated into clinical topic tests with explicit module and topic markers. You can preview, edit, or delete items in the review area, and clicking <strong>Confirm & Auto-Publish Live</strong> saves the test directly to GitHub for all students!
+            Upload your MCQ PDF. All questions are compiled into <strong>one complete module</strong> with their individual topic headings and detailed clinical explanations preserved. Tapping <strong>Confirm & Auto-Publish Live</strong> commits the entire test bank straight to GitHub for all students!
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -346,8 +346,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Chapter Override (Optional)</label>
-              <input type="text" id="import-chapter-override" placeholder="Leave blank to auto-detect from PDF" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Module Name Override (Optional)</label>
+              <input type="text" id="import-chapter-override" placeholder="Leave blank to use PDF filename" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
             </div>
           </div>
 
@@ -358,7 +358,7 @@
                 <i class="fa-solid fa-file-arrow-up"></i>
               </div>
               <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Tap to upload clinical MCQ PDF</div>
-              <p class="text-[11px] text-slate-500 mt-0.5">Extracts choices, answers, and clinical pearls</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Reads question prompts, topics, choices A–D, answers & explanations</p>
             </label>
           </div>
 
@@ -373,8 +373,8 @@
           <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-slate-800">
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Questions Review (<span id="staged-count" class="text-blue-400">0</span>)</h4>
-                <p class="text-[11px] text-slate-400">Review or edit items. Tapping below automatically pushes them to all students!</p>
+                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Module Review (<span id="staged-count" class="text-blue-400">0</span> MCQs)</h4>
+                <p class="text-[11px] text-slate-400">Inspect the extracted questions and explanations before pushing to all students.</p>
               </div>
               <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -481,6 +481,11 @@
 
       <div class="space-y-3.5 text-xs">
         <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Topic Name</label>
+          <input type="text" id="edit-mcq-topic" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
           <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Question Prompt</label>
           <textarea id="edit-mcq-question" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
         </div>
@@ -516,7 +521,7 @@
 
         <div>
           <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Explanation / Clinical Pearl</label>
-          <textarea id="edit-mcq-explanation" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-300 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+          <textarea id="edit-mcq-explanation" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-300 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
         </div>
 
         <button onclick="saveActiveMcqEdits()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-600/20">
@@ -543,7 +548,6 @@
         </div>
       </div>
 
-      <!-- Quick Metrics Strip -->
       <div class="grid grid-cols-3 gap-3 mb-5">
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 text-center">
           <div class="text-[10px] font-bold text-slate-500 uppercase">Tests Attempted</div>
@@ -559,7 +563,6 @@
         </div>
       </div>
 
-      <!-- Tab switcher for History vs Mistakes -->
       <div class="flex border-b border-slate-800 text-xs font-bold mb-4">
         <button id="btn-tab-history" onclick="switchStudentModalTab('history')" class="pb-2.5 px-3 text-blue-400 border-b-2 border-blue-500 transition">
           <i class="fa-solid fa-list-check mr-1.5"></i> Test Attempts History
@@ -570,17 +573,11 @@
       </div>
 
       <div class="overflow-y-auto custom-scroll flex-1 pr-1 space-y-4">
-        
-        <!-- Sub-View 1: Test Attempts History -->
         <div id="subview-history" class="space-y-2.5">
-          <!-- Dynamically populated rows -->
         </div>
 
-        <!-- Sub-View 2: Incorrect MCQs Review List -->
         <div id="subview-mistakes" class="hidden space-y-3">
-          <!-- Dynamically populated mistake cards -->
         </div>
-
       </div>
 
       <div class="pt-4 border-t border-slate-800 mt-3 flex justify-end">
@@ -690,7 +687,7 @@
           }
         }
       } catch (e) {
-        console.log("data.json not found yet, falling back to local/seed.");
+        console.log("data.json not found yet, falling back to local cache.");
       }
 
       if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"] || !DB["Anatomy"].chapters || DB["Anatomy"].chapters.length === 0) {
@@ -938,7 +935,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE WITH PROMINENT MODULE & TOPIC TITLES =================
+    // ================= CBT EXAM ENGINE WITH DYNAMIC MODULE & TOPIC LABELS =================
     function launchExamSession(chapterId) {
       if (!activeUser) {
         lockPortalDisplay();
@@ -1005,7 +1002,7 @@
       document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / total) * 100}%`;
       document.getElementById("exam-live-tally").textContent = `Answered: ${Object.keys(activeExam.answers).length} / ${total}`;
 
-      // Set the dynamic Module Name and Topic banner on the question card
+      // Dynamically display Module Name and Specific Topic on question banner
       document.getElementById("exam-q-module-pill").textContent = q.moduleTitle || activeExam.test.title;
       document.getElementById("exam-q-topic-badge").textContent = q.topic;
       document.getElementById("exam-q-id-badge").textContent = q.id;
@@ -1079,7 +1076,6 @@
       if (!activeUser) return;
       try {
         let mistakes = JSON.parse(localStorage.getItem(`mbbs_mistakes_${activeUser.uid}`) || "[]");
-        // Avoid duplicate entry if student retries in same session
         const exists = mistakes.find(m => m.question === questionObj.question);
         if (!exists) {
           mistakes.unshift({
@@ -1130,7 +1126,6 @@
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
       document.getElementById("result-stat-time").textContent = `${m}:${s}`;
 
-      // Show the direct review button if student committed mistakes
       const reviewMistakesBtn = document.getElementById("review-mistakes-direct-btn");
       const wrongCountEl = document.getElementById("result-wrong-count");
       if (wrongCount > 0) {
@@ -1291,6 +1286,7 @@
           <div class="space-y-1 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
+              <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">${q.topic || "Topic"}</span>
               <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
             </div>
             <div class="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
@@ -1351,7 +1347,7 @@
       }
     }
 
-    // --- TAB 2: RESILIENT PDF IMPORTER WITH PRE-PUBLISH STAGING ---
+    // --- TAB 2: RESILIENT PDF IMPORTER (SINGLE MODULE WITH TOPICS & EXPLANATIONS) ---
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1367,7 +1363,7 @@
       const log = document.getElementById("pdf-import-live-log");
       log.classList.remove("hidden");
       log.className = "text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono leading-relaxed";
-      log.textContent = "⏳ Reading PDF text stream across all pages...";
+      log.textContent = "⏳ Reading PDF text stream and coordinates across all pages...";
 
       try {
         const buffer = await stagedPdfFile.arrayBuffer();
@@ -1407,12 +1403,12 @@
 
         if (totalExtracted === 0) {
           log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
-          log.textContent = `⚠️ Extracted ${doc.numPages} pages, but no MCQs could be matched. Ensure questions have options A), B), C), D) and an answer key (e.g., 'Correct Answer: B' or 'Ans: B').`;
+          log.textContent = `⚠️ Extracted ${doc.numPages} pages, but no MCQs could be matched. Ensure questions have choices A), B), C), D) and an answer key (e.g., 'Correct Answer: B' or 'Ans: B').`;
           return;
         }
 
         log.className = "text-xs text-emerald-400 bg-slate-950 p-4 rounded-xl border border-emerald-500/30 font-mono";
-        log.textContent = `✅ Successfully extracted ${totalExtracted} questions across ${stagedModules.length} topic set(s)! Scroll down to preview.`;
+        log.textContent = `✅ Successfully extracted ${totalExtracted} MCQs with full topics & explanations into 1 unified module! Preview below.`;
 
         renderStagedReviewList();
 
@@ -1432,11 +1428,10 @@
         .replace(/(?:^|\n)\s*(?:Q(?:uestion)?\.?\s*(\d+)|\((\d+)\)|(\d+)\s*[\.\:\)])/gi, "\n###MCQ_START### Q$1$2$3. ")
         .replace(/(?:^|\n|\s)\s*(?:\(?([A-D])\)|\b([A-D])[\.\:\-])\s+/g, "\n$1$2) ")
         .replace(/(?:^|\n|\s)\s*(?:Correct\s*Answer|Answer|Ans)\s*[\:\-\=]\s*\(?([A-D])\)?/gi, "\nCorrect Answer: $1")
-        .replace(/(?:^|\n|\s)\s*(?:Explanation|Rationale|Note|Ref)\s*[\:\-\=]/gi, "\nExplanation:");
+        .replace(/(?:^|\n|\s)\s*(?:Explanation|Rationale|Note|Ref|Description)\s*[\:\-\=]/gi, "\nExplanation:");
 
       const questionBlocks = formatted.split(/###MCQ_START###\s*/i).filter(b => b.trim().length > 30);
-      const questionsList = [];
-      let defaultTopic = baseTitle;
+      const allQuestions = [];
 
       questionBlocks.forEach((block, i) => {
         const qMatch = block.match(/Q\d+\.?\s+([\s\S]+?)(?=\n[A-D]\))/i);
@@ -1445,6 +1440,8 @@
         const cMatch = block.match(/\nC\)\s*([\s\S]+?)(?=\nD\))/i);
         const dMatch = block.match(/\nD\)\s*([\s\S]+?)(?=\nCorrect Answer:|\nExplanation:|$)/i);
         const ansMatch = block.match(/Correct Answer:\s*([A-D])/i);
+        
+        // Comprehensive explanation/pearl extraction
         const expMatch = block.match(/Explanation:\s*([\s\S]+?)$/i);
 
         if (qMatch && aMatch && bMatch && cMatch && dMatch) {
@@ -1456,40 +1453,42 @@
           };
           const letter = ansMatch ? ansMatch[1].toUpperCase() : "A";
 
-          let specificTopic = defaultTopic;
-          const topicMatch = block.match(/(?:Topic|Module|Chapter)\s*[\:\-]\s*([^\n\r]+)/i) || block.match(/\[([A-Za-z\s]{3,35})\]/);
-          if (topicMatch) specificTopic = topicMatch[1].trim();
+          // Topic detection per question to show at top of quiz
+          let itemTopic = baseTitle;
+          const topicMatch = block.match(/(?:Topic|Module|Chapter)\s*[\:\-]\s*([^\n\r]+)/i) 
+                          || block.match(/\[([A-Za-z\s]{3,35})\]/)
+                          || block.match(/([A-Z\s]{4,30}(?:PLEXUS|FRACTURE|NERVE|TUNNEL|MUSCLE|ROTATOR|JOINT|LIMB|ARTERY|VEIN|TRIANGLE|CANAL|FOSSA|COMPARTMENT))/);
+          
+          if (topicMatch) {
+            itemTopic = (topicMatch[1] || topicMatch[0]).trim();
+          }
 
-          questionsList.push({
+          // Clinical explanation extraction
+          let explanationText = "High-yield MBBS guideline pearl.";
+          if (expMatch && expMatch[1].trim().length > 5) {
+            explanationText = expMatch[1].trim();
+          }
+
+          allQuestions.push({
             id: `PDF-${i + 1}`,
-            topic: specificTopic,
+            topic: itemTopic,
             question: qMatch[1].trim(),
             options: [map["A"], map["B"], map["C"], map["D"]],
             answer: map[letter] || map["A"],
-            explanation: expMatch ? expMatch[1].trim() : "High-yield MBBS guideline pearl."
+            explanation: explanationText
           });
         }
       });
 
-      if (questionsList.length === 0) return [];
+      if (allQuestions.length === 0) return [];
 
-      const topicBuckets = {};
-      questionsList.forEach(q => {
-        if (!topicBuckets[q.topic]) topicBuckets[q.topic] = [];
-        topicBuckets[q.topic].push(q);
-      });
-
-      const modules = [];
-      Object.keys(topicBuckets).forEach((tName, idx) => {
-        modules.push({
-          id: `mod_${Date.now()}_${idx}`,
-          title: tName === baseTitle ? baseTitle : `${baseTitle} - ${tName}`,
-          topic: tName,
-          questions: topicBuckets[tName]
-        });
-      });
-
-      return modules;
+      // Return as ONE complete module
+      return [{
+        id: `mod_${Date.now()}`,
+        title: baseTitle,
+        topic: baseTitle,
+        questions: allQuestions
+      }];
     }
 
     function renderStagedReviewList() {
@@ -1499,7 +1498,7 @@
       
       let totalQ = 0;
       stagedModules.forEach(m => totalQ += m.questions.length);
-      countEl.textContent = `${totalQ} in ${stagedModules.length} Modules`;
+      countEl.textContent = totalQ;
 
       if (totalQ === 0) {
         stagePreview.classList.add("hidden");
@@ -1523,8 +1522,13 @@
             ${mod.questions.map((q, qIdx) => `
               <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-start justify-between gap-3 text-xs">
                 <div class="flex-1 space-y-1">
-                  <p class="font-medium text-slate-200"><span class="font-mono text-slate-500 mr-1">Q${qIdx + 1}.</span>${q.question}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-slate-500 font-bold">Q${qIdx + 1}.</span>
+                    <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">${q.topic}</span>
+                    <p class="font-medium text-slate-200 line-clamp-1">${q.question}</p>
+                  </div>
                   <p class="text-[11px] text-emerald-400 font-mono">Answer: ${q.answer}</p>
+                  <p class="text-[11px] text-slate-400 italic line-clamp-1"><span class="text-amber-400">Explanation:</span> ${q.explanation}</p>
                 </div>
                 <div class="flex items-center gap-1.5">
                   <button onclick="openEditMcqModal('${mod.id}',${qIdx}, true)" class="px-2 py-1 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 text-xs">Edit</button>
@@ -1569,7 +1573,7 @@
 
       const success = await pushCurriculumToGitHubDirect();
       if (success) {
-        document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new MCQs.`;
+        document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new module.`;
       } else {
         document.getElementById("pdf-import-live-log").textContent = `Saved locally. Set up your GitHub Token in 'Auto-Push Settings' tab for automatic global publishing.`;
       }
@@ -1594,6 +1598,7 @@
 
       if (!q) return;
 
+      document.getElementById("edit-mcq-topic").value = q.topic || "";
       document.getElementById("edit-mcq-question").value = q.question;
       document.getElementById("edit-mcq-opt-0").value = q.options[0] || "";
       document.getElementById("edit-mcq-opt-1").value = q.options[1] || "";
@@ -1637,6 +1642,7 @@
       ];
       const correctIdx = parseInt(document.getElementById("edit-mcq-correct-select").value);
 
+      q.topic = document.getElementById("edit-mcq-topic").value.trim() || "Clinical Core";
       q.question = document.getElementById("edit-mcq-question").value.trim();
       q.options = opts;
       q.answer = opts[correctIdx] || opts[0];
@@ -1815,7 +1821,6 @@
         document.getElementById("self-avg-accuracy").textContent = "0%";
       }
 
-      // Load Incorrect MCQs Mistake Bank
       let mistakes = [];
       try {
         mistakes = JSON.parse(localStorage.getItem(`mbbs_mistakes_${activeUser.uid}`) || "[]");
