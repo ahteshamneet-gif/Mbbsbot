@@ -29,18 +29,20 @@ CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif
 # Optional environment variable containing raw JSON of old paid users
 PAID_USERS_JSON_RAW = os.getenv("PAID_USERS_BACKUP", "").strip()
 
+
 # ============================================================
-# BOT TOKENS (ALL 5 STUDY BOTS + 1 MANAGER)
+# BOT TOKENS (PULLED SECURELY FROM RENDER ENVIRONMENT ONLY)
 # ============================================================
 
 BOT_TOKENS = {
-    "all": os.getenv("BOT_TOKEN_ALL", "8808156804:AAEaw2NqVi7wQXiP_TqMsGxnNTwyR2yICrs").strip(),
-    "year_1": os.getenv("BOT_TOKEN_Y1", "8729883373:AAESg2VRUY0K1zNYEcz-7IgRuCSEodgSvK4").strip(),
-    "year_2": os.getenv("BOT_TOKEN_Y2", "8365220049:AAGRyQ9lsUinESVJYfLa9tR-51sqskQ3ghs").strip(),
-    "year_3": os.getenv("BOT_TOKEN_Y3", "8727281228:AAHFt-YI9wBWwIU-UgdoQK4HZVw-wzsyVRk").strip(),
-    "final_year": os.getenv("BOT_TOKEN_FINAL", "8796883834:AAEDRuBWPunG-Ip7tuS2ctQEIPrmtViFhxE").strip(),
-    "manager": os.getenv("BOT_TOKEN_MANAGER", "8971926878:AAGXv0W1luCS8GiO1rc1r7lM1TBpy45z1-I").strip(),
+    "all": os.getenv("BOT_TOKEN_ALL", "").strip(),
+    "year_1": os.getenv("BOT_TOKEN_Y1", "").strip(),
+    "year_2": os.getenv("BOT_TOKEN_Y2", "").strip(),
+    "year_3": os.getenv("BOT_TOKEN_Y3", "").strip(),
+    "final_year": os.getenv("BOT_TOKEN_FINAL", "").strip(),
+    "manager": os.getenv("BOT_TOKEN_MANAGER", "").strip(),
 }
+
 
 # ============================================================
 # SUBJECT DICTIONARIES PER YEAR
