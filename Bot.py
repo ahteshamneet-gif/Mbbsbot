@@ -76,7 +76,6 @@ TOPICS_Y2 = {
     "Pathology": 49,
     "Pharmacology": 50,
     "Microbiology": 5,
-    "Forensic Medicine and Toxicology": 51,
 }
 
 TOPICS_Y3 = {
