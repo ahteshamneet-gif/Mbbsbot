@@ -3,6 +3,8 @@ import sys
 import json
 import logging
 import asyncio
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 
 # ================= LOGGING SETUP =================
@@ -12,9 +14,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("MbbsMultiBot")
 
-# ================= ENVIRONMENT VARIABLES =================
+# ================= SECURE ENVIRONMENT VARIABLES =================
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8417145295"))
 WEB_APP_URL = os.environ.get("WEB_APP_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/").strip()
+PORT = int(os.environ.get("PORT", 8080))
 
 BOT_TOKENS = {
     "mgmt": os.environ.get("BOT_TOKEN_MGMT", "").strip(),
@@ -31,6 +34,25 @@ BOT_NAMES = {
     "year3": "3rd Year MBBS Bot",
     "year4": "4th Year MBBS Bot",
 }
+
+# ================= RENDER DUMMY WEB SERVER (PORT BINDING) =================
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"MBBS Bot Cluster Active and Healthy")
+
+    def log_message(self, format, *args):
+        return  # Suppress HTTP request logs to keep terminal clean
+
+def run_health_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthCheckHandler)
+    logger.info(f"🌐 Internal health check server listening on port {PORT}")
+    server.serve_forever()
+
+# Start dummy server in background daemon thread
+threading.Thread(target=run_health_server, daemon=True).start()
 
 # ================= USER PERSISTENCE DATABASE =================
 DATA_FILE = "users_db.json"
@@ -82,7 +104,7 @@ def build_login_url(user_data):
     name = user_data["name"]
     return f"{WEB_APP_URL}?uid={uid}&key={key}&name={name}#uid={uid}&key={key}&name={name}"
 
-# ================= TELEGRAM API DISPATCHERS =================
+# ================= TELEGRAM DISPATCHERS =================
 async def send_message(client, token, chat_id, text, reply_markup=None):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
@@ -125,7 +147,7 @@ async def answer_callback(client, token, callback_query_id, text=None):
     except Exception as e:
         logger.error(f"answerCallbackQuery error: {e}")
 
-# ================= STUDY BOTS LOGIC =================
+# ================= STUDY BOTS HANDLERS =================
 async def handle_study_update(client, token, bot_name, update):
     message = update.get("message")
     if not message or "text" not in message:
@@ -176,7 +198,7 @@ async def handle_study_update(client, token, bot_name, update):
 
     await send_message(client, token, message["chat"]["id"], reply, markup)
 
-# ================= MANAGEMENT BOT LOGIC =================
+# ================= MANAGEMENT BOT HANDLERS =================
 ITEMS_PER_PAGE = 8
 
 async def handle_mgmt_update(client, token, update):
@@ -388,17 +410,16 @@ async def poll_bot(key, token, name):
     logger.info(f"🚀 Worker starting for {name}...")
 
     async with httpx.AsyncClient(timeout=35.0) as client:
-        # Verify token by calling getMe
         try:
             me_res = await client.get(f"https://api.telegram.org/bot{token}/getMe")
             if me_res.status_code == 200:
                 username = me_res.json().get("result", {}).get("username")
                 logger.info(f"✅ {name} connected as @{username}")
             else:
-                logger.error(f"❌ {name} token invalid: {me_res.text}")
+                logger.error(f"❌ {name} token rejected: {me_res.text}")
                 return
         except Exception as e:
-            logger.error(f"❌ Connection failure for {name}: {e}")
+            logger.error(f"❌ Connection error for {name}: {e}")
             return
 
         while True:
@@ -413,13 +434,13 @@ async def poll_bot(key, token, name):
                         else:
                             asyncio.create_task(handle_study_update(client, token, name, update))
                 elif res.status_code == 409:
-                    logger.warning(f"⚠️ Conflict for {name} (another instance running). Backing off 5s...")
+                    logger.warning(f"⚠️ Polling conflict for {name}. Backing off 5s...")
                     await asyncio.sleep(5)
                 else:
                     await asyncio.sleep(2)
             except asyncio.CancelledError:
                 break
-            except Exception as ex:
+            except Exception:
                 await asyncio.sleep(3)
 
 # ================= MAIN BOOTSTRAPPER =================
@@ -437,7 +458,7 @@ async def main():
         logger.critical("No bot tokens configured in Render environment!")
         sys.exit(1)
 
-    logger.info(f"Starting {len(tasks)} parallel workers...")
+    logger.info(f"Starting {len(tasks)} parallel bot workers...")
     await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
