@@ -1,5 +1,1 @@
-   telethon
-   cryptg
-   aiohttp
-   python-telegram-bot==20.8
-
+   httpx>=0.27.0
