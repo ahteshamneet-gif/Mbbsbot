@@ -3,13 +3,7 @@ import sys
 import json
 import logging
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-)
+import httpx
 
 # ================= LOGGING SETUP =================
 logging.basicConfig(
@@ -18,7 +12,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("MbbsMultiBot")
 
-# ================= SECURE ENVIRONMENT VARIABLES =================
+# ================= ENVIRONMENT VARIABLES =================
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8417145295"))
 WEB_APP_URL = os.environ.get("WEB_APP_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/").strip()
 
@@ -88,314 +82,366 @@ def build_login_url(user_data):
     name = user_data["name"]
     return f"{WEB_APP_URL}?uid={uid}&key={key}&name={name}#uid={uid}&key={key}&name={name}"
 
-# ================= STUDY BOTS HANDLER =================
-def create_study_start_handler(bot_name):
-    async def study_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        sender = update.effective_user
-        user_info = get_or_create_user(sender.id, sender.username, sender.first_name)
-        is_full_access = (user_info.get("status") == "Approved" and "Full" in user_info.get("tier", ""))
+# ================= TELEGRAM API DISPATCHERS =================
+async def send_message(client, token, chat_id, text, reply_markup=None):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        await client.post(url, json=payload, timeout=10.0)
+    except Exception as e:
+        logger.error(f"sendMessage error: {e}")
 
-        if is_full_access or sender.id == ADMIN_ID:
-            login_link = build_login_url(user_info)
-            text = (
-                f"🩺 *Welcome to {bot_name}*\n\n"
-                f"👤 *Candidate:* {user_info['name']}\n"
-                f"🆔 *Student ID:* `{user_info['stu_id']}`\n"
-                f"🔑 *Password:* `{user_info['password']}`\n"
-                f"💎 *Access Tier:* `{user_info['tier']}`\n\n"
-                f"Your account is verified. Click below to launch your CBT Question Bank portal:"
-            )
-            keyboard = [
-                [InlineKeyboardButton("🚀 Launch MBBS CBT Q-Bank", url=login_link)],
-                [InlineKeyboardButton("💬 Support & Inquiries", url="https://t.me/Nothing_0786")]
-            ]
-        else:
-            text = (
-                f"🔒 *{bot_name} — Restricted Access*\n\n"
-                f"Hello {user_info['name']},\n"
-                f"This bot and its associated Computer-Based Testing Q-Bank are restricted to enrolled students.\n\n"
-                f"🆔 *Registered ID:* `{user_info['stu_id']}`\n"
-                f"⚠️ *Status:* Account Pending Approval\n\n"
-                f"Contact the administrator to activate your seat."
-            )
-            keyboard = [
-                [InlineKeyboardButton("💎 Get Full Subscription", url="https://t.me/Nothing_0786")]
-            ]
+async def edit_message(client, token, chat_id, message_id, text, reply_markup=None):
+    url = f"https://api.telegram.org/bot{token}/editMessageText"
+    payload = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": text,
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        await client.post(url, json=payload, timeout=10.0)
+    except Exception as e:
+        logger.error(f"editMessageText error: {e}")
 
-        await update.message.reply_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
+async def answer_callback(client, token, callback_query_id, text=None):
+    url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+    payload = {"callback_query_id": callback_query_id}
+    if text:
+        payload["text"] = text
+        payload["show_alert"] = True
+    try:
+        await client.post(url, json=payload, timeout=10.0)
+    except Exception as e:
+        logger.error(f"answerCallbackQuery error: {e}")
+
+# ================= STUDY BOTS LOGIC =================
+async def handle_study_update(client, token, bot_name, update):
+    message = update.get("message")
+    if not message or "text" not in message:
+        return
+
+    text = message["text"].strip()
+    if not text.startswith("/start"):
+        return
+
+    sender = message.get("from", {})
+    user_id = sender.get("id")
+    username = sender.get("username", "")
+    first_name = sender.get("first_name", "Student")
+
+    user_info = get_or_create_user(user_id, username, first_name)
+    is_full_access = (user_info.get("status") == "Approved" and "Full" in user_info.get("tier", ""))
+
+    if is_full_access or user_id == ADMIN_ID:
+        login_link = build_login_url(user_info)
+        reply = (
+            f"🩺 *Welcome to {bot_name}*\n\n"
+            f"👤 *Candidate:* {user_info['name']}\n"
+            f"🆔 *Student ID:* `{user_info['stu_id']}`\n"
+            f"🔑 *Password:* `{user_info['password']}`\n"
+            f"💎 *Access Tier:* `{user_info['tier']}`\n\n"
+            f"Your account is verified. Click below to launch your CBT Question Bank portal:"
         )
+        markup = {
+            "inline_keyboard": [
+                [{"text": "🚀 Launch MBBS CBT Q-Bank", "url": login_link}],
+                [{"text": "💬 Support & Inquiries", "url": "https://t.me/Nothing_0786"}]
+            ]
+        }
+    else:
+        reply = (
+            f"🔒 *{bot_name} — Restricted Access*\n\n"
+            f"Hello {user_info['name']},\n"
+            f"This bot and its associated CBT Q-Bank are restricted to enrolled students.\n\n"
+            f"🆔 *Registered ID:* `{user_info['stu_id']}`\n"
+            f"⚠️ *Status:* Account Pending Approval\n\n"
+            f"Contact the administrator to activate your seat."
+        )
+        markup = {
+            "inline_keyboard": [
+                [{"text": "💎 Get Full Subscription", "url": "https://t.me/Nothing_0786"}]
+            ]
+        }
 
-    return study_start
+    await send_message(client, token, message["chat"]["id"], reply, markup)
 
-# ================= MANAGEMENT BOT HANDLERS =================
+# ================= MANAGEMENT BOT LOGIC =================
 ITEMS_PER_PAGE = 8
 
-async def mgmt_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    sender = update.effective_user
-    if sender.id != ADMIN_ID:
-        await update.message.reply_text("⛔ *Access Denied:* Administrator hub only.", parse_mode="Markdown")
-        return
+async def handle_mgmt_update(client, token, update):
+    if "message" in update:
+        msg = update["message"]
+        sender_id = msg.get("from", {}).get("id")
+        text = msg.get("text", "").strip()
 
-    text = (
-        "👑 *MBBS Management Bot — Admin Hub*\n\n"
-        "Select an option to manage students, approve memberships, and track access:"
-    )
-    keyboard = [
-        [
-            InlineKeyboardButton("👥 Registered Users", callback_data="mgmt_users_0"),
-            InlineKeyboardButton("💎 Verified Members", callback_data="mgmt_approved_0")
-        ],
-        [
-            InlineKeyboardButton("📊 System Stats", callback_data="mgmt_stats"),
-            InlineKeyboardButton("🌐 Open Q-Bank", url=WEB_APP_URL)
-        ]
-    ]
-    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        if sender_id != ADMIN_ID:
+            if text.startswith("/start"):
+                await send_message(client, token, msg["chat"]["id"], "⛔ *Access Denied:* Administrator hub only.")
+            return
 
-async def cb_mgmt_main(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.from_user.id != ADMIN_ID:
-        return
+        if text.startswith("/start"):
+            welcome = (
+                "👑 *MBBS Management Bot — Admin Hub*\n\n"
+                "Select an option to manage students, approve memberships, and track access:"
+            )
+            markup = {
+                "inline_keyboard": [
+                    [
+                        {"text": "👥 Registered Users", "callback_data": "mgmt_users_0"},
+                        {"text": "💎 Verified Members", "callback_data": "mgmt_approved_0"}
+                    ],
+                    [
+                        {"text": "📊 System Stats", "callback_data": "mgmt_stats"},
+                        {"text": "🌐 Open Q-Bank", "url": WEB_APP_URL}
+                    ]
+                ]
+            }
+            await send_message(client, token, msg["chat"]["id"], welcome, markup)
 
-    text = (
-        "👑 *MBBS Management Bot — Admin Hub*\n\n"
-        "Select an option to manage students, approve memberships, and track access:"
-    )
-    keyboard = [
-        [
-            InlineKeyboardButton("👥 Registered Users", callback_data="mgmt_users_0"),
-            InlineKeyboardButton("💎 Verified Members", callback_data="mgmt_approved_0")
-        ],
-        [
-            InlineKeyboardButton("📊 System Stats", callback_data="mgmt_stats"),
-            InlineKeyboardButton("🌐 Open Q-Bank", url=WEB_APP_URL)
-        ]
-    ]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+    elif "callback_query" in update:
+        cb = update["callback_query"]
+        sender_id = cb.get("from", {}).get("id")
+        data = cb.get("data", "")
+        chat_id = cb.get("message", {}).get("chat", {}).get("id")
+        msg_id = cb.get("message", {}).get("message_id")
+        cb_id = cb.get("id")
 
-async def cb_mgmt_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.from_user.id != ADMIN_ID:
-        return
+        if sender_id != ADMIN_ID:
+            await answer_callback(client, token, cb_id, "Unauthorized.")
+            return
 
-    page = int(query.data.split("_")[2])
-    all_users = list(db["users"].values())
-    total = len(all_users)
+        await answer_callback(client, token, cb_id)
 
-    if total == 0:
-        await query.edit_message_text(
-            "ℹ️ No registered users found.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ Back", callback_data="mgmt_main")]])
-        )
-        return
+        if data == "mgmt_main":
+            text = (
+                "👑 *MBBS Management Bot — Admin Hub*\n\n"
+                "Select an option to manage students, approve memberships, and track access:"
+            )
+            markup = {
+                "inline_keyboard": [
+                    [
+                        {"text": "👥 Registered Users", "callback_data": "mgmt_users_0"},
+                        {"text": "💎 Verified Members", "callback_data": "mgmt_approved_0"}
+                    ],
+                    [
+                        {"text": "📊 System Stats", "callback_data": "mgmt_stats"},
+                        {"text": "🌐 Open Q-Bank", "url": WEB_APP_URL}
+                    ]
+                ]
+            }
+            await edit_message(client, token, chat_id, msg_id, text, markup)
 
-    total_pages = (total + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
-    start = page * ITEMS_PER_PAGE
-    page_users = all_users[start:start + ITEMS_PER_PAGE]
+        elif data.startswith("mgmt_users_"):
+            page = int(data.split("_")[2])
+            all_users = list(db["users"].values())
+            total = len(all_users)
 
-    text = f"👥 *Registered Users (Page {page + 1}/{total_pages})*\n\n"
-    keyboard = []
-    for u in page_users:
-        status_icon = "💎" if u.get("status") == "Approved" else "⏳"
-        keyboard.append([InlineKeyboardButton(f"{status_icon} {u['name']} ({u['stu_id']})", callback_data=f"usr_det_{u['id']}")])
+            if total == 0:
+                markup = {"inline_keyboard": [[{"text": "◀️ Back", "callback_data": "mgmt_main"}]]}
+                await edit_message(client, token, chat_id, msg_id, "ℹ️ No registered users found.", markup)
+                return
 
-    nav = []
-    if page > 0:
-        nav.append(InlineKeyboardButton("◀️ Prev", callback_data=f"mgmt_users_{page - 1}"))
-    if page < total_pages - 1:
-        nav.append(InlineKeyboardButton("Next ▶️", callback_data=f"mgmt_users_{page + 1}"))
-    if nav:
-        keyboard.append(nav)
+            total_pages = (total + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+            start = page * ITEMS_PER_PAGE
+            page_users = all_users[start:start + ITEMS_PER_PAGE]
 
-    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data="mgmt_main")])
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            text = f"👥 *Registered Users (Page {page + 1}/{total_pages})*\n\n"
+            keyboard = []
+            for u in page_users:
+                status_icon = "💎" if u.get("status") == "Approved" else "⏳"
+                keyboard.append([{"text": f"{status_icon} {u['name']} ({u['stu_id']})", "callback_data": f"usr_det_{u['id']}"}])
 
-async def cb_mgmt_approved(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.from_user.id != ADMIN_ID:
-        return
+            nav = []
+            if page > 0:
+                nav.append({"text": "◀️ Prev", "callback_data": f"mgmt_users_{page - 1}"})
+            if page < total_pages - 1:
+                nav.append({"text": "Next ▶️", "callback_data": f"mgmt_users_{page + 1}"})
+            if nav:
+                keyboard.append(nav)
 
-    page = int(query.data.split("_")[2])
-    approved_users = [u for u in db["users"].values() if u.get("status") == "Approved"]
-    total = len(approved_users)
+            keyboard.append([{"text": "◀️ Main Menu", "callback_data": "mgmt_main"}])
+            await edit_message(client, token, chat_id, msg_id, text, {"inline_keyboard": keyboard})
 
-    if total == 0:
-        await query.edit_message_text(
-            "ℹ️ No verified members yet.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ Back", callback_data="mgmt_main")]])
-        )
-        return
+        elif data.startswith("mgmt_approved_"):
+            page = int(data.split("_")[2])
+            approved_users = [u for u in db["users"].values() if u.get("status") == "Approved"]
+            total = len(approved_users)
 
-    total_pages = (total + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
-    start = page * ITEMS_PER_PAGE
-    page_users = approved_users[start:start + ITEMS_PER_PAGE]
+            if total == 0:
+                markup = {"inline_keyboard": [[{"text": "◀️ Back", "callback_data": "mgmt_main"}]]}
+                await edit_message(client, token, chat_id, msg_id, "ℹ️ No verified members yet.", markup)
+                return
 
-    text = f"💎 *Verified Members (Page {page + 1}/{total_pages})*\n\n"
-    keyboard = []
-    for u in page_users:
-        keyboard.append([InlineKeyboardButton(f"✅ {u['name']} [{u['tier']}]", callback_data=f"usr_det_{u['id']}")])
+            total_pages = (total + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+            start = page * ITEMS_PER_PAGE
+            page_users = approved_users[start:start + ITEMS_PER_PAGE]
 
-    nav = []
-    if page > 0:
-        nav.append(InlineKeyboardButton("◀️ Prev", callback_data=f"mgmt_approved_{page - 1}"))
-    if page < total_pages - 1:
-        nav.append(InlineKeyboardButton("Next ▶️", callback_data=f"mgmt_approved_{page + 1}"))
-    if nav:
-        keyboard.append(nav)
+            text = f"💎 *Verified Members (Page {page + 1}/{total_pages})*\n\n"
+            keyboard = []
+            for u in page_users:
+                keyboard.append([{"text": f"✅ {u['name']} [{u['tier']}]", "callback_data": f"usr_det_{u['id']}"}])
 
-    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data="mgmt_main")])
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            nav = []
+            if page > 0:
+                nav.append({"text": "◀️ Prev", "callback_data": f"mgmt_approved_{page - 1}"})
+            if page < total_pages - 1:
+                nav.append({"text": "Next ▶️", "callback_data": f"mgmt_approved_{page + 1}"})
+            if nav:
+                keyboard.append(nav)
 
-async def cb_usr_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.from_user.id != ADMIN_ID:
-        return
+            keyboard.append([{"text": "◀️ Main Menu", "callback_data": "mgmt_main"}])
+            await edit_message(client, token, chat_id, msg_id, text, {"inline_keyboard": keyboard})
 
-    uid_str = query.data.split("_")[2]
-    u = db["users"].get(uid_str)
-    if not u:
-        await query.answer("User record not found.", show_alert=True)
-        return
+        elif data.startswith("usr_det_"):
+            uid_str = data.split("_")[2]
+            u = db["users"].get(uid_str)
+            if not u:
+                return
 
-    uname = f"@{u['username']}" if u.get("username") else "None"
-    text = (
-        f"👤 *Student Profile Card*\n\n"
-        f"• *Name:* {u['name']}\n"
-        f"• *Telegram ID:* `{u['id']}`\n"
-        f"• *Username:* {uname}\n"
-        f"• *Student ID:* `{u['stu_id']}`\n"
-        f"• *Password:* `{u['password']}`\n"
-        f"• *Tier:* `{u.get('tier', 'None')}`\n"
-        f"• *Status:* `{u.get('status', 'Pending')}`"
-    )
-    keyboard = [
-        [
-            InlineKeyboardButton("💎 Full Access", callback_data=f"tier_{u['id']}_Full Access"),
-            InlineKeyboardButton("📚 Lectures Only", callback_data=f"tier_{u['id']}_Lectures Only")
-        ],
-        [InlineKeyboardButton("🚫 Revoke Access", callback_data=f"tier_{u['id']}_Revoke")],
-        [InlineKeyboardButton("◀️ Back to Users", callback_data="mgmt_users_0")]
-    ]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            uname = f"@{u['username']}" if u.get("username") else "None"
+            text = (
+                f"👤 *Student Profile Card*\n\n"
+                f"• *Name:* {u['name']}\n"
+                f"• *Telegram ID:* `{u['id']}`\n"
+                f"• *Username:* {uname}\n"
+                f"• *Student ID:* `{u['stu_id']}`\n"
+                f"• *Password:* `{u['password']}`\n"
+                f"• *Tier:* `{u.get('tier', 'None')}`\n"
+                f"• *Status:* `{u.get('status', 'Pending')}`"
+            )
+            markup = {
+                "inline_keyboard": [
+                    [
+                        {"text": "💎 Full Access", "callback_data": f"tier_{u['id']}_Full Access"},
+                        {"text": "📚 Lectures Only", "callback_data": f"tier_{u['id']}_Lectures Only"}
+                    ],
+                    [{"text": "🚫 Revoke Access", "callback_data": f"tier_{u['id']}_Revoke"}],
+                    [{"text": "◀️ Back to Users", "callback_data": "mgmt_users_0"}]
+                ]
+            }
+            await edit_message(client, token, chat_id, msg_id, text, markup)
 
-async def cb_set_tier(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    if query.from_user.id != ADMIN_ID:
-        return
+        elif data.startswith("tier_"):
+            parts = data.split("_", 2)
+            uid_str = parts[1]
+            action = parts[2]
+            u = db["users"].get(uid_str)
+            if u:
+                if action == "Revoke":
+                    u["tier"] = "None"
+                    u["status"] = "Pending"
+                else:
+                    u["tier"] = action
+                    u["status"] = "Approved"
+                save_db(db)
 
-    parts = query.data.split("_", 2)
-    uid_str = parts[1]
-    action = parts[2]
-    u = db["users"].get(uid_str)
+                uname = f"@{u['username']}" if u.get("username") else "None"
+                text = (
+                    f"👤 *Student Profile Card*\n\n"
+                    f"• *Name:* {u['name']}\n"
+                    f"• *Telegram ID:* `{u['id']}`\n"
+                    f"• *Username:* {uname}\n"
+                    f"• *Student ID:* `{u['stu_id']}`\n"
+                    f"• *Password:* `{u['password']}`\n"
+                    f"• *Tier:* `{u.get('tier', 'None')}`\n"
+                    f"• *Status:* `{u.get('status', 'Pending')}`"
+                )
+                markup = {
+                    "inline_keyboard": [
+                        [
+                            {"text": "💎 Full Access", "callback_data": f"tier_{u['id']}_Full Access"},
+                            {"text": "📚 Lectures Only", "callback_data": f"tier_{u['id']}_Lectures Only"}
+                        ],
+                        [{"text": "🚫 Revoke Access", "callback_data": f"tier_{u['id']}_Revoke"}],
+                        [{"text": "◀️ Back to Users", "callback_data": "mgmt_users_0"}]
+                    ]
+                }
+                await edit_message(client, token, chat_id, msg_id, text, markup)
 
-    if not u:
-        await query.answer("User not found.", show_alert=True)
-        return
+        elif data == "mgmt_stats":
+            total = len(db["users"])
+            approved = sum(1 for u in db["users"].values() if u.get("status") == "Approved")
+            text = (
+                "📊 *Current System Statistics*\n\n"
+                f"👥 *Total Registered Candidates:* `{total}`\n"
+                f"💎 *Active Verified Members:* `{approved}`\n"
+                f"⏳ *Pending Verification:* `{total - approved}`"
+            )
+            markup = {"inline_keyboard": [[{"text": "◀️ Back", "callback_data": "mgmt_main"}]]}
+            await edit_message(client, token, chat_id, msg_id, text, markup)
 
-    if action == "Revoke":
-        u["tier"] = "None"
-        u["status"] = "Pending"
-        await query.answer("Access revoked.", show_alert=True)
-    else:
-        u["tier"] = action
-        u["status"] = "Approved"
-        await query.answer(f"Updated to {action}!", show_alert=True)
+# ================= ASYNCHRONOUS POLLER WORKER =================
+async def poll_bot(key, token, name):
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
+    offset = 0
+    logger.info(f"🚀 Worker starting for {name}...")
 
-    save_db(db)
+    async with httpx.AsyncClient(timeout=35.0) as client:
+        # Verify token by calling getMe
+        try:
+            me_res = await client.get(f"https://api.telegram.org/bot{token}/getMe")
+            if me_res.status_code == 200:
+                username = me_res.json().get("result", {}).get("username")
+                logger.info(f"✅ {name} connected as @{username}")
+            else:
+                logger.error(f"❌ {name} token invalid: {me_res.text}")
+                return
+        except Exception as e:
+            logger.error(f"❌ Connection failure for {name}: {e}")
+            return
 
-    # Re-render updated user profile
-    uname = f"@{u['username']}" if u.get("username") else "None"
-    text = (
-        f"👤 *Student Profile Card*\n\n"
-        f"• *Name:* {u['name']}\n"
-        f"• *Telegram ID:* `{u['id']}`\n"
-        f"• *Username:* {uname}\n"
-        f"• *Student ID:* `{u['stu_id']}`\n"
-        f"• *Password:* `{u['password']}`\n"
-        f"• *Tier:* `{u.get('tier', 'None')}`\n"
-        f"• *Status:* `{u.get('status', 'Pending')}`"
-    )
-    keyboard = [
-        [
-            InlineKeyboardButton("💎 Full Access", callback_data=f"tier_{u['id']}_Full Access"),
-            InlineKeyboardButton("📚 Lectures Only", callback_data=f"tier_{u['id']}_Lectures Only")
-        ],
-        [InlineKeyboardButton("🚫 Revoke Access", callback_data=f"tier_{u['id']}_Revoke")],
-        [InlineKeyboardButton("◀️ Back to Users", callback_data="mgmt_users_0")]
-    ]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        while True:
+            try:
+                res = await client.get(url, params={"offset": offset, "timeout": 25})
+                if res.status_code == 200:
+                    data = res.json()
+                    for update in data.get("result", []):
+                        offset = update["update_id"] + 1
+                        if key == "mgmt":
+                            asyncio.create_task(handle_mgmt_update(client, token, update))
+                        else:
+                            asyncio.create_task(handle_study_update(client, token, name, update))
+                elif res.status_code == 409:
+                    logger.warning(f"⚠️ Conflict for {name} (another instance running). Backing off 5s...")
+                    await asyncio.sleep(5)
+                else:
+                    await asyncio.sleep(2)
+            except asyncio.CancelledError:
+                break
+            except Exception as ex:
+                await asyncio.sleep(3)
 
-async def cb_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.from_user.id != ADMIN_ID:
-        return
-
-    total = len(db["users"])
-    approved = sum(1 for u in db["users"].values() if u.get("status") == "Approved")
-    text = (
-        "📊 *Current System Statistics*\n\n"
-        f"👥 *Total Registered Candidates:* `{total}`\n"
-        f"💎 *Active Verified Members:* `{approved}`\n"
-        f"⏳ *Pending Verification:* `{total - approved}`"
-    )
-    keyboard = [[InlineKeyboardButton("◀️ Back", callback_data="mgmt_main")]]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
-
-# ================= MULTI-APP BOOTSTRAPPER =================
+# ================= MAIN BOOTSTRAPPER =================
 async def main():
-    logger.info("Initializing Bot applications...")
-    apps = []
+    logger.info("Initializing multi-bot runner...")
+    tasks = []
 
     for key, token in BOT_TOKENS.items():
-        if not token:
+        if token:
+            tasks.append(poll_bot(key, token, BOT_NAMES[key]))
+        else:
             logger.warning(f"Skipping {BOT_NAMES[key]}: Token missing in environment.")
-            continue
 
-        try:
-            app = ApplicationBuilder().token(token).build()
-
-            if key == "mgmt":
-                app.add_handler(CommandHandler("start", mgmt_start))
-                app.add_handler(CallbackQueryHandler(cb_mgmt_main, pattern="^mgmt_main$"))
-                app.add_handler(CallbackQueryHandler(cb_mgmt_users, pattern="^mgmt_users_"))
-                app.add_handler(CallbackQueryHandler(cb_mgmt_approved, pattern="^mgmt_approved_"))
-                app.add_handler(CallbackQueryHandler(cb_usr_detail, pattern="^usr_det_"))
-                app.add_handler(CallbackQueryHandler(cb_set_tier, pattern="^tier_"))
-                app.add_handler(CallbackQueryHandler(cb_stats, pattern="^mgmt_stats$"))
-            else:
-                app.add_handler(CommandHandler("start", create_study_start_handler(BOT_NAMES[key])))
-
-            apps.append((app, BOT_NAMES[key]))
-            logger.info(f"Registered {BOT_NAMES[key]}")
-        except Exception as err:
-            logger.error(f"Error initializing {BOT_NAMES[key]}: {err}")
-
-    if not apps:
-        logger.critical("No valid bots found. Please configure bot tokens in Render.")
+    if not tasks:
+        logger.critical("No bot tokens configured in Render environment!")
         sys.exit(1)
 
-    for app, name in apps:
-        await app.initialize()
-        await app.start()
-        await app.updater.start_polling()
-        logger.info(f"✅ {name} polling active")
-
-    logger.info(f"🚀 Cluster online ({len(apps)} bots active). Admin ID: {ADMIN_ID}")
-
-    # Keep running indefinitely
-    stop_event = asyncio.Event()
-    await stop_event.wait()
+    logger.info(f"Starting {len(tasks)} parallel workers...")
+    await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logger.info("Bots shut down.")
+        logger.info("Services stopped.")
