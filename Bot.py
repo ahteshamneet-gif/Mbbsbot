@@ -161,17 +161,14 @@ def load_db():
         try:
             env_data = json.loads(PAID_USERS_JSON_RAW)
             if isinstance(env_data, dict):
-                # Check for "users" dictionary
                 if "users" in env_data:
                     for uid, uval in env_data["users"].items():
                         if uid not in data["users"]:
                             data["users"][uid] = uval
-                # Check for "approved" list
                 if "approved" in env_data:
                     for uid in env_data["approved"]:
                         if uid not in data["approved"]:
                             data["approved"].append(uid)
-                # Check for "approved_details"
                 if "approved_details" in env_data:
                     for uid, dval in env_data["approved_details"].items():
                         if uid not in data["approved_details"]:
@@ -364,6 +361,9 @@ TOPIC_CACHE_TTL = 600
 relay_lock = asyncio.Lock()
 active_relay_future = None
 
+# Admin interactive state tracker (tracks active broadcast input)
+ADMIN_STATES = {}
+
 # ============================================================
 # CLOUD BACKUP & NOTIFICATION ENGINE
 # ============================================================
@@ -391,7 +391,6 @@ async def auto_restore_from_telegram():
     if not manager_bot_client:
         return
     try:
-        # If database currently has only the admin
         if len(db.get("users", {})) <= 1 and len(db.get("approved", [])) <= 1:
             logging.info("Checking Telegram chat for database backup...")
             async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=30):
@@ -921,6 +920,39 @@ def make_toggles_menu():
         [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
     ]
 
+# Core safe broadcast runner
+async def execute_broadcast(sender_client, message_content, is_raw_event=False):
+    users = db.get("users", {})
+    sent, failed = 0, 0
+    all_uids = list(users.keys())
+
+    for uid_str in all_uids:
+        if is_banned(uid_str):
+            continue
+        try:
+            target_id = int(uid_str)
+            if is_raw_event:
+                await sender_client.forward_messages(target_id, message_content)
+            else:
+                await sender_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{message_content}")
+            sent += 1
+            await asyncio.sleep(0.05)
+        except FloodWaitError as e:
+            await asyncio.sleep(e.seconds)
+            try:
+                target_id = int(uid_str)
+                if is_raw_event:
+                    await sender_client.forward_messages(target_id, message_content)
+                else:
+                    await sender_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{message_content}")
+                sent += 1
+            except Exception:
+                failed += 1
+        except Exception:
+            failed += 1
+
+    return sent, failed
+
 def setup_manager_bot_handlers(client):
 
     @client.on(events.NewMessage(pattern=r"^/start$"))
@@ -929,6 +961,7 @@ def setup_manager_bot_handlers(client):
             await event.respond("⛔ Access Denied.")
             return
 
+        ADMIN_STATES.pop(ADMIN_ID, None)
         total_users = len(db.get("users", {}))
         approved_users = len(db.get("approved", []))
         qbank_count = sum(1 for d in db.get("approved_details", {}).values() if d.get("content_tier") == "full")
@@ -950,6 +983,7 @@ def setup_manager_bot_handlers(client):
     async def cb_manager_home(event):
         if event.sender_id != ADMIN_ID:
             return
+        ADMIN_STATES.pop(ADMIN_ID, None)
         total_users = len(db.get("users", {}))
         approved_users = len(db.get("approved", []))
         qbank_count = sum(1 for d in db.get("approved_details", {}).values() if d.get("content_tier") == "full")
@@ -966,6 +1000,51 @@ def setup_manager_bot_handlers(client):
             "Select an administrative action below:"
         )
         await event.edit(text, buttons=make_manager_menu())
+
+    # ================= INTERACTIVE BROADCAST HANDLERS =================
+    @client.on(events.CallbackQuery(data=b"mgmt_announce"))
+    async def cb_announce_prompt(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        ADMIN_STATES[ADMIN_ID] = "WAITING_BROADCAST_MESSAGE"
+        await event.edit(
+            "📢 **Broadcast Mode Activated**\n\n"
+            "Please send the message (text, photo, note, or forward) you want to broadcast to **ALL registered students**.\n\n"
+            "_(Type and send your message below, or tap Cancel)_",
+            buttons=[[Button.inline("❌ Cancel Broadcast", data=b"mgmt_cancel_broadcast")]]
+        )
+
+    @client.on(events.CallbackQuery(data=b"mgmt_cancel_broadcast"))
+    async def cb_cancel_broadcast(event):
+        if event.sender_id != ADMIN_ID:
+            return
+        ADMIN_STATES.pop(ADMIN_ID, None)
+        await event.answer("Broadcast canceled.", alert=True)
+        await cb_manager_home(event)
+
+    @client.on(events.NewMessage)
+    async def admin_broadcast_capture(event):
+        if event.sender_id != ADMIN_ID or not event.is_private:
+            return
+
+        if ADMIN_STATES.get(ADMIN_ID) == "WAITING_BROADCAST_MESSAGE":
+            if event.text and event.text.startswith("/"):
+                return
+
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            total = len(db.get("users", {}))
+            status_msg = await event.respond(f"⏳ **Broadcasting announcement to {total} students...**")
+            
+            sender_bot = list(active_bots.values())[0] if active_bots else client
+            sent, failed = await execute_broadcast(sender_bot, event.message, is_raw_event=True)
+
+            await status_msg.edit(
+                f"✅ **Broadcast Completed!**\n\n"
+                f"📬 Delivered: `{sent}`\n"
+                f"❌ Failed/Blocked: `{failed}`\n"
+                f"👥 Total Target: `{total}`",
+                buttons=[[Button.inline("⬅️ Return to Dashboard", data=b"mgmt_home")]]
+            )
 
     @client.on(events.CallbackQuery(data=b"mgmt_toggles"))
     async def cb_manager_toggles(event):
@@ -1287,15 +1366,9 @@ def setup_manager_bot_handlers(client):
         curr_ctier = det.get("content_tier", "lectures_only")
 
         buttons = [
-            [
-                Button.inline("🩺 Switch to Full Access (Lec + Q-Bank)", data=f"adm_set_tier:{uid}:full".encode()),
-            ],
-            [
-                Button.inline("📚 Switch to Lectures & Notes Only", data=f"adm_set_tier:{uid}:lectures_only".encode()),
-            ],
-            [
-                Button.inline("⬅️ Back", data=b"mgmt_approved_p:0")
-            ]
+            [Button.inline("🩺 Switch to Full Access (Lec + Q-Bank)", data=f"adm_set_tier:{uid}:full".encode())],
+            [Button.inline("📚 Switch to Lectures & Notes Only", data=f"adm_set_tier:{uid}:lectures_only".encode())],
+            [Button.inline("⬅️ Back", data=b"mgmt_approved_p:0")]
         ]
         await event.edit(
             f"⚙️ **Modify Subscription for User `{uid}`:**\n\n"
@@ -1433,26 +1506,16 @@ def setup_manager_bot_handlers(client):
 
         await event.respond(f"✅ User `{target_id}` granted **Lectures & Notes Only**.")
 
+    # Direct slash broadcast command
     @client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
     async def cmd_broadcast(event):
         if event.sender_id != ADMIN_ID:
             return
         text = event.pattern_match.group(1).strip()
         users = db.get("users", {})
-        status = await event.respond(f"📢 Broadcasting to `{len(users)}` users...")
-        sent, failed = 0, 0
+        status = await event.respond(f"📢 Broadcasting to `{len(users)}` students...")
         sender_bot = list(active_bots.values())[0] if active_bots else client
-
-        for uid_str in list(users.keys()):
-            if is_banned(uid_str):
-                continue
-            try:
-                await sender_bot.send_message(int(uid_str), f"📢 **MBBS Announcement:**\n\n{text}")
-                sent += 1
-                await asyncio.sleep(0.05)
-            except Exception:
-                failed += 1
-
+        sent, failed = await execute_broadcast(sender_bot, text, is_raw_event=False)
         await status.edit(f"✅ **Broadcast complete!**\n📬 Delivered: `{sent}` | ❌ Failed: `{failed}`")
 
 # ============================================================
