@@ -29,7 +29,6 @@ CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif
 # Optional environment variable containing raw JSON of old paid users
 PAID_USERS_JSON_RAW = os.getenv("PAID_USERS_BACKUP", "").strip()
 
-
 # ============================================================
 # BOT TOKENS (PULLED SECURELY FROM RENDER ENVIRONMENT ONLY)
 # ============================================================
@@ -43,7 +42,6 @@ BOT_TOKENS = {
     "manager": os.getenv("BOT_TOKEN_MANAGER", "").strip(),
 }
 
-
 # ============================================================
 # SUBJECT DICTIONARIES PER YEAR
 # ============================================================
@@ -53,6 +51,7 @@ TOPICS_ALL = {
     "Physiology": 3,
     "Biochemistry": 4,
     "Microbiology": 5,
+    "Notes": 33,
     "Pathology": 49,
     "Pharmacology": 50,
     "Forensic Medicine and Toxicology": 51,
@@ -81,6 +80,8 @@ TOPICS_Y2 = {
     "Pathology": 49,
     "Pharmacology": 50,
     "Microbiology": 5,
+    "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
 }
 
 TOPICS_Y3 = {
@@ -88,6 +89,7 @@ TOPICS_Y3 = {
     "Ophthalmology": 57,
     "Otorhinolaryngology (ENT)": 58,
     "Forensic Medicine and Toxicology": 51,
+    "Notes": 33,
 }
 
 TOPICS_FINAL = {
@@ -100,6 +102,7 @@ TOPICS_FINAL = {
     "Radiology": 61,
     "Dermatology": 62,
     "Psychiatry": 63,
+    "Notes": 33,
 }
 
 BOT_SUBJECTS_MAP = {
@@ -147,7 +150,6 @@ def load_db():
         "daily_downloads": {}
     }
 
-    # 1. Load local storage file
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -156,7 +158,6 @@ def load_db():
         except Exception:
             logging.exception("Failed to read database file")
 
-    # 2. Automatically restore previous paid users if provided via environment variable
     if PAID_USERS_JSON_RAW:
         try:
             env_data = json.loads(PAID_USERS_JSON_RAW)
@@ -202,7 +203,6 @@ def save_db(data):
 
 db = load_db()
 
-# Ensure Owner has permanent full access
 if ADMIN_ID not in db["approved"]:
     db["approved"].append(ADMIN_ID)
     db["approved_details"][str(ADMIN_ID)] = {
@@ -214,7 +214,6 @@ if ADMIN_ID not in db["approved"]:
     save_db(db)
 
 def get_or_create_qbank_creds(user_id):
-    """Generates clean Student credentials for authorized candidates"""
     s_uid = str(user_id)
     if s_uid not in db["approved_details"]:
         db["approved_details"][s_uid] = {}
@@ -229,7 +228,6 @@ def get_or_create_qbank_creds(user_id):
     return details["qbank_id"], details["qbank_pass"]
 
 def get_user_content_tier(user_id):
-    """Returns 'full', 'lectures_only', or None"""
     uid_int = int(user_id)
     if uid_int == ADMIN_ID:
         return "full"
@@ -239,7 +237,6 @@ def get_user_content_tier(user_id):
     return db.get("approved_details", {}).get(s_uid, {}).get("content_tier", "lectures_only")
 
 def generate_webapp_launch_url(user_id):
-    """Builds a verified 1-tap auto-login URL embedding user details"""
     if int(user_id) == ADMIN_ID:
         return f"{CBT_WEBAPP_BASE_URL}?uid=admin&name=Administrator#uid=admin&name=Administrator"
     
@@ -274,6 +271,7 @@ def track_user(user, bot_type):
         db["users"][uid]["first_name"] = user.first_name or ""
         db["users"][uid]["last_name"] = user.last_name or ""
         db["users"][uid]["username"] = user.username or ""
+        db["users"][uid]["bot_used"] = bot_type
         save_db(db)
 
 def is_banned(user_id):
@@ -361,7 +359,6 @@ TOPIC_CACHE_TTL = 600
 relay_lock = asyncio.Lock()
 active_relay_future = None
 
-# Admin interactive state tracker (tracks active broadcast input)
 ADMIN_STATES = {}
 
 # ============================================================
@@ -386,7 +383,6 @@ async def trigger_cloud_backup():
         logging.exception("Cloud backup failed")
 
 async def auto_restore_from_telegram():
-    """Restores database from previous Telegram chat backup if local storage is blank"""
     global db
     if not manager_bot_client:
         return
@@ -878,6 +874,60 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
     return bot_entity_box
 
 # ============================================================
+# BULLETPROOF BROADCAST RUNNER
+# ============================================================
+
+async def execute_broadcast(event_message_or_text, is_raw_event=False):
+    users = db.get("users", {})
+    sent, failed = 0, 0
+
+    for uid_str, udata in users.items():
+        if is_banned(uid_str):
+            continue
+
+        target_id = int(uid_str)
+
+        # Route dynamically to the bot the user actually started
+        bot_key = udata.get("bot_used")
+        chosen_client = active_bots.get(bot_key)
+
+        # Fall back gracefully to manager or any running instance
+        if not chosen_client:
+            chosen_client = manager_bot_client or (list(active_bots.values())[0] if active_bots else None)
+
+        if not chosen_client:
+            failed += 1
+            continue
+
+        try:
+            if is_raw_event and event_message_or_text.media:
+                await chosen_client.send_file(
+                    target_id,
+                    file=event_message_or_text.media,
+                    caption=event_message_or_text.text or ""
+                )
+            else:
+                raw_text = event_message_or_text.text if is_raw_event else str(event_message_or_text)
+                await chosen_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{raw_text}")
+            
+            sent += 1
+            await asyncio.sleep(0.08)  # Smooth delivery pacing
+
+        except FloodWaitError as e:
+            await asyncio.sleep(e.seconds)
+            try:
+                raw_text = event_message_or_text.text if is_raw_event else str(event_message_or_text)
+                await chosen_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{raw_text}")
+                sent += 1
+            except Exception:
+                failed += 1
+        except Exception as err:
+            logging.warning(f"Broadcast delivery skipped for user {target_id}: {err}")
+            failed += 1
+
+    return sent, failed
+
+# ============================================================
 # BOT MANAGER ENGINE (ADMIN CONTROL CENTER)
 # ============================================================
 
@@ -919,39 +969,6 @@ def make_toggles_menu():
         [Button.inline(f"☁️ Cloud Auto-Sync: {btn_sync}", data=b"tog:cloud_backup_enabled")],
         [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
     ]
-
-# Core safe broadcast runner
-async def execute_broadcast(sender_client, message_content, is_raw_event=False):
-    users = db.get("users", {})
-    sent, failed = 0, 0
-    all_uids = list(users.keys())
-
-    for uid_str in all_uids:
-        if is_banned(uid_str):
-            continue
-        try:
-            target_id = int(uid_str)
-            if is_raw_event:
-                await sender_client.forward_messages(target_id, message_content)
-            else:
-                await sender_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{message_content}")
-            sent += 1
-            await asyncio.sleep(0.05)
-        except FloodWaitError as e:
-            await asyncio.sleep(e.seconds)
-            try:
-                target_id = int(uid_str)
-                if is_raw_event:
-                    await sender_client.forward_messages(target_id, message_content)
-                else:
-                    await sender_client.send_message(target_id, f"📢 **MBBS Announcement:**\n\n{message_content}")
-                sent += 1
-            except Exception:
-                failed += 1
-        except Exception:
-            failed += 1
-
-    return sent, failed
 
 def setup_manager_bot_handlers(client):
 
@@ -1001,7 +1018,7 @@ def setup_manager_bot_handlers(client):
         )
         await event.edit(text, buttons=make_manager_menu())
 
-    # ================= INTERACTIVE BROADCAST HANDLERS =================
+    # ================= BROADCAST HANDLERS =================
     @client.on(events.CallbackQuery(data=b"mgmt_announce"))
     async def cb_announce_prompt(event):
         if event.sender_id != ADMIN_ID:
@@ -1035,8 +1052,7 @@ def setup_manager_bot_handlers(client):
             total = len(db.get("users", {}))
             status_msg = await event.respond(f"⏳ **Broadcasting announcement to {total} students...**")
             
-            sender_bot = list(active_bots.values())[0] if active_bots else client
-            sent, failed = await execute_broadcast(sender_bot, event.message, is_raw_event=True)
+            sent, failed = await execute_broadcast(event.message, is_raw_event=True)
 
             await status_msg.edit(
                 f"✅ **Broadcast Completed!**\n\n"
@@ -1514,8 +1530,7 @@ def setup_manager_bot_handlers(client):
         text = event.pattern_match.group(1).strip()
         users = db.get("users", {})
         status = await event.respond(f"📢 Broadcasting to `{len(users)}` students...")
-        sender_bot = list(active_bots.values())[0] if active_bots else client
-        sent, failed = await execute_broadcast(sender_bot, text, is_raw_event=False)
+        sent, failed = await execute_broadcast(text, is_raw_event=False)
         await status.edit(f"✅ **Broadcast complete!**\n📬 Delivered: `{sent}` | ❌ Failed: `{failed}`")
 
 # ============================================================
