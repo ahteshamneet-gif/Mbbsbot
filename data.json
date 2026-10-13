@@ -3,6 +3,208 @@
     "name": "Anatomy",
     "chapters": [
       {
+        "id": "mod_1791916096075",
+        "title": "Lower Limb Anatomy MCQs & Explanations (1)",
+        "topic": "Lower Limb Anatomy MCQs & Explanations (1)",
+        "questions": [
+          {
+            "id": "AI-1",
+            "topic": "FEMORAL TRIANGLE & FEMORAL CANAL",
+            "question": "Which structure passes through the femoral ring into the femoral canal?",
+            "options": [
+              "Femoral nerve",
+              "Femoral artery",
+              "Deep inguinal lymph node (Cloquet)",
+              "Genitofemoral nerve"
+            ],
+            "answer": "Deep inguinal lymph node (Cloquet)",
+            "explanation": "The femoral canal is the medial compartment of the femoral sheath. It contains loose connective tissue, efferent lymphatics, and the lymph node of Cloquet (Rosenmüller). The femoral nerve lies outside the femoral sheath completely."
+          },
+          {
+            "id": "AI-2",
+            "topic": "GLUTEAL REGION & PELVIC BIOMECHANICS",
+            "question": "A patient presents with a positive Trendelenburg sign on the right side when standing on the right leg. Which nerve is most likely damaged?",
+            "options": [
+              "Right inferior gluteal nerve",
+              "Right superior gluteal nerve",
+              "Left superior gluteal nerve",
+              "Right obturator nerve"
+            ],
+            "answer": "Right superior gluteal nerve",
+            "explanation": "The superior gluteal nerve innervates gluteus medius and gluteus minimus, which prevent pelvic tilting to the unsupported side. A lesion to the right superior gluteal nerve impairs right-sided abductors, causing the pelvis to drop on the contralateral (left) side during stance phase."
+          },
+          {
+            "id": "AI-3",
+            "topic": "KNEE JOINT & LIGAMENTOUS ARCHITECTURE",
+            "question": "During an anterior cruciate ligament (ACL) reconstruction, the surgeon identifies its bony attachments. The ACL primarily attaches to the:",
+            "options": [
+              "Medial aspect of the lateral femoral condyle",
+              "Lateral aspect of the medial femoral condyle",
+              "Posterior intercondylar area of the tibia",
+              "Anterior margin of the medial meniscus"
+            ],
+            "answer": "Medial aspect of the lateral femoral condyle",
+            "explanation": "The ACL originates from the anterior intercondylar area of the tibia and ascends posterolaterally to insert into the posterior part of the medial surface of the lateral femoral condyle (mnemonic: AP-LAMP: Anterior ACL to Lateral condyle; Posterior PCL to Medial condyle)."
+          },
+          {
+            "id": "AI-4",
+            "topic": "POPLITEAL FOSSA & KNEE KINEMATICS",
+            "question": "Which muscle is the primary 'unlocker' of the fully extended knee joint at the beginning of flexion?",
+            "options": [
+              "Biceps femoris",
+              "Semimembranosus",
+              "Popliteus",
+              "Plantaris"
+            ],
+            "answer": "Popliteus",
+            "explanation": "In the locked knee (closed chain, standing), popliteus initiates flexion by laterally rotating the femur on the fixed tibia. In the open chain (sitting/non-weight-bearing), it medially rotates the tibia on the femur, thereby unlocking the joint."
+          },
+          {
+            "id": "AI-5",
+            "topic": "LEG COMPARTMENTS & PERIPHERAL NERVE ENTRAPMENTS",
+            "question": "Fractures of the neck of the fibula pose the highest risk of iatrogenic or trauma-induced paralysis to which nerve?",
+            "options": [
+              "Tibial nerve",
+              "Common fibular (peroneal) nerve",
+              "Saphenous nerve",
+              "Sural nerve"
+            ],
+            "answer": "Common fibular (peroneal) nerve",
+            "explanation": "The common fibular nerve winds subcutaneous and vulnerable around the lateral neck of the fibula before dividing into superficial and deep branches. Injury leads to foot drop (loss of dorsiflexion) and sensory loss on the dorsum of the foot."
+          },
+          {
+            "id": "AI-6",
+            "topic": "THIGH MUSCULATURE & DUAL INNERVATION",
+            "question": "Which of the following muscles is a dual-innervated component of the lower limb?",
+            "options": [
+              "Rectus femoris",
+              "Pectineus",
+              "Gracilis",
+              "Sartorius"
+            ],
+            "answer": "Pectineus",
+            "explanation": "Pectineus is a transitional muscle between the anterior and medial thigh compartments; it typically receives dual innervation from the femoral nerve (L2, L3) and the anterior division of the obturator nerve (L2, L3). (Note: Adductor magnus is also dual-innervated by obturator and tibial nerves)."
+          },
+          {
+            "id": "AI-7",
+            "topic": "ANKLE RETINACULA & TARSAL TUNNEL",
+            "question": "In tarsal tunnel syndrome, which nerve is entrapped beneath the flexor retinaculum on the medial side of the ankle?",
+            "options": [
+              "Deep fibular nerve",
+              "Superficial fibular nerve",
+              "Tibial nerve",
+              "Sural nerve"
+            ],
+            "answer": "Tibial nerve",
+            "explanation": "The tarsal tunnel lies posterior and inferior to the medial malleolus beneath the flexor retinaculum. Its contents (anterior to posterior: Tibialis posterior, Flexor digitorum longus, Posterior tibial artery/veins, Tibial nerve, Flexor hallucis longus) include the tibial nerve, causing plantar paresthesia when compressed."
+          },
+          {
+            "id": "AI-8",
+            "topic": "KNEE SPORTS INJURIES & MENISCAL PATHOLOGY",
+            "question": "The 'unhappy triad' of O'Donoghue classically involves traumatic tearing of which three structural elements?",
+            "options": [
+              "ACL, Medial Meniscus, Tibial (Medial) Collateral Ligament",
+              "PCL, Lateral Meniscus, Fibular Collateral Ligament",
+              "ACL, Lateral Meniscus, Patellar Ligament",
+              "PCL, Medial Meniscus, Arcuate Popliteal Ligament"
+            ],
+            "answer": "ACL, Medial Meniscus, Tibial (Medial) Collateral Ligament",
+            "explanation": "Caused classically by a lateral blow to the knee when the foot is planted, this valgus force ruptures the tibial collateral ligament (MCL), which tears the firmly attached medial meniscus, followed by rupture of the anterior cruciate ligament (ACL)."
+          },
+          {
+            "id": "AI-9",
+            "topic": "POSTERIOR LEG & TENDON BIOMECHANICS",
+            "question": "An athlete experiences sudden, sharp pain in the calf accompanied by an inability to plantar flex against resistance. An intact Thompson test is absent. The ruptured tendon is formed by:",
+            "options": [
+              "Tibialis posterior and flexor digitorum longus",
+              "Gastrocnemius, soleus, and plantaris",
+              "Peroneus longus and brevis",
+              "Popliteus and soleus"
+            ],
+            "answer": "Gastrocnemius, soleus, and plantaris",
+            "explanation": "The calcaneal tendon (Achilles tendon) represents the shared insertion of the triceps surae (gastrocnemius and soleus), often accompanied by the small, variable plantaris tendon. Absence of plantar flexion upon squeezing the calf confirms a positive Thompson test for Achilles rupture."
+          },
+          {
+            "id": "AI-10",
+            "topic": "ANTERIOR LEG & DORSAL FOOT INNERVATION",
+            "question": "A patient cannot dorsiflex the great toe (hallux) or feel sensation in the first dorsal web space. Which specific nerve is compromised?",
+            "options": [
+              "Superficial fibular nerve",
+              "Deep fibular nerve",
+              "Saphenous nerve",
+              "Medial plantar nerve"
+            ],
+            "answer": "Deep fibular nerve",
+            "explanation": "The deep fibular nerve supplies all muscles of the anterior leg compartment (including extensor hallucis longus, responsible for great toe dorsiflexion) and uniquely innervates the cutaneous skin wedge between the first and second toes (first interdigital cleft)."
+          },
+          {
+            "id": "AI-11",
+            "topic": "HIP JOINT & FEMORAL HEAD VASCULATURE",
+            "question": "The main arterial supply to the head of the femur in adults, whose disruption causes avascular necrosis after femoral neck fractures, is derived primarily from:",
+            "options": [
+              "Artery of the ligamentum teres",
+              "Medial circumflex femoral artery",
+              "Inferior gluteal artery",
+              "Deep external pudendal artery"
+            ],
+            "answer": "Medial circumflex femoral artery",
+            "explanation": "While the artery of the ligamentum teres contributes minimal flow in adults, the retinacular branches arising from the medial circumflex femoral artery provide the predominant blood supply to the femoral head and neck. Intracapsular neck fractures frequently tear these retinacular vessels."
+          },
+          {
+            "id": "AI-12",
+            "topic": "LATERAL LEG COMPARTMENT & METATARSAL ATTACHMENTS",
+            "question": "Which muscle inserts into the base of the fifth metatarsal bone and acts to evert the foot?",
+            "options": [
+              "Fibularis (peroneus) tertius",
+              "Fibularis (peroneus) brevis",
+              "Tibialis anterior",
+              "Abductor digiti minimi"
+            ],
+            "answer": "Fibularis (peroneus) brevis",
+            "explanation": "Fibularis brevis arises from the lower lateral fibula and inserts directly onto the tuberosity on the lateral base of the fifth metatarsal. Sudden forceful inversion can lead to an avulsion fracture of this tuberosity driven by the brevis tendon traction."
+          },
+          {
+            "id": "AI-13",
+            "topic": "ARCHES OF THE FOOT & PLANTAR LIGAMENTS",
+            "question": "The primary dynamic and static stabilizer maintaining the medial longitudinal arch of the human foot is the:",
+            "options": [
+              "Long plantar ligament and fibularis longus",
+              "Plantar calcaneonavicular (spring) ligament and tibialis posterior tendon",
+              "Short plantar ligament and flexor hallucis brevis",
+              "Deltoid ligament and quadratus plantae"
+            ],
+            "answer": "Plantar calcaneonavicular (spring) ligament and tibialis posterior tendon",
+            "explanation": "The spring ligament supports the head of the talus, acting as the primary static arch stabilizer. Dynamically, the tibialis posterior tendon inserts into the navicular and adjacent tarsals, actively lifting and maintaining the medial longitudinal arch."
+          },
+          {
+            "id": "AI-14",
+            "topic": "ADDUCTOR (HUNTER'S) CANAL & NEUROVASCULAR PASSAGE",
+            "question": "What forms the lateral boundary of the adductor (Hunter's) canal?",
+            "options": [
+              "Sartorius",
+              "Adductor longus",
+              "Vastus medialis",
+              "Rectus femoris"
+            ],
+            "answer": "Vastus medialis",
+            "explanation": "The boundaries of the adductor canal are: Anteromedial (roof) formed by sartorius and subsartorial fascia; Posterior (floor) formed by adductor longus and adductor magnus; Lateral wall formed by vastus medialis. It conducts the femoral artery, femoral vein, and saphenous nerve."
+          },
+          {
+            "id": "AI-15",
+            "topic": "PELVIC BONY LANDMARKS & MUSCULAR ORIGINS",
+            "question": "An avulsion fracture of the anterior inferior iliac spine (AIIS) involves the detachment of the proximal origin of which muscle?",
+            "options": [
+              "Sartorius",
+              "Rectus femoris (straight head)",
+              "Tensor fasciae latae",
+              "Pectineus"
+            ],
+            "answer": "Rectus femoris (straight head)",
+            "explanation": "The straight head of the rectus femoris originates from the anterior inferior iliac spine (AIIS) (the reflected head originates just above the acetabulum). In contrast, the sartorius originates from the anterior superior iliac spine (ASIS)."
+          }
+        ]
+      },
+      {
         "id": "mod_1791400759775",
         "title": "Lower Limb",
         "topic": "Lower Limb Anatomy MCQs & Explanations  1",
