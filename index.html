@@ -14,8 +14,8 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
     
     :root {
-      --bg-dark: #060913;
-      --card-bg: rgba(13, 20, 36, 0.75);
+      --bg-dark: #050811;
+      --card-bg: rgba(11, 18, 33, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
       --primary: #0284c7;
       --accent: #10b981;
@@ -35,7 +35,7 @@
     .font-mono { font-family: 'JetBrains Mono', monospace; }
     
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #080d1a; }
+    .custom-scroll::-webkit-scrollbar-track { background: #070c18; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 99px; }
 
     .glass-panel {
@@ -46,7 +46,7 @@
     }
 
     .glass-input {
-      background: rgba(8, 13, 26, 0.85);
+      background: rgba(7, 12, 24, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.08);
       transition: all 0.2s ease;
     }
@@ -66,13 +66,13 @@
 <body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white pb-12">
 
   <!-- ================= TOP APP HEADER ================= -->
-  <header id="main-header" class="sticky top-0 z-40 bg-[#060913]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3.5 transition-all">
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+  <header id="main-header" class="sticky top-0 z-40 bg-[#050811]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
       
       <!-- Brand & Profile -->
       <div class="flex items-center gap-3.5">
         <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-teal-400 p-[1px] shadow-lg shadow-sky-500/20">
-          <div class="w-full h-full bg-[#090e1d] rounded-2xl flex items-center justify-center text-sky-400">
+          <div class="w-full h-full bg-[#080d1b] rounded-2xl flex items-center justify-center text-sky-400">
             <i class="fa-solid fa-stethoscope text-base"></i>
           </div>
         </div>
@@ -85,16 +85,16 @@
         </div>
       </div>
 
-      <!-- Action Portal Buttons -->
+      <!-- Action Buttons -->
       <div class="flex items-center gap-2.5">
-        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
-          <span>Admin Hub</span>
+        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i>
+          <span>Admin Center</span>
         </button>
 
         <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-2 rounded-xl bg-slate-800/80 border border-white/[0.08] text-slate-300 text-xs font-bold hover:bg-slate-700/80 transition flex items-center gap-2">
-          <i class="fa-solid fa-chart-simple text-sky-400"></i>
-          <span class="hidden sm:inline">Analytics</span>
+          <i class="fa-solid fa-chart-pie text-sky-400"></i>
+          <span class="hidden sm:inline">My Analytics</span>
         </button>
 
         <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-md shadow-sky-600/25 flex items-center gap-1.5">
@@ -106,11 +106,11 @@
     </div>
 
     <!-- Filter & Subject Navigation Bar -->
-    <div id="sub-nav-bar" class="hidden max-w-6xl mx-auto mt-3.5 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
+    <div id="sub-nav-bar" class="hidden max-w-7xl mx-auto mt-3.5 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2 flex-1 min-w-[240px]">
         <label for="subject-select" class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
           <i class="fa-solid fa-book-medical text-sky-400"></i>
-          <span>Curriculum:</span>
+          <span>Subject:</span>
         </label>
         <select id="subject-select" onchange="switchSubject(this.value)" class="glass-input text-slate-100 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none flex-1 max-w-[220px] cursor-pointer">
         </select>
@@ -126,54 +126,55 @@
   </header>
 
   <!-- ================= CORE VIEWPORT ================= -->
-  <main class="max-w-6xl mx-auto px-4 mt-7 flex-1 w-full">
+  <main class="max-w-7xl mx-auto px-4 mt-7 flex-1 w-full">
 
     <!-- VIEW 0: STRICT LOGIN GATE -->
     <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto mt-10 shadow-2xl relative overflow-hidden">
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner">
         <i class="fa-solid fa-lock"></i>
       </div>
-      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Authorized Portal Access</h2>
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Candidate Authentication</h2>
       <p class="text-xs sm:text-sm text-slate-400 mt-2 mb-7 leading-relaxed font-medium">
-        Enter your auto-generated student credentials or sign in with admin access to load the examination engine.
+        Enter your verified student credentials or launch directly from the MBBS Telegram Study Bot.
       </p>
 
       <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left">
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Candidate ID</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Student / Admin ID</label>
           <input type="text" id="gate-uid" required placeholder="e.g. STU-101 or admin" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none font-mono">
         </div>
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Access Password</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
           <input type="password" id="gate-key" required placeholder="••••••••" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
         </div>
 
         <p id="gate-error-message" class="text-xs text-rose-400 font-medium hidden text-center py-1"></p>
 
         <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-500/25 tracking-wide">
-          Unlock Examination Bank
+          Enter Examination Portal
         </button>
       </form>
 
       <div class="mt-8 pt-6 border-t border-white/[0.06] text-center">
-        <span class="text-[11px] text-slate-500">Need verification? Contact support on Telegram:</span>
-        <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">@Nothing_0786</a>
+        <span class="text-[11px] text-slate-500">Need enrollment verification?</span>
+        <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">Contact Administrator @Nothing_0786</a>
       </div>
     </section>
 
-    <!-- VIEW 1: CANDIDATE PORTAL BROWSE -->
+    <!-- VIEW 1: STUDENT CURRICULUM BROWSER -->
     <section id="view-browse" class="hidden">
+      <!-- Subject Header Card -->
       <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
               <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
               <span>•</span>
-              <span class="text-slate-300">Computer Based Testing</span>
+              <span class="text-slate-300">NEET-PG / NExT Level CBT</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
             <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
-              Timed practice tests with randomized options, rationale pearls, and score analytics.
+              Simulated clinical test environments with instant option shuffling, high-yield rationale pearls, and score diagnostics.
             </p>
           </div>
           <div class="flex items-center gap-3">
@@ -195,60 +196,106 @@
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- VIEW 2: CBT TEST SIMULATION -->
+    <!-- VIEW 2: CBT EXAM SIMULATOR (STUDENT TEST ENVIRONMENT) -->
     <section id="view-exam" class="hidden">
-      <div class="glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
-        <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
-          <div>
-            <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
-            <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-2 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="text-right">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Timer</div>
-              <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Left: Main Exam Stage (3 Columns) -->
+        <div class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
+          <!-- Top HUD -->
+          <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
+            <div>
+              <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
+              <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-2 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
             </div>
-            <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit</button>
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Elapsed Time</div>
+                <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
+              </div>
+              <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit Test</button>
+            </div>
           </div>
-        </div>
 
-        <div class="my-5">
-          <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2.5">
-            <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
-            <span id="exam-live-tally" class="text-emerald-400 font-mono font-bold">Answered: 0</span>
+          <!-- Mode & Progress -->
+          <div class="my-5 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-xs font-semibold text-slate-400">
+              Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span>
+            </div>
+            
+            <!-- Exam vs Practice Mode Toggle -->
+            <div class="flex items-center gap-2 bg-slate-900/90 border border-white/[0.08] px-3 py-1.5 rounded-xl text-xs">
+              <span class="text-slate-400 font-semibold">Mode:</span>
+              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice (Instant)</button>
+              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Formal Exam</button>
+            </div>
           </div>
-          <div class="w-full bg-slate-900/90 h-2 rounded-full overflow-hidden border border-white/[0.06]">
+
+          <div class="w-full bg-slate-900/90 h-2 rounded-full overflow-hidden border border-white/[0.06] mb-5">
             <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
           </div>
-        </div>
 
-        <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
-          <div class="flex items-center gap-2 mb-3">
-            <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
-            <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
+          <!-- Question Card -->
+          <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
+                <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
+              </div>
+              <!-- Bookmark / Flag -->
+              <button onclick="toggleFlagCurrentQuestion()" id="exam-flag-btn" class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bookmark"></i>
+                <span id="exam-flag-label">Flag for Review</span>
+              </button>
+            </div>
+            <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
           </div>
-          <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
-        </div>
 
-        <div id="exam-options-list" class="space-y-3 mb-6"></div>
+          <!-- Options -->
+          <div id="exam-options-list" class="space-y-3 mb-6"></div>
 
-        <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
-          <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>Clinical Pearl & Comprehensive Rationale</span>
+          <!-- Immediate Clinical Rationale (Practice Mode) -->
+          <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
+            <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>High-Yield Clinical Rationale</span>
+            </div>
+            <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
           </div>
-          <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
+
+          <!-- Navigation Footer -->
+          <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
+            <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
+              <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
+            </button>
+            
+            <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center gap-2">
+              <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
         </div>
 
-        <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
-          <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
-          </button>
-          
-          <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center gap-2">
-            <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        <!-- Right: Interactive Question Palette Matrix (1 Column) -->
+        <div class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-cells text-sky-400"></i>
+            <span>Question Matrix</span>
+          </h4>
+
+          <div class="flex items-center gap-4 text-[10px] text-slate-400 font-semibold mb-4 pb-3 border-b border-white/[0.06]">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Answered</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Flagged</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> Pending</span>
+          </div>
+
+          <!-- Dynamic Grid Chips -->
+          <div id="exam-palette-grid" class="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto custom-scroll pr-1"></div>
+
+          <button onclick="finalizeExam()" class="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20">
+            Submit Complete Exam
           </button>
         </div>
+
       </div>
     </section>
 
@@ -289,19 +336,19 @@
 
   </main>
 
-  <!-- ================= MODERN ADMIN MANAGEMENT COMMAND CENTER ================= -->
+  <!-- ================= MODERN ENTERPRISE ADMIN COMMAND CENTER ================= -->
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       
-      <!-- Admin Modal Header -->
+      <!-- Admin Top Nav Bar -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <i class="fa-solid fa-shield-halved"></i>
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">AI-Powered Question Parser & Repository Sync</p>
+            <p class="text-[11px] text-slate-400">Content Management, AI Question Parser & Auto-GitHub Sync</p>
           </div>
         </div>
         <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -309,214 +356,220 @@
         </button>
       </div>
 
-      <!-- Navigation Tabs -->
-      <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold overflow-x-auto custom-scroll">
-        <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap">
-          <i class="fa-solid fa-folder-tree mr-1.5"></i> Curriculum Modules
-        </button>
-        <button onclick="switchAdminTab('importer')" id="tab-btn-importer" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-robot mr-1.5 text-sky-400"></i> AI PDF & Text Importer
-        </button>
-        <button onclick="switchAdminTab('students')" id="tab-btn-students" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Audit Tracker
-        </button>
-        <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-key mr-1.5"></i> API & Sync Settings
-        </button>
-      </div>
-
-      <!-- Scrollable Tab Container -->
-      <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
-
-        <!-- TAB 1: CURRICULUM MODULES -->
-        <div id="admin-tab-content" class="space-y-6">
-          <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-4.5 rounded-2xl border border-white/[0.06]">
-            <div>
-              <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">Manage curriculum branches and their specific questions</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="promptCreateNewSubject()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                <i class="fa-solid fa-plus text-xs"></i> New Subject
-              </button>
-              <button onclick="promptEditCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/[0.08] transition">
-                <i class="fa-solid fa-pen-to-square"></i> Rename
-              </button>
-              <button onclick="promptDeleteCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
-                <i class="fa-solid fa-trash-can"></i> Delete
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-3 px-1">
-              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-sky-400">Anatomy</span></h4>
-              <span id="admin-subject-total-modules" class="text-xs text-slate-400 font-medium">0 Modules</span>
-            </div>
-            <div id="admin-modules-container" class="space-y-3"></div>
-          </div>
-        </div>
-
-        <!-- TAB 2: AI SMART PDF & TEXT IMPORTER -->
-        <div id="admin-tab-importer" class="hidden space-y-5">
-          <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
-            <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
-              <i class="fa-solid fa-brain"></i>
-              <span>AI-Powered Medical Q-Bank Extractor</span>
-            </div>
-            Upload any medical PDF (even multi-column or unstructured notes) or paste raw text. The AI extracts every question, corrects formatting, identifies correct keys, and writes in-depth clinical rationales automatically.
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Target Curriculum Subject</label>
-              <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white"></select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override</label>
-              <input type="text" id="import-chapter-override" placeholder="e.g. Upper Limb Clinical MCQs" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
-            </div>
-          </div>
-
-          <!-- Upload Option 1: PDF File -->
-          <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
-            <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
-            <label for="pdf-file-selector" class="cursor-pointer block">
-              <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl mx-auto mb-2.5">
-                <i class="fa-solid fa-file-pdf"></i>
-              </div>
-              <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Select Medical PDF to Analyze</div>
-              <p class="text-[11px] text-slate-500 mt-1">Extracts choices, clinical answer keys, and rationale notes</p>
-            </label>
-          </div>
-
-          <!-- Upload Option 2: Raw Paste Fallback -->
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="block text-[11px] font-bold uppercase text-slate-400">Or Paste Raw Question Text Directly:</label>
-              <button onclick="document.getElementById('raw-text-paste').value=''" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
-            </div>
-            <textarea id="raw-text-paste" rows="3" placeholder="Paste unformatted questions, recalls, or PDFs copy-pasted text here..." class="glass-input w-full rounded-xl p-3 text-xs text-slate-300 focus:outline-none"></textarea>
-          </div>
-
-          <button id="pdf-import-action-btn" onclick="executeAiExtraction()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-            <span>Run AI Clinical Extraction & Parse</span>
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Left Sidebar Navigation -->
+        <aside class="w-56 border-r border-white/[0.08] bg-slate-950/70 p-4 space-y-1.5 hidden md:block">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1">Management</div>
+          <button onclick="switchAdminTab('content')" id="side-btn-content" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-folder-tree"></i> Curriculum Modules
+          </button>
+          <button onclick="switchAdminTab('importer')" id="side-btn-importer" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-robot text-sky-400"></i> AI PDF Importer
+          </button>
+          <button onclick="switchAdminTab('students')" id="side-btn-students" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-users-viewfinder"></i> Candidate Audits
           </button>
 
-          <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 pt-4">Integrations</div>
+          <button onclick="switchAdminTab('settings')" id="side-btn-settings" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-key"></i> API & Sync Settings
+          </button>
+        </aside>
 
-          <!-- Staging Preview Area -->
-          <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
-            <div class="flex items-center justify-between">
+        <!-- Right Content Area -->
+        <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
+
+          <!-- TAB 1: CURRICULUM MODULES -->
+          <div id="admin-tab-content" class="space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-4.5 rounded-2xl border border-white/[0.06]">
               <div>
-                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">AI Verified Module (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
-                <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish pushes them directly to GitHub for all students!</p>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">Manage curriculum branches and their specific questions</p>
               </div>
-              <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
-                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
-                <span>Confirm & Auto-Publish Live</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <button onclick="promptCreateNewSubject()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-plus text-xs"></i> New Subject
+                </button>
+                <button onclick="promptEditCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/[0.08] transition">
+                  <i class="fa-solid fa-pen-to-square"></i> Rename
+                </button>
+                <button onclick="promptDeleteCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
+                  <i class="fa-solid fa-trash-can"></i> Delete
+                </button>
+              </div>
             </div>
 
-            <div id="staged-questions-list" class="space-y-3"></div>
-          </div>
-        </div>
-
-        <!-- TAB 3: CANDIDATE PERFORMANCE TRACKER -->
-        <div id="admin-tab-students" class="hidden space-y-5">
-          <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all paid student seats</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
-              <button onclick="renderAdminStudentAnalytics()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
-                <i class="fa-solid fa-rotate mr-1"></i> Refresh
-              </button>
+              <div class="flex items-center justify-between mb-3 px-1">
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-sky-400">Anatomy</span></h4>
+                <span id="admin-subject-total-modules" class="text-xs text-slate-400 font-medium">0 Modules</span>
+              </div>
+              <div id="admin-modules-container" class="space-y-3"></div>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Tests Completed</div>
-              <div id="metric-total-tests" class="text-xl font-extrabold text-white mt-1">0</div>
+          <!-- TAB 2: AI SMART PDF & TEXT IMPORTER -->
+          <div id="admin-tab-importer" class="hidden space-y-5">
+            <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
+              <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
+                <i class="fa-solid fa-brain"></i>
+                <span>Gemini 3.8-Flash Medical Q-Bank Extractor</span>
+              </div>
+              Upload any medical PDF (even multi-column, unformatted, or past recalls) or paste raw text. The AI auto-extracts questions, formats 4 distinct choices, detects the right answer key, and writes a detailed clinical rationale.
             </div>
-            <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Avg Accuracy</div>
-              <div id="metric-avg-accuracy" class="text-xl font-extrabold text-emerald-400 mt-1">0%</div>
-            </div>
-            <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Active Candidates</div>
-              <div id="metric-unique-candidates" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
-            </div>
-            <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate</div>
-              <div id="metric-distinction-rate" class="text-xl font-extrabold text-amber-400 mt-1">0%</div>
-            </div>
-          </div>
 
-          <div class="border border-white/[0.08] rounded-2xl overflow-hidden bg-slate-900/50">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs text-slate-300">
-                <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-white/[0.08]">
-                  <tr>
-                    <th class="p-3.5">Candidate</th>
-                    <th class="p-3.5">Student ID</th>
-                    <th class="p-3.5">Test Title</th>
-                    <th class="p-3.5">Score</th>
-                    <th class="p-3.5">Accuracy</th>
-                    <th class="p-3.5">Status</th>
-                    <th class="p-3.5">Date</th>
-                  </tr>
-                </thead>
-                <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium"></tbody>
-              </table>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Target Curriculum Subject</label>
+                <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override</label>
+                <input type="text" id="import-chapter-override" placeholder="e.g. Upper Limb Clinical MCQs" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- TAB 4: API & DIRECT REPOSITORY SYNC -->
-        <div id="admin-tab-settings" class="hidden space-y-4">
-          <!-- Gemini AI Key -->
-          <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-brain text-sky-400"></i>
-              <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Parser API Key</h4>
+            <!-- PDF Dropzone -->
+            <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
+              <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
+              <label for="pdf-file-selector" class="cursor-pointer block">
+                <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl mx-auto mb-2.5">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Select Medical PDF to Analyze</div>
+                <p class="text-[11px] text-slate-500 mt-1">Multi-page parsing with automatic OCR text cleaning</p>
+              </label>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed font-medium">
-              Free key from <a href="https://aistudio.google.com/" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Used to format noisy PDFs and extract high-yield medical pearls.
-            </p>
+
+            <!-- Text Paste Fallback -->
             <div>
-              <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-[11px] font-bold uppercase text-slate-400">Or Paste Raw Question Text Directly:</label>
+                <button onclick="document.getElementById('raw-text-paste').value=''" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
+              </div>
+              <textarea id="raw-text-paste" rows="3" placeholder="Paste questions, past recall exams, or notes here..." class="glass-input w-full rounded-xl p-3 text-xs text-slate-300 focus:outline-none"></textarea>
             </div>
-            <div class="flex items-center justify-between pt-1">
-              <span id="gemini-key-status" class="text-xs text-slate-400 font-mono">Checking AI key...</span>
-              <button onclick="saveGeminiToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save AI Key</button>
+
+            <button id="pdf-import-action-btn" onclick="executeAiExtraction()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+              <span>Run AI Clinical Extraction & Parse</span>
+            </button>
+
+            <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
+
+            <!-- Staging Review Area -->
+            <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">AI Verified Staging (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
+                  <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish pushes them directly to GitHub for all students!</p>
+                </div>
+                <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
+                  <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                  <span>Confirm & Auto-Publish Live</span>
+                </button>
+              </div>
+
+              <div id="staged-questions-list" class="space-y-3"></div>
             </div>
           </div>
 
-          <!-- GitHub Key -->
-          <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-lock text-amber-400"></i>
-              <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
+          <!-- TAB 3: CANDIDATE PERFORMANCE TRACKER -->
+          <div id="admin-tab-students" class="hidden space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all paid student seats</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+                <button onclick="renderAdminStudentAnalytics()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
+                  <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                </button>
+              </div>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed font-medium">
-              GitHub Personal Access Token (Classic with <code>repo</code> scope) to automatically write changes to <code>data.json</code> in your repository.
-            </p>
-            <div>
-              <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="glass-input rounded-2xl p-4">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Tests Completed</div>
+                <div id="metric-total-tests" class="text-xl font-extrabold text-white mt-1">0</div>
+              </div>
+              <div class="glass-input rounded-2xl p-4">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Avg Accuracy</div>
+                <div id="metric-avg-accuracy" class="text-xl font-extrabold text-emerald-400 mt-1">0%</div>
+              </div>
+              <div class="glass-input rounded-2xl p-4">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Active Candidates</div>
+                <div id="metric-unique-candidates" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
+              </div>
+              <div class="glass-input rounded-2xl p-4">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate</div>
+                <div id="metric-distinction-rate" class="text-xl font-extrabold text-amber-400 mt-1">0%</div>
+              </div>
             </div>
-            <div class="flex items-center justify-between pt-1">
-              <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
-              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save GitHub Key</button>
+
+            <div class="border border-white/[0.08] rounded-2xl overflow-hidden bg-slate-900/50">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                  <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-white/[0.08]">
+                    <tr>
+                      <th class="p-3.5">Candidate</th>
+                      <th class="p-3.5">Student ID</th>
+                      <th class="p-3.5">Test Title</th>
+                      <th class="p-3.5">Score</th>
+                      <th class="p-3.5">Accuracy</th>
+                      <th class="p-3.5">Status</th>
+                      <th class="p-3.5">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium"></tbody>
+                </table>
+              </div>
             </div>
           </div>
+
+          <!-- TAB 4: API & DIRECT REPOSITORY SYNC -->
+          <div id="admin-tab-settings" class="hidden space-y-4">
+            <!-- Gemini AI Key -->
+            <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-brain text-sky-400"></i>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Engine (Model: gemini-3.8-flash)</h4>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                Free key from <a href="https://aistudio.google.com/" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Used to parse multi-page PDFs and extract clinical explanations.
+              </p>
+              <div>
+                <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span id="gemini-key-status" class="text-xs text-slate-400 font-mono">Checking AI key...</span>
+                <button onclick="saveGeminiToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save AI Key</button>
+              </div>
+            </div>
+
+            <!-- GitHub Key -->
+            <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-lock text-amber-400"></i>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                GitHub Personal Access Token (Classic with <code>repo</code> scope) to automatically write changes to <code>data.json</code> in your repository.
+              </p>
+              <div>
+                <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
+                <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save GitHub Key</button>
+              </div>
+            </div>
+          </div>
+
         </div>
-
       </div>
+
     </div>
   </div>
 
@@ -595,7 +648,7 @@
         <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2.5">
           <i class="fa-solid fa-chart-line"></i>
         </div>
-        <h3 class="text-base font-extrabold text-white">Your Assessment Progress</h3>
+        <h3 class="text-base font-extrabold text-white">Assessment Progress</h3>
         <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5 font-medium">Performance Record</p>
       </div>
 
@@ -616,7 +669,7 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+  <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
   <script>
     const DEFAULT_SEED_DATA = {
       "Anatomy": {
@@ -655,11 +708,14 @@
     let activeUser = null;
     let stagedModule = null;
     let editingContext = null;
+    let isFormalExamMode = false;
+
     let activeExam = {
       test: null,
       questions: [],
       cursor: 0,
       answers: {},
+      flagged: new Set(),
       seconds: 0,
       timer: null
     };
@@ -760,7 +816,7 @@
         return;
       }
 
-      errBox.textContent = "Invalid Credentials. Access is restricted to verified candidates.";
+      errBox.textContent = "Invalid Credentials. Access restricted to verified candidates.";
       errBox.classList.remove("hidden");
     }
 
@@ -895,7 +951,7 @@
           <div class="col-span-full py-14 text-center border border-dashed border-white/[0.08] rounded-3xl bg-slate-900/40">
             <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-3"></i>
             <h4 class="text-sm font-bold text-slate-300">No Tests Found in ${curSub.name}</h4>
-            <p class="text-xs text-slate-500 mt-1">Upload high-yield questions using the Admin AI Importer.</p>
+            <p class="text-xs text-slate-500 mt-1">Upload questions using the Admin AI Importer.</p>
           </div>
         `;
         return;
@@ -924,6 +980,7 @@
       });
     }
 
+    // ================= CBT EXAM ENGINE =================
     function launchExamSession(chapterId) {
       if (!activeUser) return lockPortalDisplay();
 
@@ -953,6 +1010,7 @@
         questions: preparedQuestions,
         cursor: 0,
         answers: {},
+        flagged: new Set(),
         seconds: 0,
         timer: setInterval(() => {
           activeExam.seconds++;
@@ -972,6 +1030,51 @@
       document.getElementById("view-exam").classList.remove("hidden");
 
       renderActiveExamCard();
+      renderPaletteGrid();
+    }
+
+    function toggleExamMode(formal) {
+      isFormalExamMode = formal;
+      document.getElementById("mode-btn-practice").className = !formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
+      document.getElementById("mode-btn-exam").className = formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-indigo-500/20 text-indigo-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
+      renderActiveExamCard();
+    }
+
+    function toggleFlagCurrentQuestion() {
+      const cur = activeExam.cursor;
+      if (activeExam.flagged.has(cur)) {
+        activeExam.flagged.delete(cur);
+      } else {
+        activeExam.flagged.add(cur);
+      }
+      renderActiveExamCard();
+      renderPaletteGrid();
+    }
+
+    function renderPaletteGrid() {
+      const palette = document.getElementById("exam-palette-grid");
+      palette.innerHTML = "";
+
+      activeExam.questions.forEach((_, idx) => {
+        const btn = document.createElement("button");
+        const isCurrent = idx === activeExam.cursor;
+        const isAnswered = activeExam.answers.hasOwnProperty(idx);
+        const isFlagged = activeExam.flagged.has(idx);
+
+        let bg = "bg-slate-800 text-slate-400 border-white/[0.04]";
+        if (isAnswered) bg = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+        if (isFlagged) bg = "bg-amber-500/20 text-amber-300 border-amber-500/40";
+        if (isCurrent) bg += " ring-2 ring-sky-400";
+
+        btn.className = `h-8 rounded-lg text-xs font-mono font-bold border transition ${bg}`;
+        btn.textContent = idx + 1;
+        btn.onclick = () => {
+          activeExam.cursor = idx;
+          renderActiveExamCard();
+          renderPaletteGrid();
+        };
+        palette.appendChild(btn);
+      });
     }
 
     function renderActiveExamCard() {
@@ -981,11 +1084,21 @@
 
       document.getElementById("exam-index-curr").textContent = cur + 1;
       document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / total) * 100}%`;
-      document.getElementById("exam-live-tally").textContent = `Answered: ${Object.keys(activeExam.answers).length} / ${total}`;
 
       document.getElementById("exam-q-topic-badge").textContent = q.topic || "Core Topic";
       document.getElementById("exam-q-id-badge").textContent = q.id;
       document.getElementById("exam-q-statement").textContent = q.question;
+
+      // Flag label update
+      const flagBtn = document.getElementById("exam-flag-btn");
+      const flagLabel = document.getElementById("exam-flag-label");
+      if (activeExam.flagged.has(cur)) {
+        flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5";
+        flagLabel.textContent = "Flagged (Review)";
+      } else {
+        flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5";
+        flagLabel.textContent = "Flag Question";
+      }
 
       const optsContainer = document.getElementById("exam-options-list");
       optsContainer.innerHTML = "";
@@ -1002,12 +1115,22 @@
           btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800/80 text-slate-200";
           btn.onclick = () => recordExamAnswer(cur, optText);
         } else {
-          if (optText === q.correctText) {
-            btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
-          } else if (optText === chosen && chosen !== q.correctText) {
-            btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
+          // If in formal exam mode: just show selected state without revealing correctness
+          if (isFormalExamMode) {
+            if (optText === chosen) {
+              btn.className += "border-sky-500 bg-sky-500/15 text-sky-200 font-bold";
+            } else {
+              btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-400";
+            }
           } else {
-            btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
+            // Practice Mode: Instant correct/incorrect visual feedback
+            if (optText === q.correctText) {
+              btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
+            } else if (optText === chosen && chosen !== q.correctText) {
+              btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
+            } else {
+              btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
+            }
           }
         }
 
@@ -1016,14 +1139,14 @@
             <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
             <span>${optText}</span>
           </div>
-          ${isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>' : ''}
-          ${isAnswered && optText === chosen && chosen !== q.correctText ? '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i>' : ''}
+          ${!isFormalExamMode && isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>' : ''}
+          ${!isFormalExamMode && isAnswered && optText === chosen && chosen !== q.correctText ? '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i>' : ''}
         `;
         optsContainer.appendChild(btn);
       });
 
       const expBox = document.getElementById("exam-explanation-box");
-      if (isAnswered) {
+      if (!isFormalExamMode && isAnswered) {
         document.getElementById("exam-explanation-text").textContent = q.explanation;
         expBox.classList.remove("hidden");
       } else {
@@ -1042,6 +1165,7 @@
     function recordExamAnswer(qIdx, optionText) {
       activeExam.answers[qIdx] = optionText;
       renderActiveExamCard();
+      renderPaletteGrid();
     }
 
     function stepExam(direction) {
@@ -1049,6 +1173,7 @@
       if (nextIdx >= 0 && nextIdx < activeExam.questions.length) {
         activeExam.cursor = nextIdx;
         renderActiveExamCard();
+        renderPaletteGrid();
       } else if (nextIdx >= activeExam.questions.length) {
         finalizeExam();
       }
@@ -1111,7 +1236,7 @@
       } catch (e) {}
     }
 
-    // ================= AI PARSING & PDF ENGINE =================
+    // ================= AI PARSING & PDF ENGINE (MODEL: GEMINI-3.8-FLASH) =================
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1127,7 +1252,6 @@
 
       let extractedText = document.getElementById("raw-text-paste").value.trim();
 
-      // If a PDF file was selected, extract its raw text first
       if (stagedPdfFile) {
         log.textContent = "⏳ Reading textual pages from uploaded PDF...";
         try {
@@ -1159,11 +1283,11 @@
       const apiKey = localStorage.getItem("mbbs_gemini_api_key") || "";
       if (!apiKey) {
         log.className = "text-xs text-amber-400 bg-slate-950 p-4 rounded-xl border border-amber-500/30 font-mono";
-        log.textContent = "⚠️ Missing Gemini API Key! Go to 'API & Sync Settings' tab and save your free key from Google AI Studio.";
+        log.textContent = "⚠️ Missing Gemini API Key! Enter and save it in 'API & Sync Settings'.";
         return;
       }
 
-      log.textContent = "🧠 Sending to Gemini AI: Extracting MCQs, structuring options, verifying answers & generating clinical explanations...";
+      log.textContent = "🧠 Connecting to Gemini 3.8-Flash: Structuring options & writing rationales...";
 
       try {
         const prompt = `You are an expert MBBS medical professor and test creator.
@@ -1189,18 +1313,30 @@ Respond ONLY with valid, raw JSON (no markdown backticks, no code blocks, no pre
 Input Content:
 ${extractedText.substring(0, 35000)}`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
-        });
+        const modelsToTry = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.7-flash"];
+        let response = null;
+        let lastError = null;
 
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error?.message || "Gemini API request failed");
+        for (const model of modelsToTry) {
+          try {
+            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+              })
+            });
+            if (response.ok) break;
+            const errData = await response.json();
+            lastError = errData.error?.message || `Failed on ${model}`;
+          } catch (e) {
+            lastError = e.message;
+          }
+        }
+
+        if (!response || !response.ok) {
+          throw new Error(lastError || "All Gemini endpoints failed.");
         }
 
         const data = await response.json();
@@ -1315,7 +1451,7 @@ ${extractedText.substring(0, 35000)}`;
       if (success) {
         document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new module.`;
       } else {
-        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Set up your GitHub Token in 'API & Sync Settings' tab for automatic global publishing.`;
+        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Configure GitHub Token in 'API & Sync Settings' for direct auto-publishing.`;
       }
 
       btn.disabled = false;
@@ -1406,7 +1542,7 @@ ${extractedText.substring(0, 35000)}`;
       }
     }
 
-    // Modal, subject and student utility functions
+    // ================= MODAL & EDIT HELPERS =================
     function openAdminModal() {
       if (!activeUser || activeUser.role !== "admin") return;
       document.getElementById("admin-modal").classList.remove("hidden");
@@ -1426,11 +1562,11 @@ ${extractedText.substring(0, 35000)}`;
       document.getElementById("admin-tab-settings").classList.toggle("hidden", tabKey !== 'settings');
 
       ['content', 'importer', 'students', 'settings'].forEach(k => {
-        const btn = document.getElementById(`tab-btn-${k}`);
-        if (btn) {
-          btn.className = (k === tabKey)
-            ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
-            : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
+        const sideBtn = document.getElementById(`side-btn-${k}`);
+        if (sideBtn) {
+          sideBtn.className = (k === tabKey)
+            ? "w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition"
+            : "w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition";
         }
       });
 
@@ -1468,8 +1604,8 @@ ${extractedText.substring(0, 35000)}`;
                 <i class="fa-solid fa-list-ul text-sky-400 text-xs"></i>
                 <span id="btn-label-${ch.id}">Manage MCQs</span>
               </button>
-              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition"><i class="fa-solid fa-pen"></i></button>
-              <button onclick="deleteModule('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition"><i class="fa-solid fa-trash"></i></button>
+              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteModule('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>
           <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-white/[0.06] space-y-3">
