@@ -12,57 +12,99 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    
+    :root {
+      --bg-dark: #060913;
+      --card-bg: rgba(13, 20, 36, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #0284c7;
+      --accent: #10b981;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #070b14;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
+      background-attachment: fixed;
       color: #f1f5f9;
       -webkit-tap-highlight-color: transparent;
     }
+
     .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #0c1322; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #080d1a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 99px; }
+
     .glass-panel {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
     }
+
+    .glass-input {
+      background: rgba(8, 13, 26, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+    .glass-input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 15px -3px rgba(14, 165, 233, 0.25);
+    }
+
+    .option-card {
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .option-card:hover {
+      transform: translateY(-1px);
+    }
+
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .pulse-live { animation: pulse-subtle 2s infinite; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-blue-600 selection:text-white pb-10">
+<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white pb-12">
 
   <!-- ================= TOP APP HEADER ================= -->
-  <header id="main-header" class="sticky top-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
+  <header id="main-header" class="sticky top-0 z-40 bg-[#060913]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3.5 transition-all">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
       <!-- Brand & Profile -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-          <i class="fa-solid fa-brain text-lg"></i>
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-teal-400 p-[1px] shadow-lg shadow-sky-500/20">
+          <div class="w-full h-full bg-[#090e1d] rounded-2xl flex items-center justify-center text-sky-400">
+            <i class="fa-solid fa-stethoscope text-base"></i>
+          </div>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight">MBBS CBT Q-Bank</h1>
-            <span id="header-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Verifying...</span>
+            <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight">MBBS Pro CBT</h1>
+            <span id="header-role-badge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60">Verifying...</span>
           </div>
-          <p id="header-user-label" class="text-xs text-slate-400 truncate max-w-[220px]">Authenticating profile...</p>
+          <p id="header-user-label" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs font-medium">Authenticating profile...</p>
         </div>
       </div>
 
       <!-- Action Portal Buttons -->
-      <div class="flex items-center gap-2">
-        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-sliders"></i>
+      <div class="flex items-center gap-2.5">
+        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
           <span>Admin Hub</span>
         </button>
 
-        <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-chart-pie text-emerald-400"></i>
-          <span class="hidden sm:inline">My Analytics</span>
+        <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-2 rounded-xl bg-slate-800/80 border border-white/[0.08] text-slate-300 text-xs font-bold hover:bg-slate-700/80 transition flex items-center gap-2">
+          <i class="fa-solid fa-chart-simple text-sky-400"></i>
+          <span class="hidden sm:inline">Analytics</span>
         </button>
 
-        <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-md shadow-sky-600/25 flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
           <span>Login</span>
         </button>
       </div>
@@ -70,84 +112,96 @@
     </div>
 
     <!-- Filter & Subject Navigation Bar -->
-    <div id="sub-nav-bar" class="hidden max-w-6xl mx-auto mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+    <div id="sub-nav-bar" class="hidden max-w-6xl mx-auto mt-3.5 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2 flex-1 min-w-[240px]">
-        <label for="subject-select" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Subject:</label>
-        <select id="subject-select" onchange="switchSubject(this.value)" class="bg-slate-800/90 border border-slate-700 text-slate-100 text-xs rounded-xl px-3 py-1.5 font-semibold focus:outline-none focus:border-blue-500 transition cursor-pointer flex-1 max-w-[220px]">
+        <label for="subject-select" class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-book-medical text-sky-400"></i>
+          <span>Curriculum:</span>
+        </label>
+        <select id="subject-select" onchange="switchSubject(this.value)" class="glass-input text-slate-100 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none flex-1 max-w-[220px] cursor-pointer">
         </select>
       </div>
 
       <div class="flex items-center gap-2">
         <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-          <input type="text" id="topic-search-input" onkeyup="filterTestsByKeyword()" placeholder="Search test module..." class="bg-slate-800/90 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-44 sm:w-56 placeholder-slate-500 transition">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-slate-500 text-xs"></i>
+          <input type="text" id="topic-search-input" onkeyup="filterTestsByKeyword()" placeholder="Search test modules..." class="glass-input rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none w-48 sm:w-64 font-medium">
         </div>
       </div>
     </div>
   </header>
 
   <!-- ================= CORE VIEWPORT ================= -->
-  <main class="max-w-6xl mx-auto px-4 mt-6 flex-1 w-full">
+  <main class="max-w-6xl mx-auto px-4 mt-7 flex-1 w-full">
 
     <!-- VIEW 0: STRICT LOGIN GATE -->
-    <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-lg mx-auto mt-8 border border-slate-800 shadow-2xl">
-      <div class="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-2xl mx-auto mb-5">
-        <i class="fa-solid fa-shield-halved"></i>
+    <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto mt-10 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner">
+        <i class="fa-solid fa-lock"></i>
       </div>
-      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Authorized Access Only</h2>
-      <p class="text-xs sm:text-sm text-slate-400 mt-2 mb-6 leading-relaxed">
-        This computer-based training test engine is restricted to enrolled candidates. Please sign in with your auto-generated Student ID and password.
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Authorized Portal Access</h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-2 mb-7 leading-relaxed font-medium">
+        Enter your auto-generated student credentials or sign in with admin access to load the examination engine.
       </p>
 
       <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left">
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Student / Admin ID</label>
-          <input type="text" id="gate-uid" required placeholder="e.g. STU-101 or admin" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Candidate ID</label>
+          <input type="text" id="gate-uid" required placeholder="e.g. STU-101 or admin" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none font-mono">
         </div>
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Access Password</label>
-          <input type="password" id="gate-key" required placeholder="Enter password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Access Password</label>
+          <input type="password" id="gate-key" required placeholder="••••••••" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
         </div>
 
-        <p id="gate-error-message" class="text-xs text-rose-400 font-medium hidden text-center"></p>
+        <p id="gate-error-message" class="text-xs text-rose-400 font-medium hidden text-center py-1"></p>
 
-        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/25">
-          Sign In to Portal
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-500/25 tracking-wide">
+          Unlock Examination Bank
         </button>
       </form>
 
-      <div class="mt-6 pt-5 border-t border-slate-800 text-center">
-        <span class="text-[11px] text-slate-500">New subscriber? Access is unlocked via Telegram Bot manager:</span>
-        <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-bold text-blue-400 hover:underline mt-1">@Nothing_0786</a>
+      <div class="mt-8 pt-6 border-t border-white/[0.06] text-center">
+        <span class="text-[11px] text-slate-500">Need verification? Tap to request instant approval on Telegram:</span>
+        <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">@Nothing_0786</a>
       </div>
     </section>
 
     <!-- VIEW 1: CANDIDATE PORTAL BROWSE -->
     <section id="view-browse" class="hidden">
       <!-- Subject Header Card -->
-      <div class="glass-panel rounded-3xl p-6 sm:p-7 mb-8 border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/30 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
+        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold mb-2">
-              <span id="active-subject-badge">ANATOMY</span>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
+              <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
               <span>•</span>
-              <span>CBT Standard Simulator</span>
+              <span class="text-slate-300">Computer Based Testing</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">Standardized modules featuring randomized choices and instant rationale displays.</p>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
+              Timed practice tests with randomized options, rationale pearls, and score analytics.
+            </p>
           </div>
-          <div class="flex items-center gap-2.5">
-            <div class="bg-slate-900/90 border border-slate-700/80 px-4 py-2 rounded-2xl text-right">
-              <div class="text-[10px] uppercase font-bold text-slate-500">Active Test Modules</div>
-              <div id="tests-count-pill" class="text-sm font-extrabold text-white">0 Ready</div>
+          <div class="flex items-center gap-3">
+            <div class="glass-panel px-4 py-2.5 rounded-2xl text-right border border-white/[0.08]">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Available Modules</div>
+              <div id="tests-count-pill" class="text-sm font-extrabold text-white mt-0.5">0 Modules Ready</div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Modules Grid -->
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Available Test Modules</h3>
+      <div class="flex items-center justify-between mb-4 px-1">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-sky-400"></i>
+          <span>Curriculum Test Modules</span>
+        </h3>
       </div>
 
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -156,58 +210,65 @@
 
     <!-- VIEW 2: CBT TEST SIMULATION -->
     <section id="view-exam" class="hidden">
-      <div class="glass-panel rounded-3xl border border-slate-800 p-5 sm:p-8 shadow-2xl">
+      <div class="glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
         
-        <div class="flex items-center justify-between pb-4 border-b border-slate-800 gap-3">
+        <!-- Header HUD -->
+        <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
           <div>
-            <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">ANATOMY</span>
-            <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-1.5 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
+            <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
+            <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-2 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             <div class="text-right">
-              <div class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Elapsed Time</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Timer</div>
               <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
             </div>
-            <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit Test</button>
+            <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">
+              Quit
+            </button>
           </div>
         </div>
 
+        <!-- Progress Tracker -->
         <div class="my-5">
-          <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2">
+          <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2.5">
             <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
-            <span id="exam-live-tally" class="text-emerald-400 font-mono">Answered: 0</span>
+            <span id="exam-live-tally" class="text-emerald-400 font-mono font-bold">Answered: 0</span>
           </div>
-          <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-            <div id="exam-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+          <div class="w-full bg-slate-900/90 h-2 rounded-full overflow-hidden border border-white/[0.06]">
+            <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
           </div>
         </div>
 
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-5 shadow-inner">
-          <div class="flex items-center gap-2 mb-2.5">
-            <span id="exam-q-topic-badge" class="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
+        <!-- Question Body Card -->
+        <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
+          <div class="flex items-center gap-2 mb-3">
+            <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
             <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
           </div>
-          <p id="exam-q-statement" class="text-sm sm:text-base font-medium text-slate-100 leading-relaxed">Loading question...</p>
+          <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
         </div>
 
+        <!-- Options Container -->
         <div id="exam-options-list" class="space-y-3 mb-6"></div>
 
         <!-- Explanation card displays as soon as an option is marked -->
-        <div id="exam-explanation-box" class="hidden bg-slate-950/90 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 transition-all">
-          <div class="flex items-center gap-2 text-xs font-bold text-amber-400 mb-1.5">
-            <i class="fa-solid fa-lightbulb"></i>
-            <span>Clinical Rationale & High-Yield Pearls</span>
+        <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
+          <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Clinical Pearl & Comprehensive Rationale</span>
           </div>
-          <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+          <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
         </div>
 
-        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-          <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none">
-            <i class="fa-solid fa-chevron-left mr-1.5"></i> Previous
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
+          <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
           </button>
           
-          <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/20">
-            Next <i class="fa-solid fa-chevron-right ml-1.5"></i>
+          <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center gap-2">
+            <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </button>
         </div>
 
@@ -216,34 +277,34 @@
 
     <!-- VIEW 3: SCORECARD SUMMARY -->
     <section id="view-result" class="hidden">
-      <div class="glass-panel rounded-3xl border border-slate-800 p-6 sm:p-10 max-w-md mx-auto text-center shadow-2xl">
-        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4">
+      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-md mx-auto text-center shadow-2xl relative overflow-hidden">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
           <i class="fa-solid fa-award"></i>
         </div>
         <h2 class="text-2xl font-black text-white">Performance Scorecard</h2>
-        <p id="result-test-title" class="text-xs text-slate-400 mt-1 mb-6">Subject Mock Test</p>
+        <p id="result-test-title" class="text-xs text-slate-400 mt-1 mb-6 font-medium">Subject Mock Test</p>
 
         <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-            <div class="text-[10px] uppercase font-bold text-slate-500">Correct</div>
+          <div class="glass-input rounded-2xl p-3.5">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Score</div>
             <div id="result-stat-score" class="text-base sm:text-lg font-black text-white mt-1">0 / 0</div>
           </div>
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-            <div class="text-[10px] uppercase font-bold text-slate-500">Accuracy</div>
+          <div class="glass-input rounded-2xl p-3.5">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Accuracy</div>
             <div id="result-stat-accuracy" class="text-base sm:text-lg font-black text-emerald-400 mt-1">0%</div>
           </div>
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-            <div class="text-[10px] uppercase font-bold text-slate-500">Time</div>
-            <div id="result-stat-time" class="text-base sm:text-lg font-black text-blue-400 mt-1">00:00</div>
+          <div class="glass-input rounded-2xl p-3.5">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Time</div>
+            <div id="result-stat-time" class="text-base sm:text-lg font-black text-sky-400 mt-1">00:00</div>
           </div>
         </div>
 
-        <div class="space-y-2">
-          <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/20">
+        <div class="space-y-2.5">
+          <button onclick="retakeCurrentExam()" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/25">
             Retake Exam (Fresh Shuffle)
           </button>
-          <button onclick="returnToBrowseView()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
-            Back to Tests Menu
+          <button onclick="returnToBrowseView()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+            Back to Curriculum
           </button>
         </div>
       </div>
@@ -253,13 +314,13 @@
 
   <!-- ================= MODERN ADMIN MANAGEMENT COMMAND CENTER ================= -->
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
-    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       
       <!-- Admin Modal Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800/90 bg-slate-900/60">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
-            <i class="fa-solid fa-crown"></i>
+          <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
+            <i class="fa-solid fa-shield-halved"></i>
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
@@ -274,18 +335,18 @@
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-bold overflow-x-auto custom-scroll">
-        <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap">
+      <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold overflow-x-auto custom-scroll">
+        <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap">
           <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects & Modules
         </button>
         <button onclick="switchAdminTab('importer')" id="tab-btn-importer" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-file-pdf mr-1.5"></i> Auto-Module PDF Importer
+          <i class="fa-solid fa-file-pdf mr-1.5"></i> PDF Module Importer
         </button>
         <button onclick="switchAdminTab('students')" id="tab-btn-students" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Performance Tracker
+          <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Audit Tracker
         </button>
         <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-key mr-1.5"></i> Auto-Push Settings
+          <i class="fa-solid fa-key mr-1.5"></i> GitHub Auto-Push
         </button>
       </div>
 
@@ -294,28 +355,28 @@
 
         <!-- TAB 1: SUBJECTS & DIRECT MCQ EDITOR -->
         <div id="admin-tab-content" class="space-y-6">
-          <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-4.5 rounded-2xl border border-white/[0.06]">
             <div>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
-              <p class="text-[11px] text-slate-400">Manage curriculum branches and their specific questions</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Manage curriculum branches and their specific questions</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="promptCreateNewSubject()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5">
-                <i class="fa-solid fa-plus"></i> New Subject
+              <button onclick="promptCreateNewSubject()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-plus text-xs"></i> New Subject
               </button>
-              <button onclick="promptEditCurrentSubject()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition">
+              <button onclick="promptEditCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/[0.08] transition">
                 <i class="fa-solid fa-pen-to-square"></i> Rename
               </button>
-              <button onclick="promptDeleteCurrentSubject()" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
+              <button onclick="promptDeleteCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
                 <i class="fa-solid fa-trash-can"></i> Delete
               </button>
             </div>
           </div>
 
           <div>
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-blue-400">Anatomy</span></h4>
-              <span id="admin-subject-total-modules" class="text-xs text-slate-500">0 Modules</span>
+            <div class="flex items-center justify-between mb-3 px-1">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-sky-400">Anatomy</span></h4>
+              <span id="admin-subject-total-modules" class="text-xs text-slate-400 font-medium">0 Modules</span>
             </div>
 
             <div id="admin-modules-container" class="space-y-3">
@@ -325,8 +386,8 @@
 
         <!-- TAB 2: SMART AUTO-MODULE PDF IMPORTER -->
         <div id="admin-tab-importer" class="hidden space-y-5">
-          <div class="bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
-            <div class="flex items-center gap-2 font-bold text-blue-400 mb-1">
+          <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
+            <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
               <span>High-Yield Automated Single Module Builder</span>
             </div>
@@ -335,43 +396,43 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Target Curriculum Subject</label>
-              <select id="import-target-subject" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Target Curriculum Subject</label>
+              <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
               </select>
             </div>
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Module Name Override (Optional)</label>
-              <input type="text" id="import-chapter-override" placeholder="Leave blank to use PDF filename" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override (Optional)</label>
+              <input type="text" id="import-chapter-override" placeholder="Leave blank to use PDF filename" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
             </div>
           </div>
 
-          <div class="border-2 border-dashed border-slate-700 hover:border-blue-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/30">
+          <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
             <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
             <label for="pdf-file-selector" class="cursor-pointer block">
-              <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl mx-auto mb-2">
+              <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl mx-auto mb-2.5">
                 <i class="fa-solid fa-file-arrow-up"></i>
               </div>
               <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Tap to upload clinical MCQ PDF</div>
-              <p class="text-[11px] text-slate-500 mt-0.5">Extracts choices, answers, sub-topics, and explanations</p>
+              <p class="text-[11px] text-slate-500 mt-1">Extracts choices, answers, sub-topics, and explanations</p>
             </label>
           </div>
 
-          <button id="pdf-import-action-btn" onclick="executePdfStaging()" disabled class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-microscope"></i>
+          <button id="pdf-import-action-btn" onclick="executePdfStaging()" disabled class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-microscope text-xs"></i>
             <span>Parse & Preview MCQs Before Publishing</span>
           </button>
 
-          <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 hidden font-mono leading-relaxed"></div>
+          <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
 
           <!-- Staging Preview Area -->
-          <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-slate-800">
+          <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Module Review (<span id="staged-count" class="text-blue-400">0</span> Questions)</h4>
+                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Module Review (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
                 <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish syncs them directly to GitHub for all students!</p>
               </div>
               <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
                 <span>Confirm & Auto-Publish Live</span>
               </button>
             </div>
@@ -386,39 +447,39 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
-              <p class="text-[11px] text-slate-400">Real-time performance logs across all paid student seats</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all paid student seats</p>
             </div>
             <div class="flex items-center gap-2">
-              <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500">
-              <button onclick="renderAdminStudentAnalytics()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+              <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+              <button onclick="renderAdminStudentAnalytics()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
                 <i class="fa-solid fa-rotate mr-1"></i> Refresh
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-500">Tests Completed</div>
+            <div class="glass-input rounded-2xl p-4">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Tests Completed</div>
               <div id="metric-total-tests" class="text-xl font-extrabold text-white mt-1">0</div>
             </div>
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-500">Avg Candidate Accuracy</div>
+            <div class="glass-input rounded-2xl p-4">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Avg Candidate Accuracy</div>
               <div id="metric-avg-accuracy" class="text-xl font-extrabold text-emerald-400 mt-1">0%</div>
             </div>
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-500">Active Candidates</div>
-              <div id="metric-unique-candidates" class="text-xl font-extrabold text-blue-400 mt-1">0</div>
+            <div class="glass-input rounded-2xl p-4">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Active Candidates</div>
+              <div id="metric-unique-candidates" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
             </div>
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-500">Distinction Rate (&gt;75%)</div>
+            <div class="glass-input rounded-2xl p-4">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate (&gt;75%)</div>
               <div id="metric-distinction-rate" class="text-xl font-extrabold text-amber-400 mt-1">0%</div>
             </div>
           </div>
 
-          <div class="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/50">
+          <div class="border border-white/[0.08] rounded-2xl overflow-hidden bg-slate-900/50">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs text-slate-300">
-                <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-white/[0.08]">
                   <tr>
                     <th class="p-3.5">Candidate</th>
                     <th class="p-3.5">Student ID</th>
@@ -429,7 +490,7 @@
                     <th class="p-3.5">Date</th>
                   </tr>
                 </thead>
-                <tbody id="student-analytics-records" class="divide-y divide-slate-800/60 font-medium">
+                <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium">
                 </tbody>
               </table>
             </div>
@@ -438,21 +499,21 @@
 
         <!-- TAB 4: GITHUB AUTO-PUSH CONFIGURATION -->
         <div id="admin-tab-settings" class="hidden space-y-4">
-          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-lock text-amber-400"></i>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
+            <p class="text-xs text-slate-400 leading-relaxed font-medium">
               Paste your GitHub Personal Access Token once below. When you import or edit MCQs, the app directly updates <code class="text-emerald-400 font-mono">data.json</code> in your repository automatically.
             </p>
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">GitHub Token (Classic with 'repo' scope)</label>
-              <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">GitHub Token (Classic with 'repo' scope)</label>
+              <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
             </div>
             <div class="flex items-center justify-between pt-2">
               <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
-              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">Save Key</button>
+              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save Key</button>
             </div>
           </div>
         </div>
@@ -463,49 +524,49 @@
 
   <!-- ================= EDIT SINGLE MCQ MODAL ================= -->
   <div id="edit-mcq-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
-      <button onclick="closeEditMcqModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll border border-white/[0.08]">
+      <button onclick="closeEditMcqModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
       <div class="mb-4">
         <h3 class="text-base font-extrabold text-white">Edit Question & Rationale</h3>
-        <p class="text-xs text-slate-400">Make immediate corrections to the MCQ</p>
+        <p class="text-xs text-slate-400 mt-0.5">Make immediate corrections to the MCQ</p>
       </div>
 
       <div class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Sub-Topic Tag</label>
-          <input type="text" id="edit-mcq-topic" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Sub-Topic Tag</label>
+          <input type="text" id="edit-mcq-topic" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-white focus:outline-none">
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Question Prompt</label>
-          <textarea id="edit-mcq-question" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Question Prompt</label>
+          <textarea id="edit-mcq-question" rows="3" class="glass-input w-full rounded-xl p-3.5 text-white focus:outline-none leading-relaxed"></textarea>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option A</label>
-            <input type="text" id="edit-mcq-opt-0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+            <input type="text" id="edit-mcq-opt-0" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
           </div>
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option B</label>
-            <input type="text" id="edit-mcq-opt-1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+            <input type="text" id="edit-mcq-opt-1" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
           </div>
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option C</label>
-            <input type="text" id="edit-mcq-opt-2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+            <input type="text" id="edit-mcq-opt-2" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
           </div>
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option D</label>
-            <input type="text" id="edit-mcq-opt-3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+            <input type="text" id="edit-mcq-opt-3" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
           </div>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Correct Answer</label>
-          <select id="edit-mcq-correct-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold text-emerald-400">
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Correct Answer</label>
+          <select id="edit-mcq-correct-select" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-white focus:outline-none font-bold text-emerald-400">
             <option value="0">Matches Option A</option>
             <option value="1">Matches Option B</option>
             <option value="2">Matches Option C</option>
@@ -514,11 +575,11 @@
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Explanation / Clinical Pearl</label>
-          <textarea id="edit-mcq-explanation" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-300 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Explanation / Clinical Pearl</label>
+          <textarea id="edit-mcq-explanation" rows="2" class="glass-input w-full rounded-xl p-3.5 text-slate-300 focus:outline-none leading-relaxed"></textarea>
         </div>
 
-        <button onclick="saveActiveMcqEdits()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-600/20">
+        <button onclick="saveActiveMcqEdits()" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition shadow-lg shadow-sky-600/20">
           Save Changes
         </button>
       </div>
@@ -526,27 +587,27 @@
   </div>
 
   <!-- ================= STUDENT PERSONAL ANALYTICS MODAL ================= -->
-  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-slate-950 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
+  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-sm w-full p-6 shadow-2xl relative border border-white/[0.08]">
       <button onclick="closeStudentStatsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
       <div class="text-center mb-5">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2.5">
           <i class="fa-solid fa-chart-line"></i>
         </div>
         <h3 class="text-base font-extrabold text-white">Your Assessment Progress</h3>
-        <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5">Performance Record</p>
+        <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5 font-medium">Performance Record</p>
       </div>
 
       <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Tests Taken</div>
+        <div class="glass-input rounded-2xl p-3 text-center">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div>
           <div id="self-tests-taken" class="text-xl font-black text-white mt-1">0</div>
         </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Avg Accuracy</div>
+        <div class="glass-input rounded-2xl p-3 text-center">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div>
           <div id="self-avg-accuracy" class="text-xl font-black text-emerald-400 mt-1">0%</div>
         </div>
       </div>
@@ -620,7 +681,7 @@
     let DB = {};
     let currentSubjectKey = "Anatomy";
     let activeUser = null;
-    let stagedModule = null; // Single unified module staging
+    let stagedModule = null;
     let editingContext = null;
     let activeExam = {
       test: null,
@@ -646,7 +707,6 @@
         }
       } catch (err) {}
 
-      // Fetch the globally deployed data.json file from the repo
       try {
         const res = await fetch("./data.json?v=" + Date.now());
         if (res.ok) {
@@ -806,7 +866,7 @@
       userLabel.textContent = "Guest Access Disabled";
 
       authBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Login</span>';
-      authBtn.className = "px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5";
+      authBtn.className = "px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5";
     }
 
     // ================= SUBJECT & CURRICULUM NAVIGATION =================
@@ -873,8 +933,8 @@
 
       if (chapters.length === 0) {
         grid.innerHTML = `
-          <div class="col-span-full py-12 text-center border border-dashed border-slate-800 rounded-3xl bg-slate-900/30">
-            <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-2"></i>
+          <div class="col-span-full py-14 text-center border border-dashed border-white/[0.08] rounded-3xl bg-slate-900/40">
+            <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-3"></i>
             <h4 class="text-sm font-bold text-slate-300">No Tests Found in ${curSub.name}</h4>
             <p class="text-xs text-slate-500 mt-1">Upload high-yield questions using the Admin PDF Importer.</p>
           </div>
@@ -884,18 +944,18 @@
 
       chapters.forEach(ch => {
         const card = document.createElement("div");
-        card.className = "glass-panel rounded-3xl p-5 border border-slate-800 hover:border-blue-500/40 transition flex flex-col justify-between group shadow-lg";
+        card.className = "glass-panel rounded-3xl p-6 border border-white/[0.08] hover:border-sky-500/40 transition flex flex-col justify-between group shadow-xl";
         card.innerHTML = `
           <div>
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">${ch.topic || curSub.name}</span>
-              <span class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-list-check text-blue-400 mr-1"></i> ${ch.questions.length} MCQs</span>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || curSub.name}</span>
+              <span class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-list-check text-sky-400 mr-1.5"></i> ${ch.questions.length} MCQs</span>
             </div>
-            <h4 class="text-sm font-bold text-white group-hover:text-blue-400 transition leading-snug line-clamp-2">${ch.title}</h4>
+            <h4 class="text-sm font-bold text-white group-hover:text-sky-400 transition leading-snug line-clamp-2">${ch.title}</h4>
           </div>
-          <div class="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-            <span class="text-[11px] text-slate-500 font-medium">+4 / -1 Scheme</span>
-            <button onclick="launchExamSession('${ch.id}')" class="px-4 py-2 rounded-xl bg-blue-600 group-hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-600/20">
+          <div class="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+            <span class="text-[11px] text-slate-500 font-semibold">+4 / -1 Scheme</span>
+            <button onclick="launchExamSession('${ch.id}')" class="px-4 py-2 rounded-xl bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-sky-600/25">
               <span>Start Test</span>
               <i class="fa-solid fa-chevron-right text-[10px]"></i>
             </button>
@@ -905,7 +965,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE (INSTANT EXPLANATION & SUB-TOPIC BADGE) =================
+    // ================= CBT EXAM ENGINE =================
     function launchExamSession(chapterId) {
       if (!activeUser) {
         lockPortalDisplay();
@@ -919,7 +979,6 @@
         return;
       }
 
-      // Shuffle options (A-D) so answer keys are not static
       const preparedQuestions = test.questions.map((q, idx) => {
         const shuffledOptions = [...q.options];
         for (let i = shuffledOptions.length - 1; i > 0; i--) {
@@ -972,7 +1031,6 @@
       document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / total) * 100}%`;
       document.getElementById("exam-live-tally").textContent = `Answered: ${Object.keys(activeExam.answers).length} / ${total}`;
 
-      // Highlight the precise clinical sub-topic this MCQ belongs to
       document.getElementById("exam-q-topic-badge").textContent = q.topic || "Core Topic";
       document.getElementById("exam-q-id-badge").textContent = q.id;
       document.getElementById("exam-q-statement").textContent = q.question;
@@ -986,34 +1044,32 @@
 
       q.options.forEach((optText, i) => {
         const btn = document.createElement("button");
-        btn.className = "w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-center justify-between gap-3 ";
+        btn.className = "option-card w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-center justify-between gap-3 ";
 
         if (!isAnswered) {
-          btn.className += "border-slate-800 bg-slate-900/90 hover:border-blue-500/50 hover:bg-slate-800/80 text-slate-200";
+          btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800/80 text-slate-200";
           btn.onclick = () => recordExamAnswer(cur, optText);
         } else {
-          // Instantly highlight correct and erroneous attempts
           if (optText === q.correctText) {
-            btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold";
+            btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
           } else if (optText === chosen && chosen !== q.correctText) {
             btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
           } else {
-            btn.className += "border-slate-800/60 bg-slate-900/40 text-slate-500 opacity-50";
+            btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
           }
         }
 
         btn.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
+          <div class="flex items-center gap-3.5">
+            <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
             <span>${optText}</span>
           </div>
-          ${isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
-          ${isAnswered && optText === chosen && chosen !== q.correctText ? '<i class="fa-solid fa-circle-xmark text-rose-400"></i>' : ''}
+          ${isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>' : ''}
+          ${isAnswered && optText === chosen && chosen !== q.correctText ? '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i>' : ''}
         `;
         optsContainer.appendChild(btn);
       });
 
-      // Display explanation immediately once answered
       const expBox = document.getElementById("exam-explanation-box");
       if (isAnswered) {
         document.getElementById("exam-explanation-text").textContent = q.explanation;
@@ -1027,7 +1083,7 @@
       if (cur === total - 1) {
         nextBtn.innerHTML = 'Complete Exam <i class="fa-solid fa-flag-checkered ml-1.5"></i>';
       } else {
-        nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right ml-1.5"></i>';
+        nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>';
       }
     }
 
@@ -1131,19 +1187,19 @@
       document.getElementById("admin-tab-settings").classList.toggle("hidden", !isSettings);
 
       document.getElementById("tab-btn-content").className = isContent
-        ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
+        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
       document.getElementById("tab-btn-importer").className = isImporter
-        ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
+        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
       document.getElementById("tab-btn-students").className = isStudents
-        ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
+        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
       document.getElementById("tab-btn-settings").className = isSettings
-        ? "py-3 px-4 text-blue-400 border-b-2 border-blue-500 transition whitespace-nowrap"
+        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
         : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
 
       if (isContent) renderAdminContentManager();
@@ -1160,29 +1216,29 @@
       container.innerHTML = "";
 
       if (curSub.chapters.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">No test modules in ${curSub.name}. Upload a PDF to automatically generate one.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No test modules in ${curSub.name}. Upload a PDF to automatically generate one.</div>`;
         return;
       }
 
       curSub.chapters.forEach((ch) => {
         const modCard = document.createElement("div");
-        modCard.className = "bg-slate-900/60 border border-slate-800 rounded-2xl p-4 transition";
+        modCard.className = "glass-panel rounded-2xl p-4.5 transition border border-white/[0.06]";
         modCard.innerHTML = `
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${ch.topic || "General"}</span>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || "General"}</span>
                 <span class="text-xs text-slate-400 font-mono">${ch.questions.length} MCQs</span>
               </div>
               <h4 class="text-sm font-bold text-white">${ch.title}</h4>
             </div>
 
             <div class="flex items-center gap-2">
-              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-list-ul text-blue-400"></i>
+              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition flex items-center gap-1.5">
+                <i class="fa-solid fa-list-ul text-sky-400 text-xs"></i>
                 <span id="btn-label-${ch.id}">Manage MCQs</span>
               </button>
-              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
                 <i class="fa-solid fa-pen"></i>
               </button>
               <button onclick="deleteModule('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
@@ -1191,10 +1247,10 @@
             </div>
           </div>
 
-          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-slate-800/80 space-y-3">
+          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-white/[0.06] space-y-3">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
-              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-blue-400 hover:underline font-bold">+ Add Question</button>
+              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-sky-400 hover:underline font-bold">+ Add Question</button>
             </div>
             <div class="space-y-2.5">
               ${renderMcqItemRows(ch)}
@@ -1211,19 +1267,19 @@
       }
 
       return ch.questions.map((q, idx) => `
-        <div class="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl flex items-start justify-between gap-3 text-xs">
-          <div class="space-y-1 flex-1">
+        <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
+          <div class="space-y-1.5 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
               <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">${q.topic || "Topic"}</span>
               <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
             </div>
-            <div class="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
+            <div class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
               <i class="fa-solid fa-check text-[10px]"></i> Answer: ${q.answer}
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 text-xs">
+            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 border border-sky-500/20 text-xs">
               <i class="fa-solid fa-pen"></i> Edit
             </button>
             <button onclick="deleteMcqFromModule('${ch.id}', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 text-xs">
@@ -1324,7 +1380,6 @@
         const cleanDocName = stagedPdfFile.name.replace(/\.pdf$/i, "").replace(/[\(\)\_\-]+/g, " ").trim();
         const moduleName = override || cleanDocName;
 
-        // Extracts all questions into a SINGLE unified module
         stagedModule = extractSingleModuleFromText(accumulatedText, moduleName);
 
         if (!stagedModule || stagedModule.questions.length === 0) {
@@ -1377,7 +1432,6 @@
           };
           const letter = ansMatch ? ansMatch[1].toUpperCase() : "A";
 
-          // Detect clinical topic badge from question context (e.g. [Sciatic Nerve], Topic: Popliteal Fossa)
           let subTopic = moduleTitle;
           const topicMatch = block.match(/(?:Topic|Module|Chapter)\s*[\:\-]\s*([^\n\r]+)/i) || 
                              block.match(/\[([A-Za-z\s]{3,40})\]/) ||
@@ -1397,7 +1451,6 @@
 
       if (questionsList.length === 0) return null;
 
-      // Single Module output
       return {
         id: `mod_${Date.now()}`,
         title: moduleTitle,
@@ -1421,17 +1474,17 @@
       container.innerHTML = "";
 
       const groupEl = document.createElement("div");
-      groupEl.className = "p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3";
+      groupEl.className = "p-5 bg-slate-900/90 border border-white/[0.08] rounded-2xl space-y-3.5";
       groupEl.innerHTML = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">Unified Test Module</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded border border-sky-500/20">Unified Test Module</span>
             <h5 class="text-xs font-bold text-white mt-1">${stagedModule.title} (${stagedModule.questions.length} MCQs)</h5>
           </div>
         </div>
         <div class="space-y-2">
           ${stagedModule.questions.map((q, qIdx) => `
-            <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-start justify-between gap-3 text-xs">
+            <div class="p-3 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
               <div class="flex-1 space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="font-mono text-slate-500 font-bold">Q${qIdx + 1}.</span>
@@ -1441,8 +1494,8 @@
                 <p class="text-[11px] text-emerald-400 font-mono">Answer: ${q.answer}</p>
               </div>
               <div class="flex items-center gap-1.5">
-                <button onclick="openEditMcqModal('${stagedModule.id}',${qIdx}, true)" class="px-2 py-1 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 text-xs">Edit</button>
-                <button onclick="deleteStagedMcq(${qIdx})" class="px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs">Delete</button>
+                <button onclick="openEditMcqModal('${stagedModule.id}',${qIdx}, true)" class="px-2.5 py-1 rounded bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 text-xs">Edit</button>
+                <button onclick="deleteStagedMcq(${qIdx})" class="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs">Delete</button>
               </div>
             </div>
           `).join("")}
@@ -1461,7 +1514,6 @@
       const targetSub = document.getElementById("import-target-subject").value;
       if (!DB[targetSub]) DB[targetSub] = { name: targetSub, chapters: [] };
 
-      // Add the single unified module to curriculum
       DB[targetSub].chapters.unshift(stagedModule);
 
       const btn = document.getElementById("auto-publish-btn");
@@ -1476,7 +1528,6 @@
       renderBrowsePortal();
       renderAdminContentManager();
 
-      // Trigger Direct Push to GitHub
       const success = await pushCurriculumToGitHubDirect();
       if (success) {
         document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new module.`;
@@ -1574,7 +1625,7 @@
       if (input) input.value = token;
       if (status) {
         status.textContent = token ? "✅ Auto-Push Key is active" : "⚠️ No key saved (Required for auto-upload)";
-        status.className = token ? "text-xs text-emerald-400 font-mono" : "text-xs text-amber-400 font-mono";
+        status.className = token ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
       }
     }
 
@@ -1665,7 +1716,7 @@
       tbody.innerHTML = "";
 
       if (audit.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No student exam attempts recorded yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-slate-500 font-medium">No student exam attempts recorded yet.</td></tr>`;
         return;
       }
 
@@ -1682,15 +1733,15 @@
         }
 
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/40";
+        tr.className = "hover:bg-slate-800/40 transition border-b border-white/[0.04]";
         tr.innerHTML = `
           <td class="p-3.5 font-bold text-white">${row.name || "Candidate"}</td>
-          <td class="p-3.5 font-mono text-slate-400">${row.uid}</td>
+          <td class="p-3.5 font-mono text-slate-400 font-semibold">${row.uid}</td>
           <td class="p-3.5 text-slate-300 max-w-[180px] truncate">${row.test}</td>
           <td class="p-3.5 font-mono text-slate-200">${row.score}</td>
           <td class="p-3.5 font-bold text-emerald-400">${row.accuracy}%</td>
           <td class="p-3.5">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badgeColor}">${status}</span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded border ${badgeColor}">${status}</span>
           </td>
           <td class="p-3.5 text-slate-500 text-[11px] whitespace-nowrap">${row.timestamp}</td>
         `;
