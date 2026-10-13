@@ -61,12 +61,6 @@
     .option-card:hover {
       transform: translateY(-1px);
     }
-
-    @keyframes pulse-subtle {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-    .pulse-live { animation: pulse-subtle 2s infinite; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white pb-12">
@@ -136,8 +130,6 @@
 
     <!-- VIEW 0: STRICT LOGIN GATE -->
     <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto mt-10 shadow-2xl relative overflow-hidden">
-      <div class="absolute -top-24 -left-24 w-48 h-48 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
-      
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner">
         <i class="fa-solid fa-lock"></i>
       </div>
@@ -164,17 +156,14 @@
       </form>
 
       <div class="mt-8 pt-6 border-t border-white/[0.06] text-center">
-        <span class="text-[11px] text-slate-500">Need verification? Tap to request instant approval on Telegram:</span>
+        <span class="text-[11px] text-slate-500">Need verification? Contact support on Telegram:</span>
         <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">@Nothing_0786</a>
       </div>
     </section>
 
     <!-- VIEW 1: CANDIDATE PORTAL BROWSE -->
     <section id="view-browse" class="hidden">
-      <!-- Subject Header Card -->
       <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
-        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
@@ -196,7 +185,6 @@
         </div>
       </div>
 
-      <!-- Modules Grid -->
       <div class="flex items-center justify-between mb-4 px-1">
         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <i class="fa-solid fa-layer-group text-sky-400"></i>
@@ -204,15 +192,12 @@
         </h3>
       </div>
 
-      <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      </div>
+      <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
     <!-- VIEW 2: CBT TEST SIMULATION -->
     <section id="view-exam" class="hidden">
       <div class="glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
-        
-        <!-- Header HUD -->
         <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
           <div>
             <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
@@ -223,13 +208,10 @@
               <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Timer</div>
               <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
             </div>
-            <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">
-              Quit
-            </button>
+            <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit</button>
           </div>
         </div>
 
-        <!-- Progress Tracker -->
         <div class="my-5">
           <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2.5">
             <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
@@ -240,7 +222,6 @@
           </div>
         </div>
 
-        <!-- Question Body Card -->
         <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
           <div class="flex items-center gap-2 mb-3">
             <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
@@ -249,10 +230,8 @@
           <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
         </div>
 
-        <!-- Options Container -->
         <div id="exam-options-list" class="space-y-3 mb-6"></div>
 
-        <!-- Explanation card displays as soon as an option is marked -->
         <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
           <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
             <i class="fa-solid fa-circle-check"></i>
@@ -261,7 +240,6 @@
           <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
         </div>
 
-        <!-- Navigation Buttons -->
         <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
           <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
             <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
@@ -271,7 +249,6 @@
             <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </button>
         </div>
-
       </div>
     </section>
 
@@ -320,40 +297,38 @@
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
-            <i class="fa-solid fa-shield-halved"></i>
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Content Management & Instant GitHub Auto-Push</p>
+            <p class="text-[11px] text-slate-400">AI-Powered Question Parser & Repository Sync</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-            <i class="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
+        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
       </div>
 
       <!-- Navigation Tabs -->
       <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold overflow-x-auto custom-scroll">
         <button onclick="switchAdminTab('content')" id="tab-btn-content" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap">
-          <i class="fa-solid fa-folder-tree mr-1.5"></i> Manage Subjects & Modules
+          <i class="fa-solid fa-folder-tree mr-1.5"></i> Curriculum Modules
         </button>
         <button onclick="switchAdminTab('importer')" id="tab-btn-importer" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-file-pdf mr-1.5"></i> PDF Module Importer
+          <i class="fa-solid fa-robot mr-1.5 text-sky-400"></i> AI PDF & Text Importer
         </button>
         <button onclick="switchAdminTab('students')" id="tab-btn-students" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
           <i class="fa-solid fa-users-viewfinder mr-1.5"></i> Student Audit Tracker
         </button>
         <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-          <i class="fa-solid fa-key mr-1.5"></i> GitHub Auto-Push
+          <i class="fa-solid fa-key mr-1.5"></i> API & Sync Settings
         </button>
       </div>
 
       <!-- Scrollable Tab Container -->
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
 
-        <!-- TAB 1: SUBJECTS & DIRECT MCQ EDITOR -->
+        <!-- TAB 1: CURRICULUM MODULES -->
         <div id="admin-tab-content" class="space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-4.5 rounded-2xl border border-white/[0.06]">
             <div>
@@ -378,48 +353,55 @@
               <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-sky-400">Anatomy</span></h4>
               <span id="admin-subject-total-modules" class="text-xs text-slate-400 font-medium">0 Modules</span>
             </div>
-
-            <div id="admin-modules-container" class="space-y-3">
-            </div>
+            <div id="admin-modules-container" class="space-y-3"></div>
           </div>
         </div>
 
-        <!-- TAB 2: SMART AUTO-MODULE PDF IMPORTER -->
+        <!-- TAB 2: AI SMART PDF & TEXT IMPORTER -->
         <div id="admin-tab-importer" class="hidden space-y-5">
           <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
             <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>High-Yield Automated Single Module Builder</span>
+              <i class="fa-solid fa-brain"></i>
+              <span>AI-Powered Medical Q-Bank Extractor</span>
             </div>
-            Upload your MCQ PDF. All questions are compiled into <strong>one unified module</strong> named after your PDF (or custom chapter name). Sub-topics are preserved on each question.
+            Upload any medical PDF (even multi-column or unstructured notes) or paste raw text. The AI extracts every question, corrects formatting, identifies correct keys, and writes in-depth clinical rationales automatically.
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Target Curriculum Subject</label>
-              <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
-              </select>
+              <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white"></select>
             </div>
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override (Optional)</label>
-              <input type="text" id="import-chapter-override" placeholder="Leave blank to use PDF filename" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override</label>
+              <input type="text" id="import-chapter-override" placeholder="e.g. Upper Limb Clinical MCQs" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
             </div>
           </div>
 
+          <!-- Upload Option 1: PDF File -->
           <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
             <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
             <label for="pdf-file-selector" class="cursor-pointer block">
               <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl mx-auto mb-2.5">
-                <i class="fa-solid fa-file-arrow-up"></i>
+                <i class="fa-solid fa-file-pdf"></i>
               </div>
-              <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Tap to upload clinical MCQ PDF</div>
-              <p class="text-[11px] text-slate-500 mt-1">Extracts choices, answers, sub-topics, and explanations</p>
+              <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Select Medical PDF to Analyze</div>
+              <p class="text-[11px] text-slate-500 mt-1">Extracts choices, clinical answer keys, and rationale notes</p>
             </label>
           </div>
 
-          <button id="pdf-import-action-btn" onclick="executePdfStaging()" disabled class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-microscope text-xs"></i>
-            <span>Parse & Preview MCQs Before Publishing</span>
+          <!-- Upload Option 2: Raw Paste Fallback -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-[11px] font-bold uppercase text-slate-400">Or Paste Raw Question Text Directly:</label>
+              <button onclick="document.getElementById('raw-text-paste').value=''" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
+            </div>
+            <textarea id="raw-text-paste" rows="3" placeholder="Paste unformatted questions, recalls, or PDFs copy-pasted text here..." class="glass-input w-full rounded-xl p-3 text-xs text-slate-300 focus:outline-none"></textarea>
+          </div>
+
+          <button id="pdf-import-action-btn" onclick="executeAiExtraction()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            <span>Run AI Clinical Extraction & Parse</span>
           </button>
 
           <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
@@ -428,8 +410,8 @@
           <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Staged Module Review (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
-                <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish syncs them directly to GitHub for all students!</p>
+                <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">AI Verified Module (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
+                <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish pushes them directly to GitHub for all students!</p>
               </div>
               <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
                 <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
@@ -437,12 +419,11 @@
               </button>
             </div>
 
-            <div id="staged-questions-list" class="space-y-3">
-            </div>
+            <div id="staged-questions-list" class="space-y-3"></div>
           </div>
         </div>
 
-        <!-- TAB 3: CANDIDATE PERFORMANCE AUDIT TRACKER -->
+        <!-- TAB 3: CANDIDATE PERFORMANCE TRACKER -->
         <div id="admin-tab-students" class="hidden space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -463,7 +444,7 @@
               <div id="metric-total-tests" class="text-xl font-extrabold text-white mt-1">0</div>
             </div>
             <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Avg Candidate Accuracy</div>
+              <div class="text-[10px] font-bold uppercase text-slate-400">Avg Accuracy</div>
               <div id="metric-avg-accuracy" class="text-xl font-extrabold text-emerald-400 mt-1">0%</div>
             </div>
             <div class="glass-input rounded-2xl p-4">
@@ -471,7 +452,7 @@
               <div id="metric-unique-candidates" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
             </div>
             <div class="glass-input rounded-2xl p-4">
-              <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate (&gt;75%)</div>
+              <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate</div>
               <div id="metric-distinction-rate" class="text-xl font-extrabold text-amber-400 mt-1">0%</div>
             </div>
           </div>
@@ -484,36 +465,53 @@
                     <th class="p-3.5">Candidate</th>
                     <th class="p-3.5">Student ID</th>
                     <th class="p-3.5">Test Title</th>
-                    <th class="p-3.5">Raw Score</th>
+                    <th class="p-3.5">Score</th>
                     <th class="p-3.5">Accuracy</th>
                     <th class="p-3.5">Status</th>
                     <th class="p-3.5">Date</th>
                   </tr>
                 </thead>
-                <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium">
-                </tbody>
+                <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium"></tbody>
               </table>
             </div>
           </div>
         </div>
 
-        <!-- TAB 4: GITHUB AUTO-PUSH CONFIGURATION -->
+        <!-- TAB 4: API & DIRECT REPOSITORY SYNC -->
         <div id="admin-tab-settings" class="hidden space-y-4">
+          <!-- Gemini AI Key -->
+          <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-brain text-sky-400"></i>
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Parser API Key</h4>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+              Free key from <a href="https://aistudio.google.com/" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Used to format noisy PDFs and extract high-yield medical pearls.
+            </p>
+            <div>
+              <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span id="gemini-key-status" class="text-xs text-slate-400 font-mono">Checking AI key...</span>
+              <button onclick="saveGeminiToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save AI Key</button>
+            </div>
+          </div>
+
+          <!-- GitHub Key -->
           <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-lock text-amber-400"></i>
               <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
             </div>
             <p class="text-xs text-slate-400 leading-relaxed font-medium">
-              Paste your GitHub Personal Access Token once below. When you import or edit MCQs, the app directly updates <code class="text-emerald-400 font-mono">data.json</code> in your repository automatically.
+              GitHub Personal Access Token (Classic with <code>repo</code> scope) to automatically write changes to <code>data.json</code> in your repository.
             </p>
             <div>
-              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">GitHub Token (Classic with 'repo' scope)</label>
               <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
             </div>
-            <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center justify-between pt-1">
               <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
-              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save Key</button>
+              <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save GitHub Key</button>
             </div>
           </div>
         </div>
@@ -618,7 +616,7 @@
     </div>
   </div>
 
-  <!-- ================= CORE LOGIC SCRIPTS ================= -->
+  <!-- ================= JAVASCRIPT APP LOGIC ================= -->
   <script>
     const DEFAULT_SEED_DATA = {
       "Anatomy": {
@@ -626,7 +624,7 @@
         chapters: [
           {
             id: "ch_upper_limb_clinical",
-            title: "Upper Limb Anatomy MCQs & Explanations",
+            title: "Upper Limb Anatomy Clinical MCQs",
             topic: "Upper Limb",
             questions: [
               {
@@ -640,33 +638,7 @@
                   "Main trunk of median nerve"
                 ],
                 answer: "Palmar cutaneous branch of median nerve",
-                explanation: "The palmar cutaneous branch of the median nerve arises proximal to the flexor retinaculum and passes superficial to it, sparing sensation over the thenar eminence."
-              },
-              {
-                id: "ANA-UL-002",
-                topic: "Brachial Plexus & Nerve Injury",
-                question: "A motorcyclist suffers traction injury of the upper trunk (C5-C6) of the brachial plexus (Erb-Duchenne palsy). Which classic limb posture is produced?",
-                options: [
-                  "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
-                  "Claw hand with loss of hypothenar eminence",
-                  "Wrist drop with inability to extend digits",
-                  "Ape hand deformity with thenar atrophy"
-                ],
-                answer: "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
-                explanation: "Loss of abductors (deltoid, supraspinatus) and lateral rotators produces adduction and internal rotation. Loss of biceps causes forearm pronation."
-              },
-              {
-                id: "ANA-UL-003",
-                topic: "Shoulder & Rotator Cuff",
-                question: "Which tendon of the rotator cuff is most commonly involved in impingement syndrome and degenerative tears?",
-                options: [
-                  "Supraspinatus tendon",
-                  "Infraspinatus tendon",
-                  "Subscapularis tendon",
-                  "Teres minor tendon"
-                ],
-                answer: "Supraspinatus tendon",
-                explanation: "The supraspinatus tendon passes directly beneath the rigid coracoacromial arch in a critical hypovascular zone, making it most vulnerable to impingement."
+                explanation: "The palmar cutaneous branch arises proximal to the flexor retinaculum and travels superficial to it, sparing palmar cutaneous sensation."
               }
             ]
           }
@@ -692,7 +664,6 @@
       timer: null
     };
 
-    // ================= INITIALIZATION & GLOBAL SYNC =================
     window.addEventListener("DOMContentLoaded", async () => {
       await loadDatabaseWithGlobalFallback();
       processAuthenticationPipeline();
@@ -702,9 +673,7 @@
     async function loadDatabaseWithGlobalFallback() {
       try {
         const stored = localStorage.getItem("mbbs_cbt_curriculum");
-        if (stored) {
-          DB = JSON.parse(stored);
-        }
+        if (stored) DB = JSON.parse(stored);
       } catch (err) {}
 
       try {
@@ -716,11 +685,9 @@
             commitDatabase(false);
           }
         }
-      } catch (e) {
-        console.log("data.json not found yet, falling back to local/seed.");
-      }
+      } catch (e) {}
 
-      if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"] || !DB["Anatomy"].chapters || DB["Anatomy"].chapters.length === 0) {
+      if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"]) {
         DB = JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
         commitDatabase(false);
       }
@@ -729,15 +696,12 @@
     function commitDatabase(autoPushToGitHub = true) {
       try {
         localStorage.setItem("mbbs_cbt_curriculum", JSON.stringify(DB));
-      } catch (e) {
-        console.error("Storage commit error:", e);
-      }
+      } catch (e) {}
       if (autoPushToGitHub && activeUser && activeUser.role === "admin") {
         pushCurriculumToGitHubDirect();
       }
     }
 
-    // ================= AUTHENTICATION PIPELINE =================
     function processAuthenticationPipeline() {
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
@@ -869,7 +833,6 @@
       authBtn.className = "px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5";
     }
 
-    // ================= SUBJECT & CURRICULUM NAVIGATION =================
     function syncSubjectDropdowns() {
       const topSelect = document.getElementById("subject-select");
       const importSelect = document.getElementById("import-target-subject");
@@ -878,9 +841,7 @@
       importSelect.innerHTML = "";
 
       const subjects = Object.keys(DB);
-      if (subjects.length > 0 && !DB[currentSubjectKey]) {
-        currentSubjectKey = subjects[0];
-      }
+      if (subjects.length > 0 && !DB[currentSubjectKey]) currentSubjectKey = subjects[0];
 
       subjects.forEach(sub => {
         const opt1 = document.createElement("option");
@@ -900,9 +861,7 @@
     function switchSubject(subjectKey) {
       currentSubjectKey = subjectKey;
       renderBrowsePortal();
-      if (activeUser && activeUser.role === "admin") {
-        renderAdminContentManager();
-      }
+      if (activeUser && activeUser.role === "admin") renderAdminContentManager();
     }
 
     function filterTestsByKeyword() {
@@ -936,7 +895,7 @@
           <div class="col-span-full py-14 text-center border border-dashed border-white/[0.08] rounded-3xl bg-slate-900/40">
             <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-3"></i>
             <h4 class="text-sm font-bold text-slate-300">No Tests Found in ${curSub.name}</h4>
-            <p class="text-xs text-slate-500 mt-1">Upload high-yield questions using the Admin PDF Importer.</p>
+            <p class="text-xs text-slate-500 mt-1">Upload high-yield questions using the Admin AI Importer.</p>
           </div>
         `;
         return;
@@ -965,19 +924,12 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE =================
     function launchExamSession(chapterId) {
-      if (!activeUser) {
-        lockPortalDisplay();
-        return;
-      }
+      if (!activeUser) return lockPortalDisplay();
 
       const curSub = DB[currentSubjectKey];
       const test = curSub?.chapters.find(c => c.id === chapterId);
-      if (!test || test.questions.length === 0) {
-        alert("This module currently has no registered questions.");
-        return;
-      }
+      if (!test || test.questions.length === 0) return alert("This module currently has no registered questions.");
 
       const preparedQuestions = test.questions.map((q, idx) => {
         const shuffledOptions = [...q.options];
@@ -1104,7 +1056,6 @@
 
     function finalizeExam() {
       clearInterval(activeExam.timer);
-
       let correct = 0;
       activeExam.questions.forEach((q, idx) => {
         if (activeExam.answers[idx] === q.correctText) correct++;
@@ -1127,9 +1078,7 @@
     }
 
     function retakeCurrentExam() {
-      if (activeExam.test) {
-        launchExamSession(activeExam.test.id);
-      }
+      if (activeExam.test) launchExamSession(activeExam.test.id);
     }
 
     function terminateExamPrompt() {
@@ -1162,301 +1111,135 @@
       } catch (e) {}
     }
 
-    // ================= ADMIN COMMAND CENTER =================
-    function openAdminModal() {
-      if (!activeUser || activeUser.role !== "admin") return;
-      document.getElementById("admin-modal").classList.remove("hidden");
-      renderAdminContentManager();
-      renderAdminStudentAnalytics();
-      initTokenUI();
-    }
-
-    function closeAdminModal() {
-      document.getElementById("admin-modal").classList.add("hidden");
-    }
-
-    function switchAdminTab(tabKey) {
-      const isContent = tabKey === 'content';
-      const isImporter = tabKey === 'importer';
-      const isStudents = tabKey === 'students';
-      const isSettings = tabKey === 'settings';
-
-      document.getElementById("admin-tab-content").classList.toggle("hidden", !isContent);
-      document.getElementById("admin-tab-importer").classList.toggle("hidden", !isImporter);
-      document.getElementById("admin-tab-students").classList.toggle("hidden", !isStudents);
-      document.getElementById("admin-tab-settings").classList.toggle("hidden", !isSettings);
-
-      document.getElementById("tab-btn-content").className = isContent
-        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
-        : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
-
-      document.getElementById("tab-btn-importer").className = isImporter
-        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
-        : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
-
-      document.getElementById("tab-btn-students").className = isStudents
-        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
-        : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
-
-      document.getElementById("tab-btn-settings").className = isSettings
-        ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
-        : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
-
-      if (isContent) renderAdminContentManager();
-      if (isStudents) renderAdminStudentAnalytics();
-    }
-
-    // --- TAB 1: MODULAR CONTENT & MCQ MANAGER ---
-    function renderAdminContentManager() {
-      const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
-      document.getElementById("admin-cur-subject-name").textContent = curSub.name;
-      document.getElementById("admin-subject-total-modules").textContent = `${curSub.chapters.length} Modules`;
-
-      const container = document.getElementById("admin-modules-container");
-      container.innerHTML = "";
-
-      if (curSub.chapters.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No test modules in ${curSub.name}. Upload a PDF to automatically generate one.</div>`;
-        return;
-      }
-
-      curSub.chapters.forEach((ch) => {
-        const modCard = document.createElement("div");
-        modCard.className = "glass-panel rounded-2xl p-4.5 transition border border-white/[0.06]";
-        modCard.innerHTML = `
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || "General"}</span>
-                <span class="text-xs text-slate-400 font-mono">${ch.questions.length} MCQs</span>
-              </div>
-              <h4 class="text-sm font-bold text-white">${ch.title}</h4>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition flex items-center gap-1.5">
-                <i class="fa-solid fa-list-ul text-sky-400 text-xs"></i>
-                <span id="btn-label-${ch.id}">Manage MCQs</span>
-              </button>
-              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
-                <i class="fa-solid fa-pen"></i>
-              </button>
-              <button onclick="deleteModule('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-white/[0.06] space-y-3">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
-              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-sky-400 hover:underline font-bold">+ Add Question</button>
-            </div>
-            <div class="space-y-2.5">
-              ${renderMcqItemRows(ch)}
-            </div>
-          </div>
-        `;
-        container.appendChild(modCard);
-      });
-    }
-
-    function renderMcqItemRows(ch) {
-      if (!ch.questions || ch.questions.length === 0) {
-        return `<div class="text-xs text-slate-500 p-2">No MCQs registered.</div>`;
-      }
-
-      return ch.questions.map((q, idx) => `
-        <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
-          <div class="space-y-1.5 flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
-              <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">${q.topic || "Topic"}</span>
-              <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
-            </div>
-            <div class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
-              <i class="fa-solid fa-check text-[10px]"></i> Answer: ${q.answer}
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 border border-sky-500/20 text-xs">
-              <i class="fa-solid fa-pen"></i> Edit
-            </button>
-            <button onclick="deleteMcqFromModule('${ch.id}', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 text-xs">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    function toggleModuleMcqs(moduleId) {
-      const el = document.getElementById(`mcq-list-${moduleId}`);
-      const btnLabel = document.getElementById(`btn-label-${moduleId}`);
-      if (!el) return;
-      const isHidden = el.classList.contains("hidden");
-      el.classList.toggle("hidden", !isHidden);
-      btnLabel.textContent = isHidden ? "Close List" : "Manage MCQs";
-    }
-
-    function addNewBlankMcq(moduleId) {
-      const curSub = DB[currentSubjectKey];
-      const mod = curSub.chapters.find(c => c.id === moduleId);
-      if (!mod) return;
-
-      const newQ = {
-        id: `MAN-${Date.now()}`,
-        topic: mod.topic || "Core",
-        question: "New Question Statement Here...",
-        options: ["Option A", "Option B", "Option C", "Option D"],
-        answer: "Option A",
-        explanation: "Clinical pearl and rationale description."
-      };
-      mod.questions.push(newQ);
-      commitDatabase();
-      renderAdminContentManager();
-      renderBrowsePortal();
-      openEditMcqModal(moduleId, mod.questions.length - 1, false);
-    }
-
-    function deleteMcqFromModule(moduleId, qIdx) {
-      const curSub = DB[currentSubjectKey];
-      const mod = curSub.chapters.find(c => c.id === moduleId);
-      if (!mod) return;
-
-      if (confirm(`Delete Question ${qIdx + 1}?`)) {
-        mod.questions.splice(qIdx, 1);
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      }
-    }
-
-    // --- TAB 2: UNIFIED SINGLE MODULE PDF IMPORTER ---
+    // ================= AI PARSING & PDF ENGINE =================
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
       if (!f) return;
       stagedPdfFile = f;
       document.getElementById("pdf-file-status-label").textContent = `Selected: ${f.name}`;
-      document.getElementById("pdf-import-action-btn").disabled = false;
     }
 
-    async function executePdfStaging() {
-      if (!stagedPdfFile) return;
-
+    async function executeAiExtraction() {
       const log = document.getElementById("pdf-import-live-log");
       log.classList.remove("hidden");
-      log.textContent = "⏳ Reading and extracting textual layers from PDF...";
+      log.textContent = "⏳ Preparing content for AI analysis...";
 
-      try {
-        const buffer = await stagedPdfFile.arrayBuffer();
-        if (window.pdfjsLib) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-        }
-        const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+      let extractedText = document.getElementById("raw-text-paste").value.trim();
 
-        let accumulatedText = "";
-        for (let i = 1; i <= doc.numPages; i++) {
-          const page = await doc.getPage(i);
-          const content = await page.getTextContent();
-          
-          let prevY = null;
-          let pageText = "";
-          for (const item of content.items) {
-            const curY = item.transform[5];
-            if (prevY !== null && Math.abs(curY - prevY) > 8) {
-              pageText += "\n";
-            } else if (pageText.length > 0 && !pageText.endsWith(" ")) {
-              pageText += " ";
-            }
-            pageText += item.str;
-            prevY = curY;
+      // If a PDF file was selected, extract its raw text first
+      if (stagedPdfFile) {
+        log.textContent = "⏳ Reading textual pages from uploaded PDF...";
+        try {
+          const buffer = await stagedPdfFile.arrayBuffer();
+          if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
           }
-          accumulatedText += pageText + "\n\n";
-        }
-
-        const override = document.getElementById("import-chapter-override").value.trim();
-        const cleanDocName = stagedPdfFile.name.replace(/\.pdf$/i, "").replace(/[\(\)\_\-]+/g, " ").trim();
-        const moduleName = override || cleanDocName;
-
-        stagedModule = extractSingleModuleFromText(accumulatedText, moduleName);
-
-        if (!stagedModule || stagedModule.questions.length === 0) {
+          const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+          let pdfAccum = "";
+          for (let i = 1; i <= doc.numPages; i++) {
+            const page = await doc.getPage(i);
+            const content = await page.getTextContent();
+            pdfAccum += content.items.map(it => it.str).join(" ") + "\n";
+          }
+          extractedText = pdfAccum + "\n" + extractedText;
+        } catch (err) {
           log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
-          log.textContent = `⚠️ Extracted ${doc.numPages} pages, but no MCQs could be matched. Ensure questions have options A), B), C), D) and an answer key (e.g. 'Correct Answer: B' or 'Ans: B').`;
+          log.textContent = `❌ PDF Read Error: ${err.message}`;
           return;
         }
+      }
+
+      if (!extractedText || extractedText.length < 30) {
+        log.className = "text-xs text-amber-400 bg-slate-950 p-4 rounded-xl border border-amber-500/30 font-mono";
+        log.textContent = "⚠️ Please select a valid PDF file or paste question text in the box above.";
+        return;
+      }
+
+      const apiKey = localStorage.getItem("mbbs_gemini_api_key") || "";
+      if (!apiKey) {
+        log.className = "text-xs text-amber-400 bg-slate-950 p-4 rounded-xl border border-amber-500/30 font-mono";
+        log.textContent = "⚠️ Missing Gemini API Key! Go to 'API & Sync Settings' tab and save your free key from Google AI Studio.";
+        return;
+      }
+
+      log.textContent = "🧠 Sending to Gemini AI: Extracting MCQs, structuring options, verifying answers & generating clinical explanations...";
+
+      try {
+        const prompt = `You are an expert MBBS medical professor and test creator.
+Parse the following unformatted medical text or PDF transcript. Extract ALL multiple-choice questions (MCQs).
+For each question:
+1. Ensure the question stem is clinically phrased and clean.
+2. Provide exactly 4 options.
+3. Identify the single correct answer text (must match one of the 4 options verbatim).
+4. Provide a high-yield clinical explanation and rationale.
+5. Provide a specific medical sub-topic name (e.g. "Brachial Plexus", "Myocardial Infarction").
+
+Respond ONLY with valid, raw JSON (no markdown backticks, no code blocks, no preamble) conforming to this exact structure:
+[
+  {
+    "topic": "Sub Topic",
+    "question": "Question statement...",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "answer": "Option B",
+    "explanation": "Detailed clinical rationale..."
+  }
+]
+
+Input Content:
+${extractedText.substring(0, 35000)}`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error?.message || "Gemini API request failed");
+        }
+
+        const data = await response.json();
+        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        let parsedList = JSON.parse(jsonText);
+        if (!Array.isArray(parsedList) || parsedList.length === 0) {
+          throw new Error("AI did not return a valid list of questions.");
+        }
+
+        const overrideName = document.getElementById("import-chapter-override").value.trim();
+        const fallbackName = stagedPdfFile ? stagedPdfFile.name.replace(/\.pdf$/i, "") : "AI Extracted Clinical MCQs";
+        const moduleTitle = overrideName || fallbackName;
+
+        stagedModule = {
+          id: `mod_${Date.now()}`,
+          title: moduleTitle,
+          topic: moduleTitle,
+          questions: parsedList.map((q, i) => ({
+            id: `AI-${i + 1}`,
+            topic: q.topic || moduleTitle,
+            question: q.question,
+            options: q.options,
+            answer: q.answer,
+            explanation: q.explanation || "Clinical rationale per standard medical textbooks."
+          }))
+        };
 
         log.className = "text-xs text-emerald-400 bg-slate-950 p-4 rounded-xl border border-emerald-500/30 font-mono";
-        log.textContent = `✅ Successfully extracted ${stagedModule.questions.length} questions into module "${stagedModule.title}"! Scroll down to review.`;
+        log.textContent = `🎉 AI successfully structured ${stagedModule.questions.length} clinical questions! Review below and tap Publish.`;
 
         renderStagedReviewList();
-
-        const stagePreview = document.getElementById("pdf-staging-preview");
-        stagePreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById("pdf-staging-preview").scrollIntoView({ behavior: "smooth" });
 
       } catch (err) {
-        console.error("PDF Parsing Failure:", err);
+        console.error("AI Extraction Error:", err);
         log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
-        log.textContent = `❌ Import Failed: ${err.message}`;
+        log.textContent = `❌ AI Parsing Failed: ${err.message}`;
       }
-    }
-
-    function extractSingleModuleFromText(rawText, moduleTitle) {
-      let formatted = rawText
-        .replace(/\r/g, "")
-        .replace(/(?:^|\n)\s*(?:Q(?:uestion)?\.?\s*(\d+)|\((\d+)\)|(\d+)\s*[\.\:\)])/gi, "\n###MCQ_START### Q$1$2$3. ")
-        .replace(/(?:^|\n|\s)\s*(?:\(?([A-D])\)|\b([A-D])[\.\:\-])\s+/g, "\n$1$2) ")
-        .replace(/(?:^|\n|\s)\s*(?:Correct\s*Answer|Answer|Ans)\s*[\:\-\=]\s*\(?([A-D])\)?/gi, "\nCorrect Answer: $1")
-        .replace(/(?:^|\n|\s)\s*(?:Explanation|Rationale|Note|Ref)\s*[\:\-\=]/gi, "\nExplanation:");
-
-      const questionBlocks = formatted.split(/###MCQ_START###\s*/i).filter(b => b.trim().length > 30);
-      const questionsList = [];
-
-      questionBlocks.forEach((block, i) => {
-        const qMatch = block.match(/Q\d+\.?\s+([\s\S]+?)(?=\n[A-D]\))/i);
-        const aMatch = block.match(/\nA\)\s*([\s\S]+?)(?=\nB\))/i);
-        const bMatch = block.match(/\nB\)\s*([\s\S]+?)(?=\nC\))/i);
-        const cMatch = block.match(/\nC\)\s*([\s\S]+?)(?=\nD\))/i);
-        const dMatch = block.match(/\nD\)\s*([\s\S]+?)(?=\nCorrect Answer:|\nExplanation:|$)/i);
-        const ansMatch = block.match(/Correct Answer:\s*([A-D])/i);
-        const expMatch = block.match(/Explanation:\s*([\s\S]+?)$/i);
-
-        if (qMatch && aMatch && bMatch && cMatch && dMatch) {
-          const map = {
-            "A": aMatch[1].trim(),
-            "B": bMatch[1].trim(),
-            "C": cMatch[1].trim(),
-            "D": dMatch[1].trim()
-          };
-          const letter = ansMatch ? ansMatch[1].toUpperCase() : "A";
-
-          let subTopic = moduleTitle;
-          const topicMatch = block.match(/(?:Topic|Module|Chapter)\s*[\:\-]\s*([^\n\r]+)/i) || 
-                             block.match(/\[([A-Za-z\s]{3,40})\]/) ||
-                             block.match(/([A-Z\s]{4,30}(?:PLEXUS|FRACTURE|NERVE|TUNNEL|MUSCLE|ROTATOR|JOINT|FOSSA|TRIANGLE|FEMORAL|TIBIAL))/);
-          if (topicMatch) subTopic = topicMatch[1].trim();
-
-          questionsList.push({
-            id: `PDF-${i + 1}`,
-            topic: subTopic,
-            question: qMatch[1].trim(),
-            options: [map["A"], map["B"], map["C"], map["D"]],
-            answer: map[letter] || map["A"],
-            explanation: expMatch ? expMatch[1].trim() : "High-yield guideline pearl & comprehensive explanation."
-          });
-        }
-      });
-
-      if (questionsList.length === 0) return null;
-
-      return {
-        id: `mod_${Date.now()}`,
-        title: moduleTitle,
-        topic: moduleTitle,
-        questions: questionsList
-      };
     }
 
     function renderStagedReviewList() {
@@ -1478,13 +1261,13 @@
       groupEl.innerHTML = `
         <div class="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded border border-sky-500/20">Unified Test Module</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded border border-sky-500/20">AI Verified Test Module</span>
             <h5 class="text-xs font-bold text-white mt-1">${stagedModule.title} (${stagedModule.questions.length} MCQs)</h5>
           </div>
         </div>
         <div class="space-y-2">
           ${stagedModule.questions.map((q, qIdx) => `
-            <div class="p-3 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
+            <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
               <div class="flex-1 space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="font-mono text-slate-500 font-bold">Q${qIdx + 1}.</span>
@@ -1532,100 +1315,34 @@
       if (success) {
         document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new module.`;
       } else {
-        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Set up your GitHub Token in 'Auto-Push Settings' tab for automatic global publishing.`;
+        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Set up your GitHub Token in 'API & Sync Settings' tab for automatic global publishing.`;
       }
 
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Confirm & Auto-Publish Live</span>';
     }
 
-    // ================= SINGLE MCQ MODAL EDITOR =================
-    function openEditMcqModal(moduleId, questionIndex, isStaged = false) {
-      editingContext = { moduleId, questionIndex, isStaged };
-      let q = null;
-
-      if (isStaged) {
-        if (stagedModule) q = stagedModule.questions[questionIndex];
-      } else {
-        const curSub = DB[currentSubjectKey];
-        const mod = curSub.chapters.find(c => c.id === moduleId);
-        if (mod) q = mod.questions[questionIndex];
-      }
-
-      if (!q) return;
-
-      document.getElementById("edit-mcq-topic").value = q.topic || "";
-      document.getElementById("edit-mcq-question").value = q.question;
-      document.getElementById("edit-mcq-opt-0").value = q.options[0] || "";
-      document.getElementById("edit-mcq-opt-1").value = q.options[1] || "";
-      document.getElementById("edit-mcq-opt-2").value = q.options[2] || "";
-      document.getElementById("edit-mcq-opt-3").value = q.options[3] || "";
-      document.getElementById("edit-mcq-explanation").value = q.explanation || "";
-
-      let matchIdx = q.options.indexOf(q.answer);
-      if (matchIdx === -1) matchIdx = 0;
-      document.getElementById("edit-mcq-correct-select").value = String(matchIdx);
-
-      document.getElementById("edit-mcq-modal").classList.remove("hidden");
-    }
-
-    function closeEditMcqModal() {
-      document.getElementById("edit-mcq-modal").classList.add("hidden");
-      editingContext = null;
-    }
-
-    function saveActiveMcqEdits() {
-      if (!editingContext) return;
-      const { moduleId, questionIndex, isStaged } = editingContext;
-
-      let q = null;
-      if (isStaged) {
-        if (stagedModule) q = stagedModule.questions[questionIndex];
-      } else {
-        const curSub = DB[currentSubjectKey];
-        const mod = curSub.chapters.find(c => c.id === moduleId);
-        if (mod) q = mod.questions[questionIndex];
-      }
-
-      if (!q) return;
-
-      const opts = [
-        document.getElementById("edit-mcq-opt-0").value.trim(),
-        document.getElementById("edit-mcq-opt-1").value.trim(),
-        document.getElementById("edit-mcq-opt-2").value.trim(),
-        document.getElementById("edit-mcq-opt-3").value.trim()
-      ];
-      const correctIdx = parseInt(document.getElementById("edit-mcq-correct-select").value);
-
-      q.topic = document.getElementById("edit-mcq-topic").value.trim() || stagedModule?.title || "Core";
-      q.question = document.getElementById("edit-mcq-question").value.trim();
-      q.options = opts;
-      q.answer = opts[correctIdx] || opts[0];
-      q.explanation = document.getElementById("edit-mcq-explanation").value.trim();
-
-      if (!isStaged) {
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      } else {
-        renderStagedReviewList();
-      }
-
-      closeEditMcqModal();
-    }
-
-    // ================= DIRECT GITHUB REST API AUTO-PUSH =================
+    // ================= SETTINGS & GITHUB SYNC =================
     const GITHUB_REPO = "ahteshamneet-gif/Mbbsbot";
     const GITHUB_FILE = "data.json";
 
     function initTokenUI() {
-      const token = localStorage.getItem("mbbs_gh_token") || "";
-      const input = document.getElementById("gh-token-input");
-      const status = document.getElementById("gh-token-status");
-      if (input) input.value = token;
-      if (status) {
-        status.textContent = token ? "✅ Auto-Push Key is active" : "⚠️ No key saved (Required for auto-upload)";
-        status.className = token ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
+      const ghToken = localStorage.getItem("mbbs_gh_token") || "";
+      const ghInput = document.getElementById("gh-token-input");
+      const ghStatus = document.getElementById("gh-token-status");
+      if (ghInput) ghInput.value = ghToken;
+      if (ghStatus) {
+        ghStatus.textContent = ghToken ? "✅ GitHub Token active" : "⚠️ No key saved";
+        ghStatus.className = ghToken ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
+      }
+
+      const geminiKey = localStorage.getItem("mbbs_gemini_api_key") || "";
+      const geminiInput = document.getElementById("gemini-api-key-input");
+      const geminiStatus = document.getElementById("gemini-key-status");
+      if (geminiInput) geminiInput.value = geminiKey;
+      if (geminiStatus) {
+        geminiStatus.textContent = geminiKey ? "✅ Gemini AI Key active" : "⚠️ No key saved";
+        geminiStatus.className = geminiKey ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
       }
     }
 
@@ -1634,7 +1351,15 @@
       if (!token) return;
       localStorage.setItem("mbbs_gh_token", token);
       initTokenUI();
-      alert("GitHub Auto-Push Key saved successfully!");
+      alert("GitHub token saved!");
+    }
+
+    function saveGeminiToken() {
+      const key = document.getElementById("gemini-api-key-input").value.trim();
+      if (!key) return;
+      localStorage.setItem("mbbs_gemini_api_key", key);
+      initTokenUI();
+      alert("Gemini AI API key saved!");
     }
 
     async function pushCurriculumToGitHubDirect() {
@@ -1643,7 +1368,6 @@
 
       try {
         const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
-        
         let sha = null;
         try {
           const getRes = await fetch(url, {
@@ -1660,7 +1384,7 @@
 
         const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
         const payload = {
-          message: "Auto-sync question bank via Admin Panel",
+          message: "Auto-sync question bank via AI Admin Panel",
           content: contentBase64
         };
         if (sha) payload.sha = sha;
@@ -1675,35 +1399,223 @@
           body: JSON.stringify(payload)
         });
 
-        if (putRes.ok) {
-          console.log("Successfully pushed to GitHub repository!");
-          return true;
-        } else {
-          const errData = await putRes.json();
-          console.error("GitHub API error:", errData);
-          return false;
-        }
+        return putRes.ok;
       } catch (err) {
-        console.error("Auto-push network failed:", err);
+        console.error("Auto-push error:", err);
         return false;
       }
     }
 
-    // ================= STUDENT PERFORMANCE AUDIT TRACKER =================
+    // Modal, subject and student utility functions
+    function openAdminModal() {
+      if (!activeUser || activeUser.role !== "admin") return;
+      document.getElementById("admin-modal").classList.remove("hidden");
+      renderAdminContentManager();
+      renderAdminStudentAnalytics();
+      initTokenUI();
+    }
+
+    function closeAdminModal() {
+      document.getElementById("admin-modal").classList.add("hidden");
+    }
+
+    function switchAdminTab(tabKey) {
+      document.getElementById("admin-tab-content").classList.toggle("hidden", tabKey !== 'content');
+      document.getElementById("admin-tab-importer").classList.toggle("hidden", tabKey !== 'importer');
+      document.getElementById("admin-tab-students").classList.toggle("hidden", tabKey !== 'students');
+      document.getElementById("admin-tab-settings").classList.toggle("hidden", tabKey !== 'settings');
+
+      ['content', 'importer', 'students', 'settings'].forEach(k => {
+        const btn = document.getElementById(`tab-btn-${k}`);
+        if (btn) {
+          btn.className = (k === tabKey)
+            ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition whitespace-nowrap"
+            : "py-3 px-4 text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
+        }
+      });
+
+      if (tabKey === 'content') renderAdminContentManager();
+      if (tabKey === 'students') renderAdminStudentAnalytics();
+    }
+
+    function renderAdminContentManager() {
+      const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
+      document.getElementById("admin-cur-subject-name").textContent = curSub.name;
+      document.getElementById("admin-subject-total-modules").textContent = `${curSub.chapters.length} Modules`;
+
+      const container = document.getElementById("admin-modules-container");
+      container.innerHTML = "";
+
+      if (curSub.chapters.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No test modules in ${curSub.name}. Upload a PDF using the AI Importer.</div>`;
+        return;
+      }
+
+      curSub.chapters.forEach((ch) => {
+        const modCard = document.createElement("div");
+        modCard.className = "glass-panel rounded-2xl p-4.5 transition border border-white/[0.06]";
+        modCard.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || "General"}</span>
+                <span class="text-xs text-slate-400 font-mono">${ch.questions.length} MCQs</span>
+              </div>
+              <h4 class="text-sm font-bold text-white">${ch.title}</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition flex items-center gap-1.5">
+                <i class="fa-solid fa-list-ul text-sky-400 text-xs"></i>
+                <span id="btn-label-${ch.id}">Manage MCQs</span>
+              </button>
+              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteModule('${ch.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-white/[0.06] space-y-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
+              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-sky-400 hover:underline font-bold">+ Add Question</button>
+            </div>
+            <div class="space-y-2.5">${renderMcqItemRows(ch)}</div>
+          </div>
+        `;
+        container.appendChild(modCard);
+      });
+    }
+
+    function renderMcqItemRows(ch) {
+      if (!ch.questions || ch.questions.length === 0) return `<div class="text-xs text-slate-500 p-2">No MCQs registered.</div>`;
+      return ch.questions.map((q, idx) => `
+        <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
+          <div class="space-y-1.5 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
+              <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">${q.topic || "Topic"}</span>
+              <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
+            </div>
+            <div class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
+              <i class="fa-solid fa-check text-[10px]"></i> Answer: ${q.answer}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 border border-sky-500/20 text-xs">Edit</button>
+            <button onclick="deleteMcqFromModule('${ch.id}', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 text-xs">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function toggleModuleMcqs(moduleId) {
+      const el = document.getElementById(`mcq-list-${moduleId}`);
+      const btnLabel = document.getElementById(`btn-label-${moduleId}`);
+      if (!el) return;
+      const isHidden = el.classList.contains("hidden");
+      el.classList.toggle("hidden", !isHidden);
+      btnLabel.textContent = isHidden ? "Close List" : "Manage MCQs";
+    }
+
+    function addNewBlankMcq(moduleId) {
+      const curSub = DB[currentSubjectKey];
+      const mod = curSub.chapters.find(c => c.id === moduleId);
+      if (!mod) return;
+      const newQ = {
+        id: `MAN-${Date.now()}`,
+        topic: mod.topic || "Core",
+        question: "New Question Statement Here...",
+        options: ["Option A", "Option B", "Option C", "Option D"],
+        answer: "Option A",
+        explanation: "Clinical rationale and reference."
+      };
+      mod.questions.push(newQ);
+      commitDatabase();
+      renderAdminContentManager();
+      renderBrowsePortal();
+      openEditMcqModal(moduleId, mod.questions.length - 1, false);
+    }
+
+    function deleteMcqFromModule(moduleId, qIdx) {
+      const curSub = DB[currentSubjectKey];
+      const mod = curSub.chapters.find(c => c.id === moduleId);
+      if (!mod) return;
+      if (confirm(`Delete Question ${qIdx + 1}?`)) {
+        mod.questions.splice(qIdx, 1);
+        commitDatabase();
+        renderAdminContentManager();
+        renderBrowsePortal();
+      }
+    }
+
+    function openEditMcqModal(moduleId, questionIndex, isStaged = false) {
+      editingContext = { moduleId, questionIndex, isStaged };
+      let q = null;
+      if (isStaged) {
+        if (stagedModule) q = stagedModule.questions[questionIndex];
+      } else {
+        const curSub = DB[currentSubjectKey];
+        const mod = curSub.chapters.find(c => c.id === moduleId);
+        if (mod) q = mod.questions[questionIndex];
+      }
+      if (!q) return;
+
+      document.getElementById("edit-mcq-topic").value = q.topic || "";
+      document.getElementById("edit-mcq-question").value = q.question;
+      document.getElementById("edit-mcq-opt-0").value = q.options[0] || "";
+      document.getElementById("edit-mcq-opt-1").value = q.options[1] || "";
+      document.getElementById("edit-mcq-opt-2").value = q.options[2] || "";
+      document.getElementById("edit-mcq-opt-3").value = q.options[3] || "";
+      document.getElementById("edit-mcq-explanation").value = q.explanation || "";
+
+      let matchIdx = q.options.indexOf(q.answer);
+      if (matchIdx === -1) matchIdx = 0;
+      document.getElementById("edit-mcq-correct-select").value = String(matchIdx);
+      document.getElementById("edit-mcq-modal").classList.remove("hidden");
+    }
+
+    function closeEditMcqModal() {
+      document.getElementById("edit-mcq-modal").classList.add("hidden");
+      editingContext = null;
+    }
+
+    function saveActiveMcqEdits() {
+      if (!editingContext) return;
+      const { moduleId, questionIndex, isStaged } = editingContext;
+      let q = isStaged ? stagedModule?.questions[questionIndex] : DB[currentSubjectKey]?.chapters.find(c => c.id === moduleId)?.questions[questionIndex];
+      if (!q) return;
+
+      const opts = [
+        document.getElementById("edit-mcq-opt-0").value.trim(),
+        document.getElementById("edit-mcq-opt-1").value.trim(),
+        document.getElementById("edit-mcq-opt-2").value.trim(),
+        document.getElementById("edit-mcq-opt-3").value.trim()
+      ];
+      const correctIdx = parseInt(document.getElementById("edit-mcq-correct-select").value);
+
+      q.topic = document.getElementById("edit-mcq-topic").value.trim() || "Core";
+      q.question = document.getElementById("edit-mcq-question").value.trim();
+      q.options = opts;
+      q.answer = opts[correctIdx] || opts[0];
+      q.explanation = document.getElementById("edit-mcq-explanation").value.trim();
+
+      if (!isStaged) {
+        commitDatabase();
+        renderAdminContentManager();
+        renderBrowsePortal();
+      } else {
+        renderStagedReviewList();
+      }
+      closeEditMcqModal();
+    }
+
     function renderAdminStudentAnalytics() {
       let audit = [];
-      try {
-        audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]");
-      } catch (e) {}
-
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]"); } catch (e) {}
       document.getElementById("metric-total-tests").textContent = audit.length;
       if (audit.length > 0) {
         const avg = Math.round(audit.reduce((a, c) => a + (c.accuracy || 0), 0) / audit.length);
         document.getElementById("metric-avg-accuracy").textContent = `${avg}%`;
-
         const uniqueUids = new Set(audit.map(r => r.uid));
         document.getElementById("metric-unique-candidates").textContent = uniqueUids.size;
-
         const distinctions = audit.filter(r => r.accuracy >= 75).length;
         document.getElementById("metric-distinction-rate").textContent = `${Math.round((distinctions / audit.length) * 100)}%`;
       } else {
@@ -1714,24 +1626,14 @@
 
       const tbody = document.getElementById("student-analytics-records");
       tbody.innerHTML = "";
-
       if (audit.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-slate-500 font-medium">No student exam attempts recorded yet.</td></tr>`;
         return;
       }
 
       audit.slice().reverse().forEach(row => {
-        let badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-        let status = "Needs Review";
-
-        if (row.accuracy >= 75) {
-          badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-          status = "Distinction";
-        } else if (row.accuracy >= 50) {
-          badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-          status = "Passed";
-        }
-
+        let badgeColor = row.accuracy >= 75 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : (row.accuracy >= 50 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20");
+        let status = row.accuracy >= 75 ? "Distinction" : (row.accuracy >= 50 ? "Passed" : "Needs Review");
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-800/40 transition border-b border-white/[0.04]";
         tr.innerHTML = `
@@ -1740,9 +1642,7 @@
           <td class="p-3.5 text-slate-300 max-w-[180px] truncate">${row.test}</td>
           <td class="p-3.5 font-mono text-slate-200">${row.score}</td>
           <td class="p-3.5 font-bold text-emerald-400">${row.accuracy}%</td>
-          <td class="p-3.5">
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded border ${badgeColor}">${status}</span>
-          </td>
+          <td class="p-3.5"><span class="text-[10px] font-bold px-2.5 py-0.5 rounded border ${badgeColor}">${status}</span></td>
           <td class="p-3.5 text-slate-500 text-[11px] whitespace-nowrap">${row.timestamp}</td>
         `;
         tbody.appendChild(tr);
@@ -1751,31 +1651,20 @@
 
     function filterStudentAuditTable() {
       const q = document.getElementById("student-search-box").value.toLowerCase().trim();
-      const rows = document.querySelectorAll("#student-analytics-records tr");
-      rows.forEach(r => {
-        const text = r.textContent.toLowerCase();
-        r.style.display = text.includes(q) ? "" : "none";
+      document.querySelectorAll("#student-analytics-records tr").forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
       });
     }
 
     function openStudentStatsModal() {
       if (!activeUser) return;
       let audit = [];
-      try {
-        audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]");
-      } catch (e) {}
-
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]"); } catch (e) {}
       const userRecords = audit.filter(r => r.uid === activeUser.uid);
       document.getElementById("student-stats-name").textContent = `${activeUser.name} (${activeUser.uid})`;
       document.getElementById("self-tests-taken").textContent = userRecords.length;
-
-      if (userRecords.length > 0) {
-        const avg = Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length);
-        document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
-      } else {
-        document.getElementById("self-avg-accuracy").textContent = "0%";
-      }
-
+      const avg = userRecords.length > 0 ? Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length) : 0;
+      document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
       document.getElementById("student-stats-modal").classList.remove("hidden");
     }
 
@@ -1784,16 +1673,11 @@
     }
 
     function promptCreateNewSubject() {
-      const name = prompt("Enter the new Subject Name:");
-      if (!name || !name.trim()) return;
-      const clean = name.trim();
-      if (DB[clean]) {
-        alert("Subject already exists!");
-        return;
-      }
-      DB[clean] = { name: clean, chapters: [] };
+      const name = prompt("Enter Subject Name:");
+      if (!name || !name.trim() || DB[name.trim()]) return;
+      DB[name.trim()] = { name: name.trim(), chapters: [] };
       commitDatabase();
-      currentSubjectKey = clean;
+      currentSubjectKey = name.trim();
       syncSubjectDropdowns();
       renderBrowsePortal();
       renderAdminContentManager();
@@ -1801,15 +1685,13 @@
 
     function promptEditCurrentSubject() {
       const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      const updated = prompt(`Rename Subject "${cur}" to:`, cur);
+      const updated = prompt(`Rename Subject "${cur}":`, cur);
       if (!updated || !updated.trim() || updated.trim() === cur) return;
-
       const newKey = updated.trim();
-      const existingData = DB[currentSubjectKey];
-      existingData.name = newKey;
+      const existing = DB[currentSubjectKey];
+      existing.name = newKey;
       delete DB[currentSubjectKey];
-      DB[newKey] = existingData;
-
+      DB[newKey] = existing;
       currentSubjectKey = newKey;
       commitDatabase();
       syncSubjectDropdowns();
@@ -1819,10 +1701,9 @@
 
     function promptDeleteCurrentSubject() {
       const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      if (confirm(`Permanently delete subject "${cur}" and all its questions?`)) {
+      if (confirm(`Delete subject "${cur}"?`)) {
         delete DB[currentSubjectKey];
-        const remaining = Object.keys(DB);
-        currentSubjectKey = remaining.length > 0 ? remaining[0] : "";
+        currentSubjectKey = Object.keys(DB)[0] || "";
         commitDatabase();
         syncSubjectDropdowns();
         renderBrowsePortal();
@@ -1831,11 +1712,9 @@
     }
 
     function promptEditModuleTitle(moduleId) {
-      const curSub = DB[currentSubjectKey];
-      const mod = curSub.chapters.find(c => c.id === moduleId);
+      const mod = DB[currentSubjectKey]?.chapters.find(c => c.id === moduleId);
       if (!mod) return;
-
-      const newTitle = prompt("Edit Test Module Title:", mod.title);
+      const newTitle = prompt("Edit Title:", mod.title);
       if (newTitle && newTitle.trim()) {
         mod.title = newTitle.trim();
         commitDatabase();
@@ -1846,7 +1725,7 @@
 
     function deleteModule(moduleId) {
       const curSub = DB[currentSubjectKey];
-      if (confirm("Permanently delete this test module?")) {
+      if (confirm("Delete this module?")) {
         curSub.chapters = curSub.chapters.filter(c => c.id !== moduleId);
         commitDatabase();
         renderAdminContentManager();
