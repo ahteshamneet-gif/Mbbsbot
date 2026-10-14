@@ -49,12 +49,11 @@
       padding: 0.85rem 1rem;
       width: 100%;
       outline: none;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      transition: border-color 0.2s;
     }
 
-    .glass-input:focus {
-      border-color: #38bdf8;
-    }
+    .glass-input:focus { border-color: #38bdf8; }
 
     .btn-primary {
       background: linear-gradient(135deg, #0284c7, #4f46e5);
@@ -107,6 +106,32 @@
       cursor: pointer;
     }
 
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+
+    .btn-sm:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .btn-danger-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      background: rgba(244, 63, 94, 0.1);
+      color: #fda4af;
+    }
+
+    .btn-danger-sm:hover { background: rgba(244, 63, 94, 0.25); }
+
     table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
     th { background: #020617; color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
     td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: #cbd5e1; }
@@ -120,7 +145,7 @@
       <i class="fa-solid fa-shield-halved"></i>
     </div>
     <h2 style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">Administrator Center</h2>
-    <p style="font-size: 0.75rem; color: #94a3b8; margin: 0.35rem 0 1.5rem;">Instant Master Access</p>
+    <p style="font-size: 0.75rem; color: #94a3b8; margin: 0.35rem 0 1.5rem;">Enter master credentials to unlock controls.</p>
     
     <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
       <div>
@@ -135,7 +160,7 @@
   </div>
 
   <!-- ADMIN ACTIVE CONSOLE -->
-  <div id="admin-dashboard" class="glass-panel" style="display: none; max-width: 1050px; width: 100%; overflow: hidden; margin: 0 auto;">
+  <div id="admin-dashboard" class="glass-panel" style="display: none; max-width: 1100px; width: 100%; overflow: hidden; margin: 0 auto;">
     
     <!-- Top Navigation -->
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: #0c1322; border-bottom: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap; gap: 0.75rem;">
@@ -145,18 +170,19 @@
         </div>
         <div>
           <h3 style="font-size: 0.875rem; font-weight: 800; color: #ffffff;">MBBS Admin Command Center</h3>
-          <p style="font-size: 0.68rem; color: #94a3b8;">Live Edge & Database Management</p>
+          <p style="font-size: 0.68rem; color: #94a3b8;">Full Curriculum & AI Extraction Pipeline</p>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
         <button onclick="switchTab('importer')" class="btn-nav active" id="btn-tab-importer"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Importer</button>
+        <button onclick="switchTab('curriculum')" class="btn-nav" id="btn-tab-curriculum"><i class="fa-solid fa-layer-group"></i> Subjects</button>
         <button onclick="switchTab('students')" class="btn-nav" id="btn-tab-students"><i class="fa-solid fa-chart-line"></i> Audits</button>
         <button onclick="switchTab('settings')" class="btn-nav" id="btn-tab-settings"><i class="fa-solid fa-key"></i> API Keys</button>
         <button onclick="adminLogout()" class="btn-exit"><i class="fa-solid fa-power-off"></i> Exit</button>
       </div>
     </div>
 
-    <!-- Section 1: AI Importer -->
+    <!-- Section 1: AI Importer & Question Review -->
     <div id="admin-sec-importer" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">AI Medical PDF Question Parser</h4>
@@ -167,11 +193,7 @@
         <div>
           <label style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;">Target Subject</label>
           <select id="import-subject" class="glass-input">
-            <option value="Anatomy">Anatomy</option>
-            <option value="Physiology">Physiology</option>
-            <option value="Biochemistry">Biochemistry</option>
-            <option value="Pharmacology">Pharmacology</option>
-            <option value="Pathology">Pathology</option>
+            <!-- Populated dynamically via JS -->
           </select>
         </div>
         <div>
@@ -192,9 +214,34 @@
       </button>
 
       <div id="import-status-log" style="display: none; padding: 1rem; border-radius: 0.75rem; background: #020617; font-size: 0.75rem; line-height: 1.5;" class="font-mono"></div>
+
+      <!-- STAGING INSPECTOR / REVIEW PANEL -->
+      <div id="staged-review-container" style="display: none; flex-direction: column; gap: 1rem; margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h5 style="font-size: 0.85rem; font-weight: 800; color: #ffffff;">
+            Extracted Questions Preview (<span id="staged-count-label" style="color: #38bdf8;">0</span> items)
+          </h5>
+          <button onclick="commitStagedToSupabase()" id="commit-btn" class="btn-primary" style="width: auto; padding: 0.5rem 1.25rem; background: linear-gradient(135deg, #059669, #10b981);">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Confirm & Save to Supabase
+          </button>
+        </div>
+        <p style="font-size: 0.72rem; color: #94a3b8;">Review and edit questions, options, or answer keys before pushing live to the database.</p>
+        <div id="staged-items-list" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;"></div>
+      </div>
     </div>
 
-    <!-- Section 2: Student Audits -->
+    <!-- Section 2: Subject & Curriculum Manager -->
+    <div id="admin-sec-curriculum" style="display: none; padding: 1.5rem; flex-direction: column; gap: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">Curriculum Subjects</h4>
+        <button onclick="promptAddSubject()" class="btn-nav" style="color: #38bdf8; border-color: rgba(14, 165, 233, 0.4);"><i class="fa-solid fa-plus"></i> Add New Subject</button>
+      </div>
+      <div id="subject-cards-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Section 3: Student Audits -->
     <div id="admin-sec-students" style="display: none; padding: 1.5rem; flex-direction: column; gap: 1rem;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">Real-Time Candidate Submissions</h4>
@@ -213,22 +260,27 @@
             </tr>
           </thead>
           <tbody id="student-audit-rows">
-            <tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">Click refresh to load logs.</td></tr>
+            <tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">Loading records from Supabase...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Section 3: API Keys -->
+    <!-- Section 4: API Keys -->
     <div id="admin-sec-settings" style="display: none; padding: 1.5rem; flex-direction: column; gap: 1rem;">
       <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">API Key Configuration</h4>
       <div class="glass-panel" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
-        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Google AI Studio Key (Starts with AIzaSy...)</label>
-        <p style="font-size: 0.7rem; color: #94a3b8;">Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #38bdf8;">aistudio.google.com/apikey</a>.</p>
+        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Google AI Studio Key (Must start with AIzaSy...)</label>
+        <p style="font-size: 0.7rem; color: #94a3b8;">
+          Get your free key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #38bdf8;">aistudio.google.com/apikey</a>.
+        </p>
         <input type="password" id="gemini-key" placeholder="AIzaSy..." class="glass-input font-mono">
-        <button onclick="saveGeminiKey()" class="btn-primary" style="width: auto; align-self: flex-start; padding: 0.5rem 1.25rem;">
-          <i class="fa-solid fa-floppy-disk"></i> Save Key
-        </button>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span id="key-status-text" style="font-size: 0.75rem; color: #64748b;">Checking saved key...</span>
+          <button onclick="saveGeminiKey()" class="btn-primary" style="width: auto; padding: 0.5rem 1.25rem;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Key
+          </button>
+        </div>
       </div>
     </div>
 
@@ -239,8 +291,12 @@
     const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
     const MASTER_KEY = "mbbsAdmin_MasterPass_9921";
 
-    // Auto-login if previously verified in this browser session
+    let stagedQuestions = [];
+    let availableSubjects = ["Anatomy", "Physiology", "Biochemistry", "Pharmacology", "Pathology"];
+
     window.addEventListener("DOMContentLoaded", () => {
+      loadSubjects();
+      updateSavedKeyStatus();
       if (sessionStorage.getItem("admin_authenticated") === "true") {
         showDashboard();
       }
@@ -250,7 +306,6 @@
       const pass = document.getElementById("admin-passkey").value.trim();
       const errBox = document.getElementById("admin-auth-error");
 
-      // Zero-latency instant check
       if (pass === MASTER_KEY) {
         sessionStorage.setItem("admin_authenticated", "true");
         showDashboard();
@@ -264,7 +319,7 @@
       document.getElementById("admin-auth-gate").style.display = "none";
       document.getElementById("admin-dashboard").style.display = "block";
       document.getElementById("admin-sec-importer").style.display = "flex";
-      document.getElementById("gemini-key").value = localStorage.getItem("mbbs_gemini_api_key") || "";
+      renderSubjectDropdown();
     }
 
     document.getElementById("admin-passkey").addEventListener("keydown", function(e) {
@@ -280,7 +335,7 @@
     }
 
     function switchTab(t) {
-      ['importer', 'students', 'settings'].forEach(k => {
+      ['importer', 'curriculum', 'students', 'settings'].forEach(k => {
         const sec = document.getElementById(`admin-sec-${k}`);
         const btn = document.getElementById(`btn-tab-${k}`);
         if (k === t) {
@@ -292,43 +347,112 @@
         }
       });
       if (t === 'students') fetchStudentAudits();
+      if (t === 'curriculum') renderCurriculumView();
+      if (t === 'settings') updateSavedKeyStatus();
     }
 
-    async function fetchStudentAudits() {
-      const tbody = document.getElementById("student-audit-rows");
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">Fetching audit logs from Supabase...</td></tr>';
-      try {
-        const res = await fetch(`${SUPABASE_REST}/exam_results?select=*&order=attempted_at.desc&limit=50`, {
-          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
-        });
-        const rows = await res.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          tbody.innerHTML = rows.map(r => `
-            <tr>
-              <td style="font-weight: 700; color: #ffffff;">${r.student_name || "Candidate"}</td>
-              <td class="font-mono" style="color: #94a3b8;">${r.student_id}</td>
-              <td style="color: #cbd5e1;">${r.test_title}</td>
-              <td class="font-mono" style="font-weight: 700; color: #38bdf8;">${r.net_score}</td>
-              <td style="font-weight: 700; color: ${r.accuracy >= 50 ? '#4ade80' : '#fb7185'};">${r.accuracy}%</td>
-              <td style="color: #64748b; font-size: 0.7rem;">${new Date(r.attempted_at).toLocaleString()}</td>
-            </tr>
-          `).join("");
+    // ================= SUBJECT & CURRICULUM MANAGEMENT =================
+    function loadSubjects() {
+      const saved = localStorage.getItem("mbbs_subjects_list");
+      if (saved) {
+        try { availableSubjects = JSON.parse(saved); } catch (e) {}
+      }
+    }
+
+    function saveSubjects() {
+      localStorage.setItem("mbbs_subjects_list", JSON.stringify(availableSubjects));
+      renderSubjectDropdown();
+      renderCurriculumView();
+    }
+
+    function renderSubjectDropdown() {
+      const select = document.getElementById("import-subject");
+      select.innerHTML = "";
+      availableSubjects.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.textContent = sub;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderCurriculumView() {
+      const container = document.getElementById("subject-cards-list");
+      container.innerHTML = "";
+      availableSubjects.forEach((sub, idx) => {
+        const card = document.createElement("div");
+        card.className = "glass-panel";
+        card.style.padding = "1.25rem";
+        card.style.display = "flex";
+        card.style.alignItems = "center";
+        card.style.justifyContent = "space-between";
+        card.innerHTML = `
+          <div>
+            <h5 style="font-weight: 700; color: #ffffff; font-size: 0.9rem;">${sub}</h5>
+            <span style="font-size: 0.7rem; color: #38bdf8;">Active Medical Subject</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button onclick="promptEditSubject(${idx})" class="btn-sm"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteSubject(${idx})" class="btn-danger-sm"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function promptAddSubject() {
+      const name = prompt("Enter new subject name:");
+      if (name && name.trim() && !availableSubjects.includes(name.trim())) {
+        availableSubjects.push(name.trim());
+        saveSubjects();
+      }
+    }
+
+    function promptEditSubject(idx) {
+      const current = availableSubjects[idx];
+      const updated = prompt("Edit subject name:", current);
+      if (updated && updated.trim()) {
+        availableSubjects[idx] = updated.trim();
+        saveSubjects();
+      }
+    }
+
+    function deleteSubject(idx) {
+      if (confirm(`Remove "${availableSubjects[idx]}" from curriculum?`)) {
+        availableSubjects.splice(idx, 1);
+        saveSubjects();
+      }
+    }
+
+    // ================= API KEYS & VERIFICATION =================
+    function updateSavedKeyStatus() {
+      const key = localStorage.getItem("mbbs_gemini_api_key") || "";
+      const input = document.getElementById("gemini-key");
+      const status = document.getElementById("key-status-text");
+      if (input) input.value = key;
+      if (status) {
+        if (key.startsWith("AIzaSy")) {
+          status.textContent = "✅ Valid AI Studio key configured";
+          status.style.color = "#4ade80";
+        } else if (key) {
+          status.textContent = "⚠️ Key does not start with AIzaSy... Check Google AI Studio";
+          status.style.color = "#f43f5e";
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">No student exam attempts recorded yet.</td></tr>';
+          status.textContent = "No key configured";
+          status.style.color = "#64748b";
         }
-      } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #f43f5e;">Failed to load data from Supabase.</td></tr>';
       }
     }
 
     function saveGeminiKey() {
       const val = document.getElementById("gemini-key").value.trim();
-      if (val) {
-        localStorage.setItem("mbbs_gemini_api_key", val);
-        alert("Gemini API Key saved!");
-      }
+      if (!val) return alert("Please paste an API key first.");
+      localStorage.setItem("mbbs_gemini_api_key", val);
+      updateSavedKeyStatus();
+      alert("API Key saved successfully!");
     }
 
+    // ================= AI PARSER & STAGING EDITOR =================
     async function runAiExtraction() {
       const log = document.getElementById("import-status-log");
       const btn = document.getElementById("parse-btn");
@@ -339,9 +463,9 @@
 
       const apiKey = (localStorage.getItem("mbbs_gemini_api_key") || "").trim();
 
-      if (!apiKey) {
+      if (!apiKey || !apiKey.startsWith("AIzaSy")) {
         log.style.color = "#fbbf24";
-        log.textContent = "⚠️ Please open 'API Keys' tab and paste your AI Studio key (starts with AIzaSy...).";
+        log.textContent = "⚠️ Please open the 'API Keys' tab and paste your free Google AI Studio key (starts with AIzaSy...).";
         btn.disabled = false;
         return;
       }
@@ -371,14 +495,14 @@
 
       if (!text || text.length < 30) {
         log.style.color = "#fbbf24";
-        log.textContent = "⚠️ Select a valid PDF file or paste question text.";
+        log.textContent = "⚠️ Upload a valid PDF file or paste question text.";
         btn.disabled = false;
         return;
       }
 
-      log.textContent = "🧠 Calling Gemini to format questions & explanations...";
+      log.textContent = "🧠 Calling Gemini AI to extract & format questions...";
 
-      const prompt = `Extract all multiple choice questions from this text into a clean JSON array without markdown code fences.
+      const prompt = `Extract all multiple choice questions from this text into a strict JSON array.
 Return ONLY valid JSON matching this schema:
 [
   {
@@ -394,7 +518,7 @@ ${text.substring(0, 30000)}`;
 
       const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
       let response = null;
-      let lastErrText = "";
+      let lastErr = "";
 
       for (const m of models) {
         try {
@@ -408,15 +532,15 @@ ${text.substring(0, 30000)}`;
           });
           if (response.ok) break;
           const errData = await response.json();
-          lastErrText = errData.error?.message || `Failed on ${m}`;
+          lastErr = errData.error?.message || `Failed on ${m}`;
         } catch (err) {
-          lastErrText = err.message;
+          lastErr = err.message;
         }
       }
 
       if (!response || !response.ok) {
         log.style.color = "#f43f5e";
-        log.textContent = "❌ AI API Error: " + (lastErrText || "Check your Gemini API key.");
+        log.textContent = "❌ AI API Error: " + (lastErr || "Check your Gemini API key.");
         btn.disabled = false;
         return;
       }
@@ -436,17 +560,106 @@ ${text.substring(0, 30000)}`;
         const subject = document.getElementById("import-subject").value;
         const subtopic = document.getElementById("import-subtopic").value.trim() || "General";
 
-        log.textContent = `💾 Uploading ${parsed.length} MCQs directly to Supabase...`;
-
-        const insertPayload = parsed.map(q => ({
+        stagedQuestions = parsed.map(q => ({
           subject: subject,
           sub_topic: q.sub_topic || subtopic,
           question: q.question,
-          options: q.options,
-          answer: q.answer,
+          options: q.options || ["A", "B", "C", "D"],
+          answer: q.answer || (q.options ? q.options[0] : "A"),
           explanation: q.explanation || "Clinical reasoning per standard guidelines."
         }));
 
+        log.style.color = "#4ade80";
+        log.textContent = `🎉 Extracted ${stagedQuestions.length} questions! Review and edit them below before saving.`;
+        renderStagedReview();
+
+      } catch (err) {
+        log.style.color = "#f43f5e";
+        log.textContent = "❌ Parsing Error: " + err.message;
+      }
+
+      btn.disabled = false;
+    }
+
+    function renderStagedReview() {
+      const container = document.getElementById("staged-review-container");
+      const list = document.getElementById("staged-items-list");
+      const countLabel = document.getElementById("staged-count-label");
+
+      if (stagedQuestions.length === 0) {
+        container.style.display = "none";
+        return;
+      }
+
+      container.style.display = "flex";
+      countLabel.textContent = stagedQuestions.length;
+      list.innerHTML = "";
+
+      stagedQuestions.forEach((q, idx) => {
+        const item = document.createElement("div");
+        item.className = "glass-panel";
+        item.style.padding = "1rem";
+        item.style.display = "flex";
+        item.style.flexDirection = "column";
+        item.style.gap = "0.5rem";
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: #38bdf8;">Question ${idx + 1} (${q.sub_topic})</span>
+            <button onclick="removeStagedQuestion(${idx})" class="btn-danger-sm"><i class="fa-solid fa-trash"></i> Remove</button>
+          </div>
+          <div>
+            <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">PROMPT</label>
+            <input type="text" value="${escapeHtml(q.question)}" onchange="updateStagedField(${idx}, 'question', this.value)" class="glass-input" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+            ${q.options.map((opt, optIdx) => `
+              <div>
+                <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">OPTION ${String.fromCharCode(65 + optIdx)}</label>
+                <input type="text" value="${escapeHtml(opt)}" onchange="updateStagedOption(${idx},${optIdx}, this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+              </div>
+            `).join("")}
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label style="font-size: 0.65rem; color: #4ade80; font-weight: 700;">CORRECT ANSWER (Must match option)</label>
+              <input type="text" value="${escapeHtml(q.answer)}" onchange="updateStagedField(${idx}, 'answer', this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; color: #4ade80;">
+            </div>
+            <div>
+              <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">EXPLANATION</label>
+              <input type="text" value="${escapeHtml(q.explanation)}" onchange="updateStagedField(${idx}, 'explanation', this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+            </div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function updateStagedField(idx, field, val) {
+      if (stagedQuestions[idx]) stagedQuestions[idx][field] = val;
+    }
+
+    function updateStagedOption(qIdx, optIdx, val) {
+      if (stagedQuestions[qIdx] && stagedQuestions[qIdx].options) {
+        stagedQuestions[qIdx].options[optIdx] = val;
+      }
+    }
+
+    function removeStagedQuestion(idx) {
+      stagedQuestions.splice(idx, 1);
+      renderStagedReview();
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/"/g, '&quot;');
+    }
+
+    async function commitStagedToSupabase() {
+      if (stagedQuestions.length === 0) return alert("No questions to upload.");
+      const btn = document.getElementById("commit-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving to Supabase...';
+
+      try {
         const sRes = await fetch(`${SUPABASE_REST}/questions`, {
           method: "POST",
           headers: {
@@ -455,23 +668,52 @@ ${text.substring(0, 30000)}`;
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
           },
-          body: JSON.stringify(insertPayload)
+          body: JSON.stringify(stagedQuestions)
         });
 
         if (sRes.ok) {
-          log.style.color = "#4ade80";
-          log.textContent = `🎉 Success! Successfully extracted and uploaded ${insertPayload.length} questions to ${subject}!`;
+          alert(`🎉 Successfully saved ${stagedQuestions.length} questions to Supabase!`);
+          stagedQuestions = [];
+          renderStagedReview();
+          document.getElementById("import-status-log").style.display = "none";
         } else {
-          const supaErr = await sRes.text();
-          log.style.color = "#f43f5e";
-          log.textContent = "❌ Supabase write failed: " + supaErr;
+          const err = await sRes.text();
+          alert("Failed to write to database: " + err);
         }
-      } catch (err) {
-        log.style.color = "#f43f5e";
-        log.textContent = "❌ Parsing Error: " + err.message;
+      } catch (e) {
+        alert("Upload error: " + e.message);
       }
 
       btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Confirm & Save to Supabase';
+    }
+
+    // ================= STUDENT AUDITS =================
+    async function fetchStudentAudits() {
+      const tbody = document.getElementById("student-audit-rows");
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">Fetching audit logs from Supabase...</td></tr>';
+      try {
+        const res = await fetch(`${SUPABASE_REST}/exam_results?select=*&order=attempted_at.desc&limit=50`, {
+          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
+        });
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          tbody.innerHTML = rows.map(r => `
+            <tr>
+              <td style="font-weight: 700; color: #ffffff;">${r.student_name || "Candidate"}</td>
+              <td class="font-mono" style="color: #94a3b8;">${r.student_id}</td>
+              <td style="color: #cbd5e1;">${r.test_title}</td>
+              <td class="font-mono" style="font-weight: 700; color: #38bdf8;">${r.net_score}</td>
+              <td style="font-weight: 700; color: ${r.accuracy >= 50 ? '#4ade80' : '#fb7185'};">${r.accuracy}%</td>
+              <td style="color: #64748b; font-size: 0.7rem;">${new Date(r.attempted_at).toLocaleString()}</td>
+            </tr>
+          `).join("");
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">No student exam attempts recorded yet.</td></tr>';
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #f43f5e;">Failed to load data from Supabase.</td></tr>';
+      }
     }
   </script>
 </body>
