@@ -15,7 +15,7 @@
     
     :root {
       --bg-dark: #050811;
-      --card-bg: rgba(11, 18, 33, 0.75);
+      --card-bg: rgba(11, 18, 33, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
       --primary: #0284c7;
       --accent: #10b981;
@@ -86,15 +86,20 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5">
-        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-2 shadow-sm">
-          <i class="fa-solid fa-shield-halved text-amber-400"></i>
-          <span>Admin Center</span>
+      <div class="flex items-center gap-2">
+        <button id="notebook-hub-btn" onclick="openNotebookModal()" class="hidden px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold hover:bg-indigo-500/20 transition flex items-center gap-2">
+          <i class="fa-solid fa-book-bookmark text-indigo-400"></i>
+          <span class="hidden sm:inline">Notebook</span>
         </button>
 
         <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-2 rounded-xl bg-slate-800/80 border border-white/[0.08] text-slate-300 text-xs font-bold hover:bg-slate-700/80 transition flex items-center gap-2">
           <i class="fa-solid fa-chart-pie text-sky-400"></i>
-          <span class="hidden sm:inline">My Analytics</span>
+          <span class="hidden sm:inline">Analytics</span>
+        </button>
+
+        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i>
+          <span>Admin</span>
         </button>
 
         <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-md shadow-sky-600/25 flex items-center gap-1.5">
@@ -128,7 +133,7 @@
   <!-- ================= CORE VIEWPORT ================= -->
   <main class="max-w-7xl mx-auto px-4 mt-7 flex-1 w-full">
 
-    <!-- VIEW 0: STRICT LOGIN GATE -->
+    <!-- VIEW 0: LOGIN GATE -->
     <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto mt-10 shadow-2xl relative overflow-hidden">
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner">
         <i class="fa-solid fa-lock"></i>
@@ -156,25 +161,25 @@
       </form>
 
       <div class="mt-8 pt-6 border-t border-white/[0.06] text-center">
-        <span class="text-[11px] text-slate-500">Need enrollment verification?</span>
+        <span class="text-[11px] text-slate-500">Need verification?</span>
         <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">Contact Administrator @Nothing_0786</a>
       </div>
     </section>
 
-    <!-- VIEW 1: STUDENT CURRICULUM BROWSER -->
+    <!-- VIEW 1: STUDENT BROWSE & QUICK TARGET PRACTICE -->
     <section id="view-browse" class="hidden">
       <!-- Subject Header Card -->
-      <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
               <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
               <span>•</span>
-              <span class="text-slate-300">NEET-PG / NExT Level CBT</span>
+              <span class="text-slate-300">Exam Mode (+4 / −1) & Practice Modes</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
             <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
-              Simulated clinical test environments with instant option shuffling, high-yield rationale pearls, and score diagnostics.
+              Timed simulation with true competitive negative marking (+4 / −1), option shuffling, interactive bookmarks, and error log tracking.
             </p>
           </div>
           <div class="flex items-center gap-3">
@@ -186,34 +191,70 @@
         </div>
       </div>
 
+      <!-- Quick Notebook Action Banner -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
+        <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-indigo-500/20 bg-indigo-950/20">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-base">
+              <i class="fa-solid fa-bookmark"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-white">Bookmarked Questions</h4>
+              <p id="quick-bookmark-count" class="text-[11px] text-slate-400">0 Saved</p>
+            </div>
+          </div>
+          <button onclick="launchTargetedPractice('bookmarks')" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
+            Practise
+          </button>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-rose-500/20 bg-rose-950/20">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-base">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-white">Automatic Mistakes Vault</h4>
+              <p id="quick-mistakes-count" class="text-[11px] text-slate-400">0 Past Errors</p>
+            </div>
+          </div>
+          <button onclick="launchTargetedPractice('mistakes')" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
+            Drill Errors
+          </button>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between mb-4 px-1">
         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <i class="fa-solid fa-layer-group text-sky-400"></i>
-          <span>Curriculum Test Modules</span>
+          <span>Curriculum Modules</span>
         </h3>
       </div>
 
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- VIEW 2: CBT EXAM SIMULATOR (STUDENT TEST ENVIRONMENT) -->
+    <!-- VIEW 2: CBT EXAM SIMULATOR -->
     <section id="view-exam" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <!-- Left: Main Exam Stage (3 Columns) -->
+        <!-- Left: Stage (3 Columns) -->
         <div class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
           <!-- Top HUD -->
           <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
             <div>
-              <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
-              <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-2 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
+              <div class="flex items-center gap-2">
+                <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
+                <span id="exam-marking-pill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">+4 / −1 Scheme Active</span>
+              </div>
+              <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-1.5 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
             </div>
             <div class="flex items-center gap-4">
               <div class="text-right">
-                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Elapsed Time</div>
+                <div id="exam-timer-label" class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Time Remaining</div>
                 <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
               </div>
-              <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit Test</button>
+              <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit</button>
             </div>
           </div>
 
@@ -223,11 +264,11 @@
               Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span>
             </div>
             
-            <!-- Exam vs Practice Mode Toggle -->
+            <!-- Exam Mode vs Practice Mode Selector -->
             <div class="flex items-center gap-2 bg-slate-900/90 border border-white/[0.08] px-3 py-1.5 rounded-xl text-xs">
               <span class="text-slate-400 font-semibold">Mode:</span>
-              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice (Instant)</button>
-              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Formal Exam</button>
+              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice (Instant Rationale)</button>
+              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam Mode (Countdown)</button>
             </div>
           </div>
 
@@ -235,17 +276,17 @@
             <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
           </div>
 
-          <!-- Question Card -->
+          <!-- Question Body Card -->
           <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
                 <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
               </div>
-              <!-- Bookmark / Flag -->
+              <!-- Bookmark / Review Toggle -->
               <button onclick="toggleFlagCurrentQuestion()" id="exam-flag-btn" class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-bookmark"></i>
-                <span id="exam-flag-label">Flag for Review</span>
+                <span id="exam-flag-label">Mark for Review</span>
               </button>
             </div>
             <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
@@ -254,7 +295,7 @@
           <!-- Options -->
           <div id="exam-options-list" class="space-y-3 mb-6"></div>
 
-          <!-- Immediate Clinical Rationale (Practice Mode) -->
+          <!-- Practice Mode Explanation -->
           <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
             <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
               <i class="fa-solid fa-circle-check"></i>
@@ -275,23 +316,32 @@
           </div>
         </div>
 
-        <!-- Right: Interactive Question Palette Matrix (1 Column) -->
+        <!-- Right: Question Palette Matrix (1 Column) -->
         <div class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
           <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-table-cells text-sky-400"></i>
             <span>Question Matrix</span>
           </h4>
 
-          <div class="flex items-center gap-4 text-[10px] text-slate-400 font-semibold mb-4 pb-3 border-b border-white/[0.06]">
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Answered</span>
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Flagged</span>
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> Pending</span>
+          <div class="flex flex-col gap-1.5 text-[10px] text-slate-400 font-semibold mb-4 pb-3 border-b border-white/[0.06]">
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Answered:</span>
+              <span id="matrix-answered-count" class="font-mono text-emerald-400 font-bold">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Marked for Review:</span>
+              <span id="matrix-flagged-count" class="font-mono text-amber-400 font-bold">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> Unanswered:</span>
+              <span id="matrix-unanswered-count" class="font-mono text-slate-400 font-bold">0</span>
+            </div>
           </div>
 
           <!-- Dynamic Grid Chips -->
           <div id="exam-palette-grid" class="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto custom-scroll pr-1"></div>
 
-          <button onclick="finalizeExam()" class="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20">
+          <button onclick="promptSubmitExam()" class="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20">
             Submit Complete Exam
           </button>
         </div>
@@ -299,32 +349,46 @@
       </div>
     </section>
 
-    <!-- VIEW 3: SCORECARD SUMMARY -->
+    <!-- VIEW 3: SCORECARD SUMMARY WITH APPLIED +4 / −1 SCHEME -->
     <section id="view-result" class="hidden">
-      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-md mx-auto text-center shadow-2xl relative overflow-hidden">
+      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-xl mx-auto shadow-2xl relative overflow-hidden">
         <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
           <i class="fa-solid fa-award"></i>
         </div>
-        <h2 class="text-2xl font-black text-white">Performance Scorecard</h2>
-        <p id="result-test-title" class="text-xs text-slate-400 mt-1 mb-6 font-medium">Subject Mock Test</p>
+        <h2 class="text-2xl font-black text-white text-center">Examination Result</h2>
+        <p id="result-test-title" class="text-xs text-slate-400 mt-1 mb-6 font-medium text-center">Subject Mock Test</p>
 
-        <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="glass-input rounded-2xl p-3.5">
-            <div class="text-[10px] uppercase font-bold text-slate-400">Score</div>
-            <div id="result-stat-score" class="text-base sm:text-lg font-black text-white mt-1">0 / 0</div>
+        <!-- True +4 / -1 Competitive Scoring Box -->
+        <div class="glass-input rounded-2xl p-5 mb-6 text-center border border-amber-500/30 bg-amber-950/15">
+          <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Net Competitive Score (+4 / −1 Scheme)</div>
+          <div id="result-stat-net-score" class="text-3xl sm:text-4xl font-black text-white mt-1">0 <span class="text-xs text-slate-400 font-normal">/ 0 Marks</span></div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] uppercase font-bold text-emerald-400">Correct (+4)</div>
+            <div id="result-stat-correct" class="text-base font-black text-white mt-0.5">0</div>
           </div>
-          <div class="glass-input rounded-2xl p-3.5">
-            <div class="text-[10px] uppercase font-bold text-slate-400">Accuracy</div>
-            <div id="result-stat-accuracy" class="text-base sm:text-lg font-black text-emerald-400 mt-1">0%</div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] uppercase font-bold text-rose-400">Wrong (−1)</div>
+            <div id="result-stat-wrong" class="text-base font-black text-white mt-0.5">0</div>
           </div>
-          <div class="glass-input rounded-2xl p-3.5">
-            <div class="text-[10px] uppercase font-bold text-slate-400">Time</div>
-            <div id="result-stat-time" class="text-base sm:text-lg font-black text-sky-400 mt-1">00:00</div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Unanswered</div>
+            <div id="result-stat-blank" class="text-base font-black text-white mt-0.5">0</div>
+          </div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] uppercase font-bold text-sky-400">Accuracy</div>
+            <div id="result-stat-accuracy" class="text-base font-black text-emerald-400 mt-0.5">0%</div>
           </div>
         </div>
 
         <div class="space-y-2.5">
-          <button onclick="retakeCurrentExam()" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/25">
+          <button onclick="openFullAnswerReview()" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Full Answer Key & Rationales Review</span>
+          </button>
+          <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
             Retake Exam (Fresh Shuffle)
           </button>
           <button onclick="returnToBrowseView()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
@@ -336,7 +400,165 @@
 
   </main>
 
-  <!-- ================= MODERN ENTERPRISE ADMIN COMMAND CENTER ================= -->
+  <!-- ================= SUBMIT CONFIRMATION AUDIT MODAL ================= -->
+  <div id="submit-confirm-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/[0.08] text-center">
+      <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl mx-auto mb-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-white">Confirm Exam Submission</h3>
+      <p class="text-xs text-slate-400 mt-1 mb-5">Are you sure you want to finalize this exam? Please review your attempt summary below:</p>
+
+      <div class="grid grid-cols-3 gap-2.5 mb-6 text-left">
+        <div class="glass-input p-3 rounded-xl">
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Answered</div>
+          <div id="confirm-answered" class="text-base font-bold text-emerald-400 mt-0.5">0</div>
+        </div>
+        <div class="glass-input p-3 rounded-xl">
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Flagged</div>
+          <div id="confirm-flagged" class="text-base font-bold text-amber-400 mt-0.5">0</div>
+        </div>
+        <div class="glass-input p-3 rounded-xl">
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Blank</div>
+          <div id="confirm-blank" class="text-base font-bold text-rose-400 mt-0.5">0</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="closeSubmitConfirmModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+          Return to Test
+        </button>
+        <button onclick="executeFinalSubmission()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/25">
+          Submit & Finish
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FULL POST-EXAM ANSWER REVIEW MODAL ================= -->
+  <div id="full-review-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm shadow-inner">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white">Full Exam Solution & Rationales Review</h3>
+            <p id="review-subtitle" class="text-[11px] text-slate-400">Detailed answers and clinical pearls</p>
+          </div>
+        </div>
+        <button onclick="closeFullAnswerReview()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div id="review-questions-container" class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6"></div>
+    </div>
+  </div>
+
+  <!-- ================= NOTEBOOK MODAL (BOOKMARKS & MISTAKES) ================= -->
+  <div id="notebook-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white">Clinical Notebook</h3>
+            <p class="text-[11px] text-slate-400">Saved Bookmarks & Automatic Error Vault</p>
+          </div>
+        </div>
+        <button onclick="closeNotebookModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold">
+        <button onclick="switchNotebookTab('bookmarks')" id="nb-tab-bookmarks" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition">
+          <i class="fa-solid fa-bookmark mr-1.5"></i> Saved Bookmarks
+        </button>
+        <button onclick="switchNotebookTab('mistakes')" id="nb-tab-mistakes" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition">
+          <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Mistakes / Wrong Answers
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4">
+        <div id="notebook-action-header" class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+          <span id="notebook-count-label" class="text-xs text-slate-400 font-semibold">0 items</span>
+          <button onclick="launchCurrentNotebookAsExam()" id="notebook-start-btn" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-play text-[10px]"></i>
+            <span>Practise This Set</span>
+          </button>
+        </div>
+
+        <div id="notebook-items-container" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STUDENT ANALYTICS & WEAKEST TOPICS MODAL ================= -->
+  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl relative border border-white/[0.08] overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white">Candidate Progress Analytics</h3>
+            <p id="student-stats-name" class="text-[11px] text-slate-400">Topic accuracy & recent tests</p>
+          </div>
+        </div>
+        <button onclick="closeStudentStatsModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div>
+            <div id="self-tests-taken" class="text-xl font-black text-white mt-0.5">0</div>
+          </div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div>
+            <div id="self-avg-accuracy" class="text-xl font-black text-emerald-400 mt-0.5">0%</div>
+          </div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Net Marks</div>
+            <div id="self-net-marks" class="text-xl font-black text-amber-400 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Weakest Topics First -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-stethoscope text-rose-400"></i>
+              <span>Accuracy by Topic (Weakest First)</span>
+            </h4>
+            <span class="text-[10px] text-slate-500">Auto-calculated</span>
+          </div>
+          <div id="weak-topics-container" class="space-y-2.5"></div>
+        </div>
+
+        <!-- Recent Attempts Log -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-clock-rotate-left text-sky-400"></i>
+            <span>Recent Test Attempts</span>
+          </h4>
+          <div id="recent-attempts-container" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ENTERPRISE ADMIN COMMAND CENTER ================= -->
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       
@@ -357,7 +579,7 @@
       </div>
 
       <div class="flex flex-1 overflow-hidden">
-        <!-- Left Sidebar Navigation -->
+        <!-- Sidebar Navigation -->
         <aside class="w-56 border-r border-white/[0.08] bg-slate-950/70 p-4 space-y-1.5 hidden md:block">
           <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1">Management</div>
           <button onclick="switchAdminTab('content')" id="side-btn-content" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition">
@@ -637,39 +859,7 @@
     </div>
   </div>
 
-  <!-- ================= STUDENT PERSONAL ANALYTICS MODAL ================= -->
-  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-sm w-full p-6 shadow-2xl relative border border-white/[0.08]">
-      <button onclick="closeStudentStatsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <div class="text-center mb-5">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-2.5">
-          <i class="fa-solid fa-chart-line"></i>
-        </div>
-        <h3 class="text-base font-extrabold text-white">Assessment Progress</h3>
-        <p id="student-stats-name" class="text-xs text-slate-400 mt-0.5 font-medium">Performance Record</p>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="glass-input rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div>
-          <div id="self-tests-taken" class="text-xl font-black text-white mt-1">0</div>
-        </div>
-        <div class="glass-input rounded-2xl p-3 text-center">
-          <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div>
-          <div id="self-avg-accuracy" class="text-xl font-black text-emerald-400 mt-1">0%</div>
-        </div>
-      </div>
-
-      <button onclick="closeStudentStatsModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition">
-        Dismiss
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+  <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
   <script>
     const DEFAULT_SEED_DATA = {
       "Anatomy": {
@@ -691,7 +881,20 @@
                   "Main trunk of median nerve"
                 ],
                 answer: "Palmar cutaneous branch of median nerve",
-                explanation: "The palmar cutaneous branch arises proximal to the flexor retinaculum and travels superficial to it, sparing palmar cutaneous sensation."
+                explanation: "The palmar cutaneous branch arises proximal to the flexor retinaculum and travels superficial to it, sparing palmar cutaneous sensation over the thenar eminence."
+              },
+              {
+                id: "ANA-UL-002",
+                topic: "Brachial Plexus & Nerve Injury",
+                question: "A motorcyclist suffers traction injury of the upper trunk (C5-C6) of the brachial plexus (Erb-Duchenne palsy). Which classic limb posture is produced?",
+                options: [
+                  "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
+                  "Claw hand with loss of hypothenar eminence",
+                  "Wrist drop with inability to extend digits",
+                  "Ape hand deformity with thenar atrophy"
+                ],
+                answer: "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
+                explanation: "Loss of abductors (deltoid, supraspinatus) and lateral rotators produces adduction and internal rotation. Loss of biceps causes forearm pronation."
               }
             ]
           }
@@ -708,8 +911,9 @@
     let activeUser = null;
     let stagedModule = null;
     let editingContext = null;
+    
+    // Test Runtime State
     let isFormalExamMode = false;
-
     let activeExam = {
       test: null,
       questions: [],
@@ -717,6 +921,7 @@
       answers: {},
       flagged: new Set(),
       seconds: 0,
+      totalSecondsAllocated: 0,
       timer: null
     };
 
@@ -724,6 +929,7 @@
       await loadDatabaseWithGlobalFallback();
       processAuthenticationPipeline();
       initTokenUI();
+      updateNotebookCounters();
     });
 
     async function loadDatabaseWithGlobalFallback() {
@@ -758,6 +964,7 @@
       }
     }
 
+    // ================= AUTHENTICATION =================
     function processAuthenticationPipeline() {
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
@@ -835,6 +1042,7 @@
       const authBtn = document.getElementById("auth-action-btn");
       const adminBtn = document.getElementById("admin-hub-btn");
       const statsBtn = document.getElementById("student-stats-btn");
+      const notebookBtn = document.getElementById("notebook-hub-btn");
 
       if (activeUser.role === "admin") {
         roleBadge.textContent = "ADMIN";
@@ -842,12 +1050,14 @@
         userLabel.textContent = "Administrator Controls Enabled";
         adminBtn.classList.remove("hidden");
         statsBtn.classList.add("hidden");
+        notebookBtn.classList.remove("hidden");
       } else {
         roleBadge.textContent = "VERIFIED SEAT";
         roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
         userLabel.textContent = `${activeUser.name} • ${activeUser.uid}`;
         adminBtn.classList.add("hidden");
         statsBtn.classList.remove("hidden");
+        notebookBtn.classList.remove("hidden");
       }
 
       authBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Logout</span>';
@@ -855,6 +1065,7 @@
 
       syncSubjectDropdowns();
       renderBrowsePortal();
+      updateNotebookCounters();
     }
 
     function handleAuthButtonClick() {
@@ -874,6 +1085,7 @@
       document.getElementById("sub-nav-bar").classList.add("hidden");
       document.getElementById("admin-hub-btn").classList.add("hidden");
       document.getElementById("student-stats-btn").classList.add("hidden");
+      document.getElementById("notebook-hub-btn").classList.add("hidden");
 
       document.getElementById("view-locked").classList.remove("hidden");
 
@@ -969,9 +1181,9 @@
             <h4 class="text-sm font-bold text-white group-hover:text-sky-400 transition leading-snug line-clamp-2">${ch.title}</h4>
           </div>
           <div class="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-            <span class="text-[11px] text-slate-500 font-semibold">+4 / -1 Scheme</span>
+            <span class="text-[11px] text-amber-400 font-semibold font-mono">+4 / −1 Scheme</span>
             <button onclick="launchExamSession('${ch.id}')" class="px-4 py-2 rounded-xl bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-sky-600/25">
-              <span>Start Test</span>
+              <span>Start CBT</span>
               <i class="fa-solid fa-chevron-right text-[10px]"></i>
             </button>
           </div>
@@ -980,7 +1192,7 @@
       });
     }
 
-    // ================= CBT EXAM ENGINE =================
+    // ================= CBT ENGINE & EXAM DYNAMICS =================
     function launchExamSession(chapterId) {
       if (!activeUser) return lockPortalDisplay();
 
@@ -988,7 +1200,11 @@
       const test = curSub?.chapters.find(c => c.id === chapterId);
       if (!test || test.questions.length === 0) return alert("This module currently has no registered questions.");
 
-      const preparedQuestions = test.questions.map((q, idx) => {
+      setupAndRunTest(test, test.questions);
+    }
+
+    function setupAndRunTest(testMeta, questionList) {
+      const preparedQuestions = questionList.map((q, idx) => {
         const shuffledOptions = [...q.options];
         for (let i = shuffledOptions.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -997,7 +1213,7 @@
 
         return {
           id: q.id || `Q-${idx + 1}`,
-          topic: q.topic || test.topic || "Clinical Core",
+          topic: q.topic || testMeta.topic || "Clinical Core",
           question: q.question,
           options: shuffledOptions,
           correctText: q.answer,
@@ -1005,24 +1221,25 @@
         };
       });
 
+      // Default: 1.5 minutes per question for countdown
+      const timePerQuestionSeconds = 90;
+      const totalSeconds = preparedQuestions.length * timePerQuestionSeconds;
+
       activeExam = {
-        test: test,
+        test: testMeta,
         questions: preparedQuestions,
         cursor: 0,
         answers: {},
         flagged: new Set(),
         seconds: 0,
-        timer: setInterval(() => {
-          activeExam.seconds++;
-          const m = String(Math.floor(activeExam.seconds / 60)).padStart(2, '0');
-          const s = String(activeExam.seconds % 60).padStart(2, '0');
-          const timerEl = document.getElementById("exam-timer-display");
-          if (timerEl) timerEl.textContent = `${m}:${s}`;
-        }, 1000)
+        totalSecondsAllocated: totalSeconds,
+        timer: null
       };
 
-      document.getElementById("exam-module-tag").textContent = (test.topic || currentSubjectKey).toUpperCase();
-      document.getElementById("exam-module-title").textContent = test.title;
+      startTimerClock();
+
+      document.getElementById("exam-module-tag").textContent = (testMeta.topic || currentSubjectKey).toUpperCase();
+      document.getElementById("exam-module-title").textContent = testMeta.title;
       document.getElementById("exam-index-total").textContent = preparedQuestions.length;
 
       document.getElementById("view-browse").classList.add("hidden");
@@ -1033,33 +1250,76 @@
       renderPaletteGrid();
     }
 
+    function startTimerClock() {
+      if (activeExam.timer) clearInterval(activeExam.timer);
+
+      const display = document.getElementById("exam-timer-display");
+      const label = document.getElementById("exam-timer-label");
+
+      activeExam.timer = setInterval(() => {
+        activeExam.seconds++;
+
+        if (isFormalExamMode) {
+          label.textContent = "Time Remaining (Countdown)";
+          const rem = Math.max(0, activeExam.totalSecondsAllocated - activeExam.seconds);
+          const m = String(Math.floor(rem / 60)).padStart(2, '0');
+          const s = String(rem % 60).padStart(2, '0');
+          display.textContent = `${m}:${s}`;
+
+          if (rem <= 0) {
+            clearInterval(activeExam.timer);
+            alert("⏰ Time is up! Your exam will now be submitted automatically.");
+            finalizeExam();
+          }
+        } else {
+          label.textContent = "Elapsed Study Time";
+          const m = String(Math.floor(activeExam.seconds / 60)).padStart(2, '0');
+          const s = String(activeExam.seconds % 60).padStart(2, '0');
+          display.textContent = `${m}:${s}`;
+        }
+      }, 1000);
+    }
+
     function toggleExamMode(formal) {
       isFormalExamMode = formal;
       document.getElementById("mode-btn-practice").className = !formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
       document.getElementById("mode-btn-exam").className = formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-indigo-500/20 text-indigo-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
+      
+      startTimerClock();
       renderActiveExamCard();
     }
 
     function toggleFlagCurrentQuestion() {
       const cur = activeExam.cursor;
+      const q = activeExam.questions[cur];
+
       if (activeExam.flagged.has(cur)) {
         activeExam.flagged.delete(cur);
       } else {
         activeExam.flagged.add(cur);
+        // Also add to candidate's saved Bookmarks Notebook
+        saveQuestionToNotebook('bookmarks', q);
       }
       renderActiveExamCard();
       renderPaletteGrid();
+      updateNotebookCounters();
     }
 
     function renderPaletteGrid() {
       const palette = document.getElementById("exam-palette-grid");
       palette.innerHTML = "";
 
+      let answeredCount = 0;
+      let flaggedCount = 0;
+
       activeExam.questions.forEach((_, idx) => {
         const btn = document.createElement("button");
         const isCurrent = idx === activeExam.cursor;
         const isAnswered = activeExam.answers.hasOwnProperty(idx);
         const isFlagged = activeExam.flagged.has(idx);
+
+        if (isAnswered) answeredCount++;
+        if (isFlagged) flaggedCount++;
 
         let bg = "bg-slate-800 text-slate-400 border-white/[0.04]";
         if (isAnswered) bg = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
@@ -1075,6 +1335,10 @@
         };
         palette.appendChild(btn);
       });
+
+      document.getElementById("matrix-answered-count").textContent = answeredCount;
+      document.getElementById("matrix-flagged-count").textContent = flaggedCount;
+      document.getElementById("matrix-unanswered-count").textContent = activeExam.questions.length - answeredCount;
     }
 
     function renderActiveExamCard() {
@@ -1089,15 +1353,14 @@
       document.getElementById("exam-q-id-badge").textContent = q.id;
       document.getElementById("exam-q-statement").textContent = q.question;
 
-      // Flag label update
       const flagBtn = document.getElementById("exam-flag-btn");
       const flagLabel = document.getElementById("exam-flag-label");
       if (activeExam.flagged.has(cur)) {
         flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Flagged (Review)";
+        flagLabel.textContent = "Flagged & Bookmarked";
       } else {
         flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Flag Question";
+        flagLabel.textContent = "Mark for Review";
       }
 
       const optsContainer = document.getElementById("exam-options-list");
@@ -1115,15 +1378,16 @@
           btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800/80 text-slate-200";
           btn.onclick = () => recordExamAnswer(cur, optText);
         } else {
-          // If in formal exam mode: just show selected state without revealing correctness
           if (isFormalExamMode) {
+            // Exam Mode: Only shows chosen option without revealing answer key
             if (optText === chosen) {
               btn.className += "border-sky-500 bg-sky-500/15 text-sky-200 font-bold";
             } else {
               btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-400";
             }
+            btn.onclick = () => recordExamAnswer(cur, optText); // Allow changing answers in Exam Mode
           } else {
-            // Practice Mode: Instant correct/incorrect visual feedback
+            // Practice Mode: Instant correct (+4) or incorrect (−1) lock
             if (optText === q.correctText) {
               btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
             } else if (optText === chosen && chosen !== q.correctText) {
@@ -1156,7 +1420,7 @@
       document.getElementById("exam-prev-btn").disabled = (cur === 0);
       const nextBtn = document.getElementById("exam-next-btn");
       if (cur === total - 1) {
-        nextBtn.innerHTML = 'Complete Exam <i class="fa-solid fa-flag-checkered ml-1.5"></i>';
+        nextBtn.innerHTML = 'Review & Submit <i class="fa-solid fa-flag-checkered ml-1.5"></i>';
       } else {
         nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>';
       }
@@ -1164,6 +1428,14 @@
 
     function recordExamAnswer(qIdx, optionText) {
       activeExam.answers[qIdx] = optionText;
+      const q = activeExam.questions[qIdx];
+
+      // If answered incorrectly, automatically log to candidate's Mistakes Vault
+      if (optionText !== q.correctText) {
+        saveQuestionToNotebook('mistakes', q);
+        updateNotebookCounters();
+      }
+
       renderActiveExamCard();
       renderPaletteGrid();
     }
@@ -1175,31 +1447,70 @@
         renderActiveExamCard();
         renderPaletteGrid();
       } else if (nextIdx >= activeExam.questions.length) {
-        finalizeExam();
+        promptSubmitExam();
       }
     }
 
+    // ================= CONFIRM-BEFORE-SUBMIT FLOW =================
+    function promptSubmitExam() {
+      const total = activeExam.questions.length;
+      const answered = Object.keys(activeExam.answers).length;
+      const flagged = activeExam.flagged.size;
+      const blank = total - answered;
+
+      document.getElementById("confirm-answered").textContent = answered;
+      document.getElementById("confirm-flagged").textContent = flagged;
+      document.getElementById("confirm-blank").textContent = blank;
+
+      document.getElementById("submit-confirm-modal").classList.remove("hidden");
+    }
+
+    function closeSubmitConfirmModal() {
+      document.getElementById("submit-confirm-modal").classList.add("hidden");
+    }
+
+    function executeFinalSubmission() {
+      closeSubmitConfirmModal();
+      finalizeExam();
+    }
+
+    // ================= SCORING (+4 / -1 APPLIED) =================
     function finalizeExam() {
-      clearInterval(activeExam.timer);
+      if (activeExam.timer) clearInterval(activeExam.timer);
+
       let correct = 0;
+      let wrong = 0;
+      let blank = 0;
+
       activeExam.questions.forEach((q, idx) => {
-        if (activeExam.answers[idx] === q.correctText) correct++;
+        if (!activeExam.answers.hasOwnProperty(idx)) {
+          blank++;
+        } else if (activeExam.answers[idx] === q.correctText) {
+          correct++;
+        } else {
+          wrong++;
+          saveQuestionToNotebook('mistakes', q);
+        }
       });
 
       const total = activeExam.questions.length;
-      const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-      const m = String(Math.floor(activeExam.seconds / 60)).padStart(2, '0');
-      const s = String(activeExam.seconds % 60).padStart(2, '0');
+      // True Competitive Medical Scoring Scheme (+4 for correct, -1 for wrong)
+      const netMarks = (correct * 4) - (wrong * 1);
+      const maxPossibleMarks = total * 4;
+      const accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
 
       document.getElementById("result-test-title").textContent = activeExam.test.title;
-      document.getElementById("result-stat-score").textContent = `${correct} / ${total}`;
+      document.getElementById("result-stat-net-score").innerHTML = `${netMarks} <span class="text-xs text-slate-400 font-normal">/ ${maxPossibleMarks} Max Marks</span>`;
+      document.getElementById("result-stat-correct").textContent = `${correct} (+${correct * 4})`;
+      document.getElementById("result-stat-wrong").textContent = `${wrong} (−${wrong})`;
+      document.getElementById("result-stat-blank").textContent = `${blank}`;
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
-      document.getElementById("result-stat-time").textContent = `${m}:${s}`;
 
-      storeExamAnalytics(activeExam.test.title, correct, total, accuracy);
+      storeExamAnalytics(activeExam.test.title, netMarks, maxPossibleMarks, correct, wrong, blank, accuracy);
 
       document.getElementById("view-exam").classList.add("hidden");
       document.getElementById("view-result").classList.remove("hidden");
+      updateNotebookCounters();
     }
 
     function retakeCurrentExam() {
@@ -1208,7 +1519,7 @@
 
     function terminateExamPrompt() {
       if (confirm("Terminate this test? Progress will not be registered.")) {
-        clearInterval(activeExam.timer);
+        if (activeExam.timer) clearInterval(activeExam.timer);
         returnToBrowseView();
       }
     }
@@ -1218,25 +1529,319 @@
       document.getElementById("view-result").classList.add("hidden");
       document.getElementById("view-browse").classList.remove("hidden");
       renderBrowsePortal();
+      updateNotebookCounters();
     }
 
-    function storeExamAnalytics(testTitle, correct, total, accuracy) {
+    // ================= POST-EXAM FULL SOLUTION REVIEW =================
+    function openFullAnswerReview() {
+      const container = document.getElementById("review-questions-container");
+      container.innerHTML = "";
+
+      document.getElementById("review-subtitle").textContent = `${activeExam.test.title} • Reviewing ${activeExam.questions.length} Items`;
+
+      activeExam.questions.forEach((q, idx) => {
+        const chosen = activeExam.answers[idx];
+        const isAnswered = activeExam.answers.hasOwnProperty(idx);
+        const isCorrect = isAnswered && chosen === q.correctText;
+        const isWrong = isAnswered && chosen !== q.correctText;
+
+        let badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Unanswered (0)</span>';
+        if (isCorrect) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Correct (+4)</span>';
+        if (isWrong) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">Incorrect (−1)</span>';
+
+        const card = document.createElement("div");
+        card.className = "glass-panel p-5 rounded-2xl border border-white/[0.08] space-y-3";
+        card.innerHTML = `
+          <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-slate-400 font-bold text-xs">Q${idx + 1}.</span>
+              <span class="text-[10px] font-bold text-indigo-300 uppercase px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">${q.topic}</span>
+            </div>
+            ${badge}
+          </div>
+
+          <p class="text-sm font-semibold text-slate-100">${q.question}</p>
+
+          <div class="space-y-2 text-xs">
+            ${q.options.map((opt) => {
+              let optStyle = "border-white/[0.06] bg-slate-900/60 text-slate-300";
+              let icon = "";
+              if (opt === q.correctText) {
+                optStyle = "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-bold";
+                icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>';
+              } else if (opt === chosen && isWrong) {
+                optStyle = "border-rose-500/40 bg-rose-500/10 text-rose-300 font-semibold";
+                icon = '<i class="fa-solid fa-circle-xmark text-rose-400 text-xs"></i>';
+              }
+              return `
+                <div class="p-3 rounded-xl border flex items-center justify-between ${optStyle}">
+                  <span>${opt}</span>
+                  ${icon}
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] text-xs space-y-1">
+            <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-lightbulb"></i> Clinical Pearl & Rationale
+            </span>
+            <p class="text-slate-300 leading-relaxed">${q.explanation}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById("full-review-modal").classList.remove("hidden");
+    }
+
+    function closeFullAnswerReview() {
+      document.getElementById("full-review-modal").classList.add("hidden");
+    }
+
+    // ================= NOTEBOOK ENGINE (BOOKMARKS & MISTAKES) =================
+    function getNotebookKey(type) {
+      const uid = activeUser ? activeUser.uid : 'guest';
+      return `mbbs_notebook_${type}_${uid}`;
+    }
+
+    function saveQuestionToNotebook(type, q) {
+      try {
+        const key = getNotebookKey(type);
+        const list = JSON.parse(localStorage.getItem(key) || "[]");
+        // Prevent duplicate questions
+        if (!list.some(item => item.question === q.question)) {
+          list.push({
+            id: q.id,
+            topic: q.topic,
+            question: q.question,
+            options: q.options,
+            answer: q.correctText || q.answer,
+            explanation: q.explanation,
+            addedAt: new Date().toLocaleDateString()
+          });
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      } catch (e) {}
+    }
+
+    function updateNotebookCounters() {
+      try {
+        const bm = JSON.parse(localStorage.getItem(getNotebookKey('bookmarks')) || "[]");
+        const ms = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
+
+        const elBm = document.getElementById("quick-bookmark-count");
+        const elMs = document.getElementById("quick-mistakes-count");
+        if (elBm) elBm.textContent = `${bm.length} Saved Questions`;
+        if (elMs) elMs.textContent = `${ms.length} Recorded Errors`;
+      } catch (e) {}
+    }
+
+    let activeNotebookTab = 'bookmarks';
+    function openNotebookModal() {
+      switchNotebookTab('bookmarks');
+      document.getElementById("notebook-modal").classList.remove("hidden");
+    }
+
+    function closeNotebookModal() {
+      document.getElementById("notebook-modal").classList.add("hidden");
+    }
+
+    function switchNotebookTab(tab) {
+      activeNotebookTab = tab;
+      const isBm = tab === 'bookmarks';
+      document.getElementById("nb-tab-bookmarks").className = isBm ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition" : "py-3 px-4 text-slate-400 hover:text-slate-200 transition";
+      document.getElementById("nb-tab-mistakes").className = !isBm ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition" : "py-3 px-4 text-slate-400 hover:text-slate-200 transition";
+
+      renderNotebookItems();
+    }
+
+    function renderNotebookItems() {
+      const container = document.getElementById("notebook-items-container");
+      const list = JSON.parse(localStorage.getItem(getNotebookKey(activeNotebookTab)) || "[]");
+      document.getElementById("notebook-count-label").textContent = `${list.length} Questions Saved`;
+      container.innerHTML = "";
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No questions saved in this list yet.</div>`;
+        return;
+      }
+
+      list.forEach((q, idx) => {
+        const item = document.createElement("div");
+        item.className = "p-4 bg-slate-900/80 rounded-2xl border border-white/[0.06] space-y-2 text-xs";
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">${q.topic}</span>
+            <button onclick="removeQuestionFromNotebook('${activeNotebookTab}', ${idx})" class="text-rose-400 hover:text-rose-300">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+          <p class="font-medium text-slate-200">${q.question}</p>
+          <p class="text-emerald-400 font-bold font-mono">Key: ${q.answer}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function removeQuestionFromNotebook(type, idx) {
+      const key = getNotebookKey(type);
+      const list = JSON.parse(localStorage.getItem(key) || "[]");
+      list.splice(idx, 1);
+      localStorage.setItem(key, JSON.stringify(list));
+      renderNotebookItems();
+      updateNotebookCounters();
+    }
+
+    function launchCurrentNotebookAsExam() {
+      const list = JSON.parse(localStorage.getItem(getNotebookKey(activeNotebookTab)) || "[]");
+      if (list.length === 0) return alert("No questions to practice in this list.");
+
+      closeNotebookModal();
+      setupAndRunTest({
+        id: `custom_${activeNotebookTab}`,
+        title: activeNotebookTab === 'bookmarks' ? "Targeted Practice: Bookmarks" : "Targeted Practice: Mistakes Vault",
+        topic: activeNotebookTab.toUpperCase()
+      }, list);
+    }
+
+    function launchTargetedPractice(type) {
+      const list = JSON.parse(localStorage.getItem(getNotebookKey(type)) || "[]");
+      if (list.length === 0) return alert(`No questions in ${type} yet.`);
+
+      setupAndRunTest({
+        id: `custom_${type}`,
+        title: type === 'bookmarks' ? "Targeted Practice: Bookmarks" : "Targeted Practice: Mistakes Vault",
+        topic: type.toUpperCase()
+      }, list);
+    }
+
+    // ================= PROGRESS & TOPIC ANALYTICS =================
+    function storeExamAnalytics(testTitle, netMarks, maxMarks, correct, wrong, blank, accuracy) {
       if (!activeUser) return;
       try {
-        const auditLog = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]");
+        const auditLog = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]");
+        
+        // Break down accuracy per topic for this attempt
+        const topicBreakdown = {};
+        activeExam.questions.forEach((q, idx) => {
+          const t = q.topic || "Core Topic";
+          if (!topicBreakdown[t]) topicBreakdown[t] = { correct: 0, total: 0 };
+          topicBreakdown[t].total++;
+          if (activeExam.answers[idx] === q.correctText) topicBreakdown[t].correct++;
+        });
+
         auditLog.push({
           uid: activeUser.uid,
           name: activeUser.name,
           test: testTitle,
-          score: `${correct}/${total}`,
+          netMarks: netMarks,
+          maxMarks: maxMarks,
+          correct: correct,
+          wrong: wrong,
+          blank: blank,
           accuracy: accuracy,
+          topics: topicBreakdown,
           timestamp: new Date().toLocaleString()
         });
-        localStorage.setItem("mbbs_exam_audit_v2", JSON.stringify(auditLog));
+        localStorage.setItem("mbbs_exam_audit_v3", JSON.stringify(auditLog));
       } catch (e) {}
     }
 
-    // ================= AI PARSING & PDF ENGINE (MODEL: GEMINI-3.8-FLASH) =================
+    function openStudentStatsModal() {
+      if (!activeUser) return;
+      let audit = [];
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]"); } catch (e) {}
+      const userRecords = audit.filter(r => r.uid === activeUser.uid);
+
+      document.getElementById("student-stats-name").textContent = `${activeUser.name} (${activeUser.uid})`;
+      document.getElementById("self-tests-taken").textContent = userRecords.length;
+
+      let netMarksTotal = 0;
+      userRecords.forEach(r => netMarksTotal += (r.netMarks || 0));
+      document.getElementById("self-net-marks").textContent = netMarksTotal;
+
+      const avg = userRecords.length > 0 ? Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length) : 0;
+      document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
+
+      // 1. Weakest Topics First Calculation
+      const topicStats = {};
+      userRecords.forEach(r => {
+        if (r.topics) {
+          Object.keys(r.topics).forEach(t => {
+            if (!topicStats[t]) topicStats[t] = { correct: 0, total: 0 };
+            topicStats[t].correct += r.topics[t].correct;
+            topicStats[t].total += r.topics[t].total;
+          });
+        }
+      });
+
+      const weakTopicsContainer = document.getElementById("weak-topics-container");
+      weakTopicsContainer.innerHTML = "";
+
+      const topicList = Object.keys(topicStats).map(t => {
+        const pct = Math.round((topicStats[t].correct / topicStats[t].total) * 100);
+        return { name: t, accuracy: pct, total: topicStats[t].total };
+      });
+
+      // Sort Ascending (Lowest accuracy first = weakest)
+      topicList.sort((a, b) => a.accuracy - b.accuracy);
+
+      if (topicList.length === 0) {
+        weakTopicsContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">Complete a test to generate your topic accuracy profile.</div>`;
+      } else {
+        topicList.forEach(item => {
+          let color = "bg-rose-500";
+          if (item.accuracy >= 70) color = "bg-emerald-500";
+          else if (item.accuracy >= 50) color = "bg-amber-500";
+
+          const row = document.createElement("div");
+          row.className = "glass-input p-3 rounded-xl space-y-1.5 text-xs";
+          row.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-200">${item.name}</span>
+              <span class="font-mono font-bold ${item.accuracy < 50 ? 'text-rose-400' : 'text-emerald-400'}">${item.accuracy}% (${item.total} Qs)</span>
+            </div>
+            <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+              <div class="${color} h-full" style="width: ${item.accuracy}%"></div>
+            </div>
+          `;
+          weakTopicsContainer.appendChild(row);
+        });
+      }
+
+      // 2. Chronological Recent Attempts Log
+      const recentContainer = document.getElementById("recent-attempts-container");
+      recentContainer.innerHTML = "";
+
+      if (userRecords.length === 0) {
+        recentContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">No test attempts logged yet.</div>`;
+      } else {
+        userRecords.slice().reverse().slice(0, 5).forEach(r => {
+          const row = document.createElement("div");
+          row.className = "p-3 bg-slate-900/80 rounded-xl border border-white/[0.06] flex items-center justify-between text-xs";
+          row.innerHTML = `
+            <div>
+              <h5 class="font-bold text-white">${r.test}</h5>
+              <span class="text-[10px] text-slate-400">${r.timestamp}</span>
+            </div>
+            <div class="text-right font-mono">
+              <div class="font-bold text-sky-400">${r.netMarks} Marks</div>
+              <div class="text-[10px] ${r.accuracy >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${r.accuracy}% Accuracy</div>
+            </div>
+          `;
+          recentContainer.appendChild(row);
+        });
+      }
+
+      document.getElementById("student-stats-modal").classList.remove("hidden");
+    }
+
+    function closeStudentStatsModal() {
+      document.getElementById("student-stats-modal").classList.add("hidden");
+    }
+
+    // ================= AI PARSER & PDF ENGINE (MODEL: GEMINI-3.8-FLASH) =================
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -1745,7 +2350,7 @@ ${extractedText.substring(0, 35000)}`;
 
     function renderAdminStudentAnalytics() {
       let audit = [];
-      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]"); } catch (e) {}
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]"); } catch (e) {}
       document.getElementById("metric-total-tests").textContent = audit.length;
       if (audit.length > 0) {
         const avg = Math.round(audit.reduce((a, c) => a + (c.accuracy || 0), 0) / audit.length);
@@ -1776,7 +2381,7 @@ ${extractedText.substring(0, 35000)}`;
           <td class="p-3.5 font-bold text-white">${row.name || "Candidate"}</td>
           <td class="p-3.5 font-mono text-slate-400 font-semibold">${row.uid}</td>
           <td class="p-3.5 text-slate-300 max-w-[180px] truncate">${row.test}</td>
-          <td class="p-3.5 font-mono text-slate-200">${row.score}</td>
+          <td class="p-3.5 font-mono text-slate-200">${row.netMarks}/${row.maxMarks}</td>
           <td class="p-3.5 font-bold text-emerald-400">${row.accuracy}%</td>
           <td class="p-3.5"><span class="text-[10px] font-bold px-2.5 py-0.5 rounded border ${badgeColor}">${status}</span></td>
           <td class="p-3.5 text-slate-500 text-[11px] whitespace-nowrap">${row.timestamp}</td>
@@ -1790,22 +2395,6 @@ ${extractedText.substring(0, 35000)}`;
       document.querySelectorAll("#student-analytics-records tr").forEach(r => {
         r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
       });
-    }
-
-    function openStudentStatsModal() {
-      if (!activeUser) return;
-      let audit = [];
-      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v2") || "[]"); } catch (e) {}
-      const userRecords = audit.filter(r => r.uid === activeUser.uid);
-      document.getElementById("student-stats-name").textContent = `${activeUser.name} (${activeUser.uid})`;
-      document.getElementById("self-tests-taken").textContent = userRecords.length;
-      const avg = userRecords.length > 0 ? Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length) : 0;
-      document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
-      document.getElementById("student-stats-modal").classList.remove("hidden");
-    }
-
-    function closeStudentStatsModal() {
-      document.getElementById("student-stats-modal").classList.add("hidden");
     }
 
     function promptCreateNewSubject() {
