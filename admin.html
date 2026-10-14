@@ -123,7 +123,7 @@ th{background:#050811;color:#94a3b8;font-size:.68rem;text-transform:uppercase}
 <div id="tab-settings" class="sec">
   <div><label>Google Gemini API Key</label><input type="password" id="set-key" placeholder="AIza... or AQ..."></div>
   <div class="grid">
-    <div><label>Gemini model</label><input type="text" id="set-model" placeholder="gemini-3.5-flash"></div>
+    <div><label>Gemini model</label><input type="text" id="set-model" placeholder="gemini-3.8-flash"></div>
     <div><label>Questions table</label><input type="text" id="set-tq" placeholder="questions"></div>
     <div><label>Submissions table</label><input type="text" id="set-ts" placeholder="submissions"></div>
   </div>
@@ -146,8 +146,8 @@ th{background:#050811;color:#94a3b8;font-size:.68rem;text-transform:uppercase}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const DEF={url:"https://iafqcssktvejitssqawi.supabase.co/rest/v1",anon:"sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C",model:"gemini-3.5-flash",tq:"questions",ts:"submissions"};
-const cfg=()=>({key:LS.get("gemini_key",""),url:LS.get("sb_url",DEF.url).replace(/\/$/,""),anon:LS.get("sb_anon",DEF.anon),model:LS.get("g_model",DEF.model),tq:LS.get("t_q",DEF.tq),ts:LS.get("t_s",DEF.ts)});
+const DEF={url:"https://iafqcssktvejitssqawi.supabase.co/rest/v1",anon:"sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C",model:"gemini-3.8-flash",tq:"questions",ts:"submissions"};
+const cfg=()=>({key:LS.get("gemini_key",""),url:LS.get("sb_url",DEF.url).replace(/\/$/,""),anon:LS.get("sb_anon",DEF.anon),model:(m=>/^gemini-(1|2)\./.test(m)?DEF.model:m)(LS.get("g_model",DEF.model)),tq:LS.get("t_q",DEF.tq),ts:LS.get("t_s",DEF.ts)});
 let subjects=["Anatomy","Physiology","Biochemistry","Pharmacology","Pathology"];
 try{const s=JSON.parse(LS.get("sub_list","null"));if(Array.isArray(s)&&s.length)subjects=s}catch(e){}
 let staged=[],bankRows=[],auditRows=[];
@@ -228,7 +228,7 @@ function parseJson(s){
 async function gemini(text){
   const c=cfg();
   const prompt='Extract every multiple-choice question from the text below. Return ONLY a JSON array. Each item: {"question":string,"options":[exactly 4 strings without A/B/C/D prefixes],"correct":integer 0-3 index of the right option,"explanation":string}. If the answer key is not given, choose the most likely correct answer using medical knowledge. If no explanation is given, write a concise 1-2 sentence rationale. Skip anything that is not an MCQ.\n\nTEXT:\n'+text;
-  const models=[c.model,"gemini-3.1-flash-lite","gemini-flash-latest"].filter((m,i,a)=>m&&a.indexOf(m)===i);
+  const models=[c.model,"gemini-3.8-flash","gemini-3.5-flash","gemini-3.1-flash-lite","gemini-flash-latest"].filter((m,i,a)=>m&&a.indexOf(m)===i);
   const body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:"application/json"}});
   let r=null,lastErr="";
   outer:for(const m of models){
