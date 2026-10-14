@@ -15,10 +15,9 @@
     
     :root {
       --bg-dark: #050811;
-      --card-bg: rgba(11, 18, 33, 0.78);
+      --card-bg: rgba(11, 18, 33, 0.85);
       --card-border: rgba(255, 255, 255, 0.08);
-      --primary: #0284c7;
-      --accent: #10b981;
+      --font-scale: 1rem;
     }
 
     body {
@@ -33,6 +32,7 @@
     }
 
     .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .q-text-dyn { font-size: var(--font-scale); }
     
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scroll::-webkit-scrollbar-track { background: #070c18; }
@@ -41,7 +41,6 @@
     .glass-panel {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
     }
 
@@ -56,10 +55,36 @@
     }
 
     .option-card {
-      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.15s ease-in-out;
     }
     .option-card:hover {
       transform: translateY(-1px);
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+      header, #sub-nav-bar, #admin-modal, #student-stats-modal, #notebook-modal, #custom-test-modal, .no-print {
+        display: none !important;
+      }
+      #view-result {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .glass-panel, .glass-input {
+        background: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+      .print-black { color: #000000 !important; }
+      .print-break { page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -80,6 +105,9 @@
           <div class="flex items-center gap-2">
             <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight">MBBS Pro CBT</h1>
             <span id="header-role-badge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60">Verifying...</span>
+            <span id="header-streak-badge" class="hidden text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+              <i class="fa-solid fa-fire text-amber-400"></i> <span id="streak-counter">0</span>d Streak
+            </span>
           </div>
           <p id="header-user-label" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs font-medium">Authenticating profile...</p>
         </div>
@@ -87,6 +115,11 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
+        <button id="custom-test-btn" onclick="openCustomTestModal()" class="hidden px-3.5 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-bold hover:bg-sky-500/20 transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-sliders text-sky-400"></i>
+          <span class="hidden sm:inline">Custom Builder</span>
+        </button>
+
         <button id="notebook-hub-btn" onclick="openNotebookModal()" class="hidden px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold hover:bg-indigo-500/20 transition flex items-center gap-2">
           <i class="fa-solid fa-book-bookmark text-indigo-400"></i>
           <span class="hidden sm:inline">Notebook</span>
@@ -94,7 +127,7 @@
 
         <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-2 rounded-xl bg-slate-800/80 border border-white/[0.08] text-slate-300 text-xs font-bold hover:bg-slate-700/80 transition flex items-center gap-2">
           <i class="fa-solid fa-chart-pie text-sky-400"></i>
-          <span class="hidden sm:inline">Analytics</span>
+          <span class="hidden sm:inline">Analytics & Badges</span>
         </button>
 
         <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-2">
@@ -166,7 +199,7 @@
       </div>
     </section>
 
-    <!-- VIEW 1: STUDENT BROWSE & QUICK TARGET PRACTICE -->
+    <!-- VIEW 1: STUDENT BROWSE & QUICK POWER HUBS -->
     <section id="view-browse" class="hidden">
       <!-- Subject Header Card -->
       <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
@@ -175,11 +208,11 @@
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
               <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
               <span>•</span>
-              <span class="text-slate-300">Exam Mode (+4 / −1) & Practice Modes</span>
+              <span class="text-slate-300">+4 / −1 CBT Marking Applied</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
             <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
-              Timed simulation with true competitive negative marking (+4 / −1), option shuffling, interactive bookmarks, and error log tracking.
+              Competitive medical examinations with confidence tracking ("Sure" vs "Guess"), spaced repetition schedules, and personal notes.
             </p>
           </div>
           <div class="flex items-center gap-3">
@@ -191,35 +224,65 @@
         </div>
       </div>
 
-      <!-- Quick Notebook Action Banner -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
-        <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-indigo-500/20 bg-indigo-950/20">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-base">
-              <i class="fa-solid fa-bookmark"></i>
+      <!-- Quick Action Power Hub Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+        <div class="glass-panel p-4 rounded-2xl border border-amber-500/25 bg-amber-950/20 flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-fire"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold text-white">Bookmarked Questions</h4>
-              <p id="quick-bookmark-count" class="text-[11px] text-slate-400">0 Saved</p>
+              <h4 class="text-xs font-bold text-white">Daily 10 Challenge</h4>
+              <p id="daily-status-label" class="text-[10px] text-amber-300/80 font-medium">10 Fresh MCQs Today</p>
             </div>
           </div>
-          <button onclick="launchTargetedPractice('bookmarks')" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
-            Practise
+          <button onclick="launchDaily10()" class="w-full mt-2 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition">
+            Launch Daily 10
           </button>
         </div>
 
-        <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-rose-500/20 bg-rose-950/20">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-base">
-              <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="glass-panel p-4 rounded-2xl border border-rose-500/25 bg-rose-950/20 flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-bolt-lightning"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold text-white">Automatic Mistakes Vault</h4>
-              <p id="quick-mistakes-count" class="text-[11px] text-slate-400">0 Past Errors</p>
+              <h4 class="text-xs font-bold text-white">Wrong-Answers Quiz</h4>
+              <p id="quick-mistakes-count" class="text-[10px] text-slate-400 font-medium">0 Errors Recorded</p>
             </div>
           </div>
-          <button onclick="launchTargetedPractice('mistakes')" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
-            Drill Errors
+          <button onclick="launchWrongAnswersQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
+            1-Tap Mistake Drill
+          </button>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl border border-teal-500/25 bg-teal-950/20 flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-white">Spaced Repetition</h4>
+              <p id="sr-due-count" class="text-[10px] text-teal-300/80 font-medium">0 Due (1, 3, 7 Days)</p>
+            </div>
+          </div>
+          <button onclick="launchSpacedRepetitionQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition">
+            Review Due Items
+          </button>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl border border-sky-500/25 bg-sky-950/20 flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-white">Custom Mixed Test</h4>
+              <p class="text-[10px] text-slate-400 font-medium">Pick topics & length</p>
+            </div>
+          </div>
+          <button onclick="openCustomTestModal()" class="w-full mt-2 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
+            Build Custom Test
           </button>
         </div>
       </div>
@@ -234,41 +297,52 @@
       <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- VIEW 2: CBT EXAM SIMULATOR -->
+    <!-- VIEW 2: CBT EXAM SIMULATOR (STUDENT ENGINE) -->
     <section id="view-exam" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <!-- Left: Stage (3 Columns) -->
-        <div class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
+        <!-- Left: Exam Question Stage (3 Columns) -->
+        <div id="exam-main-panel" class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
           <!-- Top HUD -->
           <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
             <div>
               <div class="flex items-center gap-2">
                 <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
-                <span id="exam-marking-pill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">+4 / −1 Scheme Active</span>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">+4 / −1 Scheme</span>
               </div>
               <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-1.5 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
             </div>
-            <div class="flex items-center gap-4">
+            
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1 bg-slate-900 border border-white/[0.08] px-2 py-1 rounded-xl">
+                <button onclick="changeFontSize(-0.1)" title="Smaller Font" class="px-2 py-0.5 text-xs text-slate-400 hover:text-white font-bold">A-</button>
+                <button onclick="changeFontSize(0.1)" title="Larger Font" class="px-2 py-0.5 text-xs text-slate-400 hover:text-white font-bold">A+</button>
+                <button onclick="toggleFocusMode()" title="Distraction-Free Focus Mode" class="px-2 py-0.5 text-xs text-slate-400 hover:text-sky-400"><i class="fa-solid fa-expand"></i></button>
+              </div>
+
               <div class="text-right">
-                <div id="exam-timer-label" class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Time Remaining</div>
+                <div id="exam-timer-label" class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Elapsed Time</div>
                 <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
               </div>
               <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit</button>
             </div>
           </div>
 
-          <!-- Mode & Progress -->
-          <div class="my-5 flex flex-wrap items-center justify-between gap-3">
-            <div class="text-xs font-semibold text-slate-400">
-              Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span>
+          <!-- Per-Question Timing & Mode Toggles -->
+          <div class="my-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 text-xs font-semibold text-slate-400">
+              <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
+              <span class="text-slate-600">•</span>
+              <span class="flex items-center gap-1.5 text-slate-300">
+                <i class="fa-regular fa-clock text-sky-400"></i>
+                <span>This item: <span id="q-timer-display" class="font-mono text-sky-300">0s</span></span>
+              </span>
             </div>
             
-            <!-- Exam Mode vs Practice Mode Selector -->
             <div class="flex items-center gap-2 bg-slate-900/90 border border-white/[0.08] px-3 py-1.5 rounded-xl text-xs">
               <span class="text-slate-400 font-semibold">Mode:</span>
-              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice (Instant Rationale)</button>
-              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam Mode (Countdown)</button>
+              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice</button>
+              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam (+4/−1 Countdown)</button>
             </div>
           </div>
 
@@ -276,27 +350,48 @@
             <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
           </div>
 
-          <!-- Question Body Card -->
-          <div class="glass-input rounded-2xl p-5 sm:p-6 mb-5 border border-white/[0.06] shadow-inner">
+          <!-- Question Stem -->
+          <div class="glass-input rounded-2xl p-5 sm:p-6 mb-4 border border-white/[0.06] shadow-inner">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
                 <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
               </div>
-              <!-- Bookmark / Review Toggle -->
               <button onclick="toggleFlagCurrentQuestion()" id="exam-flag-btn" class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-bookmark"></i>
-                <span id="exam-flag-label">Mark for Review</span>
+                <span id="exam-flag-label">Flag</span>
               </button>
             </div>
-            <p id="exam-q-statement" class="text-sm sm:text-base font-semibold text-slate-100 leading-relaxed">Loading question...</p>
+            <p id="exam-q-statement" class="q-text-dyn font-semibold text-slate-100 leading-relaxed">Loading question...</p>
+          </div>
+
+          <!-- Confidence Tags -->
+          <div class="flex items-center justify-end gap-2 mb-4">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Confidence Tag:</span>
+            <button onclick="setConfidence('sure')" id="conf-btn-sure" class="px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition">
+              <i class="fa-solid fa-circle-check mr-1 text-[10px]"></i> 100% Sure
+            </button>
+            <button onclick="setConfidence('guess')" id="conf-btn-guess" class="px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition">
+              <i class="fa-solid fa-dice mr-1 text-[10px]"></i> Guess / 50-50
+            </button>
           </div>
 
           <!-- Options -->
-          <div id="exam-options-list" class="space-y-3 mb-6"></div>
+          <div id="exam-options-list" class="space-y-3 mb-5"></div>
 
-          <!-- Practice Mode Explanation -->
-          <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-6 transition-all">
+          <!-- Personal Notes Box -->
+          <div class="mb-5 p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-2xl">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-bold text-sky-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-nib text-xs"></i> Personal Question Note
+              </span>
+              <button onclick="saveCurrentQuestionNote()" class="text-[10px] text-slate-400 hover:text-white font-bold">Save Note</button>
+            </div>
+            <textarea id="q-note-input" rows="2" placeholder="Write custom mnemonics, clinical pearls or memory aids for this question..." class="glass-input w-full rounded-xl p-2.5 text-xs text-slate-300 focus:outline-none"></textarea>
+          </div>
+
+          <!-- Explanation Card -->
+          <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-5 transition-all">
             <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
               <i class="fa-solid fa-circle-check"></i>
               <span>High-Yield Clinical Rationale</span>
@@ -316,8 +411,8 @@
           </div>
         </div>
 
-        <!-- Right: Question Palette Matrix (1 Column) -->
-        <div class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
+        <!-- Right: Question Palette Matrix -->
+        <div id="exam-matrix-panel" class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
           <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-table-cells text-sky-400"></i>
             <span>Question Matrix</span>
@@ -338,7 +433,6 @@
             </div>
           </div>
 
-          <!-- Dynamic Grid Chips -->
           <div id="exam-palette-grid" class="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto custom-scroll pr-1"></div>
 
           <button onclick="promptSubmitExam()" class="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20">
@@ -349,41 +443,48 @@
       </div>
     </section>
 
-    <!-- VIEW 3: SCORECARD SUMMARY WITH APPLIED +4 / −1 SCHEME -->
+    <!-- VIEW 3: SCORECARD SUMMARY -->
     <section id="view-result" class="hidden">
-      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-xl mx-auto shadow-2xl relative overflow-hidden">
-        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
-          <i class="fa-solid fa-award"></i>
+      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-xl mx-auto shadow-2xl relative overflow-hidden print-break">
+        
+        <div class="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg">🩺</div>
+            <div class="text-left">
+              <h2 class="text-base font-extrabold text-white print-black">MBBS CBT Candidate Report</h2>
+              <p id="print-candidate-meta" class="text-xs text-slate-400 font-medium">Candidate Report Card</p>
+            </div>
+          </div>
+          <button onclick="window.print()" class="no-print px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/[0.08] transition flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> Print PDF
+          </button>
         </div>
-        <h2 class="text-2xl font-black text-white text-center">Examination Result</h2>
-        <p id="result-test-title" class="text-xs text-slate-400 mt-1 mb-6 font-medium text-center">Subject Mock Test</p>
 
-        <!-- True +4 / -1 Competitive Scoring Box -->
         <div class="glass-input rounded-2xl p-5 mb-6 text-center border border-amber-500/30 bg-amber-950/15">
-          <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Net Competitive Score (+4 / −1 Scheme)</div>
-          <div id="result-stat-net-score" class="text-3xl sm:text-4xl font-black text-white mt-1">0 <span class="text-xs text-slate-400 font-normal">/ 0 Marks</span></div>
+          <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Net Score (+4 / −1 Scheme)</div>
+          <div id="result-stat-net-score" class="text-3xl sm:text-4xl font-black text-white mt-1 print-black">0 <span class="text-xs text-slate-400 font-normal">/ 0 Marks</span></div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div class="glass-input rounded-2xl p-3 text-center">
             <div class="text-[10px] uppercase font-bold text-emerald-400">Correct (+4)</div>
-            <div id="result-stat-correct" class="text-base font-black text-white mt-0.5">0</div>
+            <div id="result-stat-correct" class="text-base font-black text-white mt-0.5 print-black">0</div>
           </div>
           <div class="glass-input rounded-2xl p-3 text-center">
             <div class="text-[10px] uppercase font-bold text-rose-400">Wrong (−1)</div>
-            <div id="result-stat-wrong" class="text-base font-black text-white mt-0.5">0</div>
+            <div id="result-stat-wrong" class="text-base font-black text-white mt-0.5 print-black">0</div>
           </div>
           <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-slate-400">Unanswered</div>
-            <div id="result-stat-blank" class="text-base font-black text-white mt-0.5">0</div>
+            <div class="text-[10px] uppercase font-bold text-slate-400">Accuracy</div>
+            <div id="result-stat-accuracy" class="text-base font-black text-emerald-400 mt-0.5 print-black">0%</div>
           </div>
           <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-sky-400">Accuracy</div>
-            <div id="result-stat-accuracy" class="text-base font-black text-emerald-400 mt-0.5">0%</div>
+            <div class="text-[10px] uppercase font-bold text-sky-400">Lucky Guesses</div>
+            <div id="result-stat-lucky" class="text-base font-black text-amber-300 mt-0.5 print-black">0</div>
           </div>
         </div>
 
-        <div class="space-y-2.5">
+        <div class="space-y-2.5 no-print">
           <button onclick="openFullAnswerReview()" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
             <i class="fa-solid fa-list-check"></i>
             <span>Full Answer Key & Rationales Review</span>
@@ -400,6 +501,40 @@
 
   </main>
 
+  <!-- ================= CUSTOM TEST BUILDER MODAL ================= -->
+  <div id="custom-test-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white/[0.08]">
+      <div class="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-sliders"></i></div>
+          <h3 class="text-sm font-extrabold text-white">Custom Test Builder</h3>
+        </div>
+        <button onclick="closeCustomTestModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Select Subjects / Topics:</label>
+          <div id="custom-builder-topics" class="max-h-44 overflow-y-auto custom-scroll space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-white/[0.06]"></div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Question Count:</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button onclick="selectCustomCount(10)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="10">10 Qs</button>
+            <button onclick="selectCustomCount(20)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="20">20 Qs</button>
+            <button onclick="selectCustomCount(30)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="30">30 Qs</button>
+            <button onclick="selectCustomCount(50)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="50">50 Qs</button>
+          </div>
+        </div>
+
+        <button onclick="generateAndLaunchCustomTest()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition shadow-lg shadow-sky-600/25">
+          Generate & Start Mixed Test
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= SUBMIT CONFIRMATION AUDIT MODAL ================= -->
   <div id="submit-confirm-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/[0.08] text-center">
@@ -407,7 +542,7 @@
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
       <h3 class="text-base font-extrabold text-white">Confirm Exam Submission</h3>
-      <p class="text-xs text-slate-400 mt-1 mb-5">Are you sure you want to finalize this exam? Please review your attempt summary below:</p>
+      <p class="text-xs text-slate-400 mt-1 mb-5">Review your summary before applying the +4 / −1 competitive score:</p>
 
       <div class="grid grid-cols-3 gap-2.5 mb-6 text-left">
         <div class="glass-input p-3 rounded-xl">
@@ -440,7 +575,7 @@
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm shadow-inner">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm">
             <i class="fa-solid fa-list-check"></i>
           </div>
           <div>
@@ -475,7 +610,6 @@
         </button>
       </div>
 
-      <!-- Tabs -->
       <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold">
         <button onclick="switchNotebookTab('bookmarks')" id="nb-tab-bookmarks" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition">
           <i class="fa-solid fa-bookmark mr-1.5"></i> Saved Bookmarks
@@ -486,9 +620,9 @@
       </div>
 
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4">
-        <div id="notebook-action-header" class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <span id="notebook-count-label" class="text-xs text-slate-400 font-semibold">0 items</span>
-          <button onclick="launchCurrentNotebookAsExam()" id="notebook-start-btn" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+          <button onclick="launchCurrentNotebookAsExam()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
             <i class="fa-solid fa-play text-[10px]"></i>
             <span>Practise This Set</span>
           </button>
@@ -499,17 +633,17 @@
     </div>
   </div>
 
-  <!-- ================= STUDENT ANALYTICS & WEAKEST TOPICS MODAL ================= -->
+  <!-- ================= STUDENT ANALYTICS, WEAKEST TOPICS & BADGES MODAL ================= -->
   <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl relative border border-white/[0.08] overflow-hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative border border-white/[0.08] overflow-hidden">
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm">
             <i class="fa-solid fa-chart-pie"></i>
           </div>
           <div>
-            <h3 class="text-sm font-extrabold text-white">Candidate Progress Analytics</h3>
-            <p id="student-stats-name" class="text-[11px] text-slate-400">Topic accuracy & recent tests</p>
+            <h3 class="text-sm font-extrabold text-white">Candidate Progress & Badges</h3>
+            <p id="student-stats-name" class="text-[11px] text-slate-400">Performance diagnostic dashboard</p>
           </div>
         </div>
         <button onclick="closeStudentStatsModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -518,41 +652,50 @@
       </div>
 
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-4 gap-2.5">
           <div class="glass-input rounded-2xl p-3 text-center">
             <div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div>
-            <div id="self-tests-taken" class="text-xl font-black text-white mt-0.5">0</div>
+            <div id="self-tests-taken" class="text-lg font-black text-white mt-0.5">0</div>
           </div>
           <div class="glass-input rounded-2xl p-3 text-center">
             <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div>
-            <div id="self-avg-accuracy" class="text-xl font-black text-emerald-400 mt-0.5">0%</div>
+            <div id="self-avg-accuracy" class="text-lg font-black text-emerald-400 mt-0.5">0%</div>
           </div>
           <div class="glass-input rounded-2xl p-3 text-center">
             <div class="text-[10px] font-bold text-slate-400 uppercase">Net Marks</div>
-            <div id="self-net-marks" class="text-xl font-black text-amber-400 mt-0.5">0</div>
+            <div id="self-net-marks" class="text-lg font-black text-amber-400 mt-0.5">0</div>
+          </div>
+          <div class="glass-input rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Lucky Guesses</div>
+            <div id="self-lucky-guesses" class="text-lg font-black text-sky-400 mt-0.5">0</div>
           </div>
         </div>
 
-        <!-- Weakest Topics First -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-medal text-amber-400"></i>
+            <span>Achievements & Badges</span>
+          </h4>
+          <div id="badges-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+        </div>
+
         <div>
           <div class="flex items-center justify-between mb-2.5">
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               <i class="fa-solid fa-stethoscope text-rose-400"></i>
               <span>Accuracy by Topic (Weakest First)</span>
             </h4>
-            <span class="text-[10px] text-slate-500">Auto-calculated</span>
+            <span class="text-[10px] text-slate-500">Self-calibrating</span>
           </div>
-          <div id="weak-topics-container" class="space-y-2.5"></div>
+          <div id="weak-topics-container" class="space-y-2.5 max-h-44 overflow-y-auto custom-scroll pr-1"></div>
         </div>
 
-        <!-- Recent Attempts Log -->
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
             <i class="fa-solid fa-clock-rotate-left text-sky-400"></i>
-            <span>Recent Test Attempts</span>
+            <span>Recent Test History</span>
           </h4>
-          <div id="recent-attempts-container" class="space-y-2"></div>
+          <div id="recent-attempts-container" class="space-y-2 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
         </div>
       </div>
     </div>
@@ -562,7 +705,6 @@
   <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       
-      <!-- Admin Top Nav Bar -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
@@ -570,7 +712,7 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Content Management, AI Question Parser & Auto-GitHub Sync</p>
+            <p class="text-[11px] text-slate-400">Curriculum, AI Parser, Candidate Audit & Auto-GitHub Sync</p>
           </div>
         </div>
         <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -579,7 +721,6 @@
       </div>
 
       <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar Navigation -->
         <aside class="w-56 border-r border-white/[0.08] bg-slate-950/70 p-4 space-y-1.5 hidden md:block">
           <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1">Management</div>
           <button onclick="switchAdminTab('content')" id="side-btn-content" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition">
@@ -598,7 +739,6 @@
           </button>
         </aside>
 
-        <!-- Right Content Area -->
         <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
 
           <!-- TAB 1: CURRICULUM MODULES -->
@@ -635,7 +775,7 @@
             <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
               <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
                 <i class="fa-solid fa-brain"></i>
-                <span>Gemini 3.8-Flash Medical Q-Bank Extractor</span>
+                <span>Gemini AI Medical Q-Bank Extractor</span>
               </div>
               Upload any medical PDF (even multi-column, unformatted, or past recalls) or paste raw text. The AI auto-extracts questions, formats 4 distinct choices, detects the right answer key, and writes a detailed clinical rationale.
             </div>
@@ -651,7 +791,6 @@
               </div>
             </div>
 
-            <!-- PDF Dropzone -->
             <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
               <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
               <label for="pdf-file-selector" class="cursor-pointer block">
@@ -663,7 +802,6 @@
               </label>
             </div>
 
-            <!-- Text Paste Fallback -->
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="block text-[11px] font-bold uppercase text-slate-400">Or Paste Raw Question Text Directly:</label>
@@ -679,7 +817,6 @@
 
             <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
 
-            <!-- Staging Review Area -->
             <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
               <div class="flex items-center justify-between">
                 <div>
@@ -701,7 +838,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all paid student seats</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all candidate tests</p>
               </div>
               <div class="flex items-center gap-2">
                 <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
@@ -738,7 +875,7 @@
                       <th class="p-3.5">Candidate</th>
                       <th class="p-3.5">Student ID</th>
                       <th class="p-3.5">Test Title</th>
-                      <th class="p-3.5">Score</th>
+                      <th class="p-3.5">Net Score (+4/−1)</th>
                       <th class="p-3.5">Accuracy</th>
                       <th class="p-3.5">Status</th>
                       <th class="p-3.5">Date</th>
@@ -752,11 +889,10 @@
 
           <!-- TAB 4: API & DIRECT REPOSITORY SYNC -->
           <div id="admin-tab-settings" class="hidden space-y-4">
-            <!-- Gemini AI Key -->
             <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-brain text-sky-400"></i>
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Engine (Model: gemini-3.8-flash)</h4>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Engine (gemini-3.8-flash)</h4>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed font-medium">
                 Free key from <a href="https://aistudio.google.com/" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Used to parse multi-page PDFs and extract clinical explanations.
@@ -770,7 +906,6 @@
               </div>
             </div>
 
-            <!-- GitHub Key -->
             <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-lock text-amber-400"></i>
@@ -912,14 +1047,20 @@
     let stagedModule = null;
     let editingContext = null;
     
-    // Test Runtime State
+    let currentFontScale = 1.0;
+    let isFocusModeActive = false;
+
     let isFormalExamMode = false;
     let activeExam = {
       test: null,
       questions: [],
       cursor: 0,
       answers: {},
+      confidences: {},
       flagged: new Set(),
+      questionTimes: {},
+      currentQStartTime: Date.now(),
+      qInterval: null,
       seconds: 0,
       totalSecondsAllocated: 0,
       timer: null
@@ -930,6 +1071,7 @@
       processAuthenticationPipeline();
       initTokenUI();
       updateNotebookCounters();
+      updateDailyStreakUI();
     });
 
     async function loadDatabaseWithGlobalFallback() {
@@ -1043,6 +1185,7 @@
       const adminBtn = document.getElementById("admin-hub-btn");
       const statsBtn = document.getElementById("student-stats-btn");
       const notebookBtn = document.getElementById("notebook-hub-btn");
+      const customTestBtn = document.getElementById("custom-test-btn");
 
       if (activeUser.role === "admin") {
         roleBadge.textContent = "ADMIN";
@@ -1051,6 +1194,7 @@
         adminBtn.classList.remove("hidden");
         statsBtn.classList.add("hidden");
         notebookBtn.classList.remove("hidden");
+        customTestBtn.classList.remove("hidden");
       } else {
         roleBadge.textContent = "VERIFIED SEAT";
         roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
@@ -1058,6 +1202,7 @@
         adminBtn.classList.add("hidden");
         statsBtn.classList.remove("hidden");
         notebookBtn.classList.remove("hidden");
+        customTestBtn.classList.remove("hidden");
       }
 
       authBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Logout</span>';
@@ -1066,6 +1211,7 @@
       syncSubjectDropdowns();
       renderBrowsePortal();
       updateNotebookCounters();
+      updateDailyStreakUI();
     }
 
     function handleAuthButtonClick() {
@@ -1086,6 +1232,7 @@
       document.getElementById("admin-hub-btn").classList.add("hidden");
       document.getElementById("student-stats-btn").classList.add("hidden");
       document.getElementById("notebook-hub-btn").classList.add("hidden");
+      document.getElementById("custom-test-btn").classList.add("hidden");
 
       document.getElementById("view-locked").classList.remove("hidden");
 
@@ -1192,6 +1339,29 @@
       });
     }
 
+    // ================= FONT SIZING & FOCUS MODE =================
+    function changeFontSize(delta) {
+      currentFontScale = Math.max(0.85, Math.min(1.35, currentFontScale + delta));
+      document.documentElement.style.setProperty('--font-scale', `${currentFontScale}rem`);
+    }
+
+    function toggleFocusMode() {
+      isFocusModeActive = !isFocusModeActive;
+      const header = document.getElementById("main-header");
+      const matrix = document.getElementById("exam-matrix-panel");
+      const mainPanel = document.getElementById("exam-main-panel");
+
+      if (isFocusModeActive) {
+        header.classList.add("hidden");
+        matrix.classList.add("hidden");
+        mainPanel.className = "lg:col-span-4 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative";
+      } else {
+        header.classList.remove("hidden");
+        matrix.classList.remove("hidden");
+        mainPanel.className = "lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative";
+      }
+    }
+
     // ================= CBT ENGINE & EXAM DYNAMICS =================
     function launchExamSession(chapterId) {
       if (!activeUser) return lockPortalDisplay();
@@ -1221,7 +1391,6 @@
         };
       });
 
-      // Default: 1.5 minutes per question for countdown
       const timePerQuestionSeconds = 90;
       const totalSeconds = preparedQuestions.length * timePerQuestionSeconds;
 
@@ -1230,13 +1399,18 @@
         questions: preparedQuestions,
         cursor: 0,
         answers: {},
+        confidences: {},
         flagged: new Set(),
+        questionTimes: {},
+        currentQStartTime: Date.now(),
+        qInterval: null,
         seconds: 0,
         totalSecondsAllocated: totalSeconds,
         timer: null
       };
 
       startTimerClock();
+      startQuestionTiming();
 
       document.getElementById("exam-module-tag").textContent = (testMeta.topic || currentSubjectKey).toUpperCase();
       document.getElementById("exam-module-title").textContent = testMeta.title;
@@ -1260,7 +1434,7 @@
         activeExam.seconds++;
 
         if (isFormalExamMode) {
-          label.textContent = "Time Remaining (Countdown)";
+          label.textContent = "Countdown Timer";
           const rem = Math.max(0, activeExam.totalSecondsAllocated - activeExam.seconds);
           const m = String(Math.floor(rem / 60)).padStart(2, '0');
           const s = String(rem % 60).padStart(2, '0');
@@ -1268,16 +1442,40 @@
 
           if (rem <= 0) {
             clearInterval(activeExam.timer);
-            alert("⏰ Time is up! Your exam will now be submitted automatically.");
+            alert("⏰ Exam time expired! Finalizing submissions.");
             finalizeExam();
           }
         } else {
-          label.textContent = "Elapsed Study Time";
+          label.textContent = "Elapsed Time";
           const m = String(Math.floor(activeExam.seconds / 60)).padStart(2, '0');
           const s = String(activeExam.seconds % 60).padStart(2, '0');
           display.textContent = `${m}:${s}`;
         }
       }, 1000);
+    }
+
+    function startQuestionTiming() {
+      if (activeExam.qInterval) clearInterval(activeExam.qInterval);
+      activeExam.currentQStartTime = Date.now();
+      const qDisplay = document.getElementById("q-timer-display");
+
+      activeExam.qInterval = setInterval(() => {
+        const cur = activeExam.cursor;
+        const past = activeExam.questionTimes[cur] || 0;
+        const currentElapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000) + past;
+        qDisplay.textContent = `${currentElapsed}s`;
+        if (currentElapsed > 90) {
+          qDisplay.className = "font-mono text-rose-400 font-bold";
+        } else {
+          qDisplay.className = "font-mono text-sky-300";
+        }
+      }, 1000);
+    }
+
+    function recordCurrentQuestionElapsed() {
+      const cur = activeExam.cursor;
+      const elapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000);
+      activeExam.questionTimes[cur] = (activeExam.questionTimes[cur] || 0) + elapsed;
     }
 
     function toggleExamMode(formal) {
@@ -1289,6 +1487,28 @@
       renderActiveExamCard();
     }
 
+    function setConfidence(type) {
+      const cur = activeExam.cursor;
+      activeExam.confidences[cur] = type;
+      updateConfidenceUI(type);
+    }
+
+    function updateConfidenceUI(type) {
+      const btnSure = document.getElementById("conf-btn-sure");
+      const btnGuess = document.getElementById("conf-btn-guess");
+
+      if (type === 'sure') {
+        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition";
+        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
+      } else if (type === 'guess') {
+        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
+        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-amber-500 bg-amber-500/20 text-amber-300 transition";
+      } else {
+        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
+        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
+      }
+    }
+
     function toggleFlagCurrentQuestion() {
       const cur = activeExam.cursor;
       const q = activeExam.questions[cur];
@@ -1297,7 +1517,6 @@
         activeExam.flagged.delete(cur);
       } else {
         activeExam.flagged.add(cur);
-        // Also add to candidate's saved Bookmarks Notebook
         saveQuestionToNotebook('bookmarks', q);
       }
       renderActiveExamCard();
@@ -1329,7 +1548,9 @@
         btn.className = `h-8 rounded-lg text-xs font-mono font-bold border transition ${bg}`;
         btn.textContent = idx + 1;
         btn.onclick = () => {
+          recordCurrentQuestionElapsed();
           activeExam.cursor = idx;
+          startQuestionTiming();
           renderActiveExamCard();
           renderPaletteGrid();
         };
@@ -1357,11 +1578,17 @@
       const flagLabel = document.getElementById("exam-flag-label");
       if (activeExam.flagged.has(cur)) {
         flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Flagged & Bookmarked";
+        flagLabel.textContent = "Flagged";
       } else {
         flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Mark for Review";
+        flagLabel.textContent = "Flag";
       }
+
+      updateConfidenceUI(activeExam.confidences[cur] || null);
+
+      const noteInput = document.getElementById("q-note-input");
+      const noteKey = getNoteStorageKey(q.question);
+      noteInput.value = localStorage.getItem(noteKey) || "";
 
       const optsContainer = document.getElementById("exam-options-list");
       optsContainer.innerHTML = "";
@@ -1379,15 +1606,13 @@
           btn.onclick = () => recordExamAnswer(cur, optText);
         } else {
           if (isFormalExamMode) {
-            // Exam Mode: Only shows chosen option without revealing answer key
             if (optText === chosen) {
               btn.className += "border-sky-500 bg-sky-500/15 text-sky-200 font-bold";
             } else {
               btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-400";
             }
-            btn.onclick = () => recordExamAnswer(cur, optText); // Allow changing answers in Exam Mode
+            btn.onclick = () => recordExamAnswer(cur, optText);
           } else {
-            // Practice Mode: Instant correct (+4) or incorrect (−1) lock
             if (optText === q.correctText) {
               btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
             } else if (optText === chosen && chosen !== q.correctText) {
@@ -1430,9 +1655,13 @@
       activeExam.answers[qIdx] = optionText;
       const q = activeExam.questions[qIdx];
 
-      // If answered incorrectly, automatically log to candidate's Mistakes Vault
+      if (!activeExam.confidences[qIdx]) {
+        activeExam.confidences[qIdx] = 'sure';
+      }
+
       if (optionText !== q.correctText) {
         saveQuestionToNotebook('mistakes', q);
+        queueSpacedRepetition(q);
         updateNotebookCounters();
       }
 
@@ -1441,9 +1670,11 @@
     }
 
     function stepExam(direction) {
+      recordCurrentQuestionElapsed();
       const nextIdx = activeExam.cursor + direction;
       if (nextIdx >= 0 && nextIdx < activeExam.questions.length) {
         activeExam.cursor = nextIdx;
+        startQuestionTiming();
         renderActiveExamCard();
         renderPaletteGrid();
       } else if (nextIdx >= activeExam.questions.length) {
@@ -1451,8 +1682,26 @@
       }
     }
 
-    // ================= CONFIRM-BEFORE-SUBMIT FLOW =================
+    function getNoteStorageKey(questionText) {
+      const uid = activeUser ? activeUser.uid : 'guest';
+      return `q_note_${uid}_${btoa(encodeURIComponent(questionText)).slice(0, 32)}`;
+    }
+
+    function saveCurrentQuestionNote() {
+      const q = activeExam.questions[activeExam.cursor];
+      const val = document.getElementById("q-note-input").value.trim();
+      const key = getNoteStorageKey(q.question);
+      if (val) {
+        localStorage.setItem(key, val);
+        alert("Clinical note saved!");
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+
+    // ================= CONFIRMATION & SCORING =================
     function promptSubmitExam() {
+      recordCurrentQuestionElapsed();
       const total = activeExam.questions.length;
       const answered = Object.keys(activeExam.answers).length;
       const flagged = activeExam.flagged.size;
@@ -1474,39 +1723,46 @@
       finalizeExam();
     }
 
-    // ================= SCORING (+4 / -1 APPLIED) =================
     function finalizeExam() {
       if (activeExam.timer) clearInterval(activeExam.timer);
+      if (activeExam.qInterval) clearInterval(activeExam.qInterval);
+      recordCurrentQuestionElapsed();
 
       let correct = 0;
       let wrong = 0;
       let blank = 0;
+      let luckyGuesses = 0;
 
       activeExam.questions.forEach((q, idx) => {
         if (!activeExam.answers.hasOwnProperty(idx)) {
           blank++;
         } else if (activeExam.answers[idx] === q.correctText) {
           correct++;
+          if (activeExam.confidences[idx] === 'guess') luckyGuesses++;
         } else {
           wrong++;
           saveQuestionToNotebook('mistakes', q);
+          queueSpacedRepetition(q);
         }
       });
 
       const total = activeExam.questions.length;
-      // True Competitive Medical Scoring Scheme (+4 for correct, -1 for wrong)
       const netMarks = (correct * 4) - (wrong * 1);
       const maxPossibleMarks = total * 4;
       const accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
+
+      document.getElementById("print-candidate-meta").textContent = 
+        `${activeUser ? activeUser.name : 'Candidate'} • ID: ${activeUser ? activeUser.uid : 'STU'} • Date: ${new Date().toLocaleDateString()}`;
 
       document.getElementById("result-test-title").textContent = activeExam.test.title;
       document.getElementById("result-stat-net-score").innerHTML = `${netMarks} <span class="text-xs text-slate-400 font-normal">/ ${maxPossibleMarks} Max Marks</span>`;
       document.getElementById("result-stat-correct").textContent = `${correct} (+${correct * 4})`;
       document.getElementById("result-stat-wrong").textContent = `${wrong} (−${wrong})`;
-      document.getElementById("result-stat-blank").textContent = `${blank}`;
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
+      document.getElementById("result-stat-lucky").textContent = `${luckyGuesses} Lucky`;
 
-      storeExamAnalytics(activeExam.test.title, netMarks, maxPossibleMarks, correct, wrong, blank, accuracy);
+      storeExamAnalytics(activeExam.test.title, netMarks, maxPossibleMarks, correct, wrong, blank, accuracy, luckyGuesses);
+      advanceDailyStreak();
 
       document.getElementById("view-exam").classList.add("hidden");
       document.getElementById("view-result").classList.remove("hidden");
@@ -1520,6 +1776,7 @@
     function terminateExamPrompt() {
       if (confirm("Terminate this test? Progress will not be registered.")) {
         if (activeExam.timer) clearInterval(activeExam.timer);
+        if (activeExam.qInterval) clearInterval(activeExam.qInterval);
         returnToBrowseView();
       }
     }
@@ -1530,6 +1787,7 @@
       document.getElementById("view-browse").classList.remove("hidden");
       renderBrowsePortal();
       updateNotebookCounters();
+      updateDailyStreakUI();
     }
 
     // ================= POST-EXAM FULL SOLUTION REVIEW =================
@@ -1544,10 +1802,14 @@
         const isAnswered = activeExam.answers.hasOwnProperty(idx);
         const isCorrect = isAnswered && chosen === q.correctText;
         const isWrong = isAnswered && chosen !== q.correctText;
+        const conf = activeExam.confidences[idx] || "none";
+        const timeSpent = activeExam.questionTimes[idx] || 0;
 
-        let badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Unanswered (0)</span>';
+        let badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Unanswered</span>';
         if (isCorrect) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Correct (+4)</span>';
         if (isWrong) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">Incorrect (−1)</span>';
+
+        const savedNote = localStorage.getItem(getNoteStorageKey(q.question)) || "";
 
         const card = document.createElement("div");
         card.className = "glass-panel p-5 rounded-2xl border border-white/[0.08] space-y-3";
@@ -1556,6 +1818,8 @@
             <div class="flex items-center gap-2">
               <span class="font-mono text-slate-400 font-bold text-xs">Q${idx + 1}.</span>
               <span class="text-[10px] font-bold text-indigo-300 uppercase px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">${q.topic}</span>
+              <span class="text-[10px] font-mono text-slate-400">⏱️ ${timeSpent}s</span>
+              ${conf === 'guess' ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Guessed</span>' : ''}
             </div>
             ${badge}
           </div>
@@ -1588,6 +1852,12 @@
             </span>
             <p class="text-slate-300 leading-relaxed">${q.explanation}</p>
           </div>
+
+          ${savedNote ? `
+            <div class="p-3 rounded-xl bg-sky-950/30 border border-sky-500/20 text-xs text-sky-200">
+              <span class="font-bold">📝 Your Note:</span> ${savedNote}
+            </div>
+          ` : ''}
         `;
         container.appendChild(card);
       });
@@ -1597,6 +1867,199 @@
 
     function closeFullAnswerReview() {
       document.getElementById("full-review-modal").classList.add("hidden");
+    }
+
+    // ================= SPACED REPETITION ENGINE (1, 3, 7 DAYS) =================
+    function getSrStorageKey() {
+      const uid = activeUser ? activeUser.uid : 'guest';
+      return `mbbs_spaced_repetition_${uid}`;
+    }
+
+    function queueSpacedRepetition(q) {
+      try {
+        const key = getSrStorageKey();
+        const queue = JSON.parse(localStorage.getItem(key) || "[]");
+        const existing = queue.find(item => item.question === q.question);
+
+        const now = Date.now();
+        if (!existing) {
+          queue.push({
+            q: q,
+            stage: 1,
+            nextReviewDate: now + (1 * 24 * 60 * 60 * 1000)
+          });
+        } else {
+          existing.stage = Math.min(3, (existing.stage || 1) + 1);
+          const days = existing.stage === 2 ? 3 : 7;
+          existing.nextReviewDate = now + (days * 24 * 60 * 60 * 1000);
+        }
+        localStorage.setItem(key, JSON.stringify(queue));
+      } catch (e) {}
+    }
+
+    function launchSpacedRepetitionQuiz() {
+      const key = getSrStorageKey();
+      const queue = JSON.parse(localStorage.getItem(key) || "[]");
+      const now = Date.now();
+      
+      const due = queue.filter(item => item.nextReviewDate <= now).map(item => item.q);
+      if (due.length === 0) {
+        return alert("🎉 Great job! No spaced repetition questions are due today. Keep studying!");
+      }
+
+      setupAndRunTest({
+        id: "spaced_repetition_test",
+        title: `Spaced Repetition Review (${due.length} Items Due)`,
+        topic: "MEMORY RETENTION"
+      }, due);
+    }
+
+    // ================= 1-TAP WRONG-ANSWERS QUIZ =================
+    function launchWrongAnswersQuiz() {
+      const mistakes = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
+      if (mistakes.length === 0) {
+        return alert("🎯 Clean record! You have no saved wrong answers in your vault.");
+      }
+
+      setupAndRunTest({
+        id: "wrong_answers_drill",
+        title: `Wrong-Answers Remediation Quiz (${mistakes.length} MCQs)`,
+        topic: "ERROR LOG"
+      }, mistakes);
+    }
+
+    // ================= DAILY 10 WITH CONSECUTIVE STREAK =================
+    function getDailyStreakData() {
+      const uid = activeUser ? activeUser.uid : 'guest';
+      return JSON.parse(localStorage.getItem(`daily_streak_${uid}`) || JSON.stringify({
+        streak: 0,
+        lastCompletedDate: null
+      }));
+    }
+
+    function updateDailyStreakUI() {
+      const data = getDailyStreakData();
+      const streakBadge = document.getElementById("header-streak-badge");
+      const streakCounter = document.getElementById("streak-counter");
+      
+      if (streakCounter) streakCounter.textContent = data.streak;
+      if (streakBadge && data.streak > 0) streakBadge.classList.remove("hidden");
+
+      const todayStr = new Date().toDateString();
+      const statusLabel = document.getElementById("daily-status-label");
+      if (statusLabel) {
+        if (data.lastCompletedDate === todayStr) {
+          statusLabel.textContent = "Completed for Today! 🎉";
+        } else {
+          statusLabel.textContent = "10 Fresh Questions Waiting";
+        }
+      }
+
+      const queue = JSON.parse(localStorage.getItem(getSrStorageKey()) || "[]");
+      const dueCount = queue.filter(item => item.nextReviewDate <= Date.now()).length;
+      const dueLabel = document.getElementById("sr-due-count");
+      if (dueLabel) dueLabel.textContent = `${dueCount} Due for Review`;
+    }
+
+    function advanceDailyStreak() {
+      const uid = activeUser ? activeUser.uid : 'guest';
+      const data = getDailyStreakData();
+      const today = new Date();
+      const todayStr = today.toDateString();
+
+      if (data.lastCompletedDate === todayStr) return;
+
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+      if (data.lastCompletedDate === yesterday) {
+        data.streak += 1;
+      } else {
+        data.streak = 1;
+      }
+      data.lastCompletedDate = todayStr;
+      localStorage.setItem(`daily_streak_${uid}`, JSON.stringify(data));
+      updateDailyStreakUI();
+    }
+
+    function launchDaily10() {
+      const allQs = [];
+      Object.keys(DB).forEach(sub => {
+        (DB[sub].chapters || []).forEach(ch => {
+          (ch.questions || []).forEach(q => allQs.push(q));
+        });
+      });
+
+      if (allQs.length < 10) return alert("Not enough questions loaded in database to create a Daily 10.");
+
+      const shuffled = [...allQs].sort(() => 0.5 - Math.random());
+      const dailySet = shuffled.slice(0, 10);
+
+      setupAndRunTest({
+        id: `daily_10_${new Date().toISOString().slice(0, 10)}`,
+        title: `Daily 10 Challenge (${new Date().toLocaleDateString()})`,
+        topic: "DAILY STREAK"
+      }, dailySet);
+    }
+
+    // ================= CUSTOM TEST BUILDER =================
+    let selectedCustomCount = 20;
+
+    function openCustomTestModal() {
+      const container = document.getElementById("custom-builder-topics");
+      container.innerHTML = "";
+
+      Object.keys(DB).forEach(subKey => {
+        const sub = DB[subKey];
+        const row = document.createElement("label");
+        row.className = "flex items-center gap-2 p-2 rounded-lg hover:bg-slate-900 cursor-pointer text-slate-300";
+        row.innerHTML = `
+          <input type="checkbox" name="custom_topic" value="${subKey}" checked class="rounded border-slate-700 bg-slate-900 text-sky-500">
+          <span class="font-bold">${sub.name}</span>
+          <span class="text-[10px] text-slate-500">(${sub.chapters?.length || 0} modules)</span>
+        `;
+        container.appendChild(row);
+      });
+
+      selectCustomCount(20);
+      document.getElementById("custom-test-modal").classList.remove("hidden");
+    }
+
+    function closeCustomTestModal() {
+      document.getElementById("custom-test-modal").classList.add("hidden");
+    }
+
+    function selectCustomCount(cnt) {
+      selectedCustomCount = cnt;
+      document.querySelectorAll(".count-btn").forEach(btn => {
+        if (parseInt(btn.dataset.val) === cnt) {
+          btn.className = "count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold";
+        } else {
+          btn.className = "count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 text-slate-400 font-bold hover:border-sky-500";
+        }
+      });
+    }
+
+    function generateAndLaunchCustomTest() {
+      const checkedBoxes = Array.from(document.querySelectorAll("input[name='custom_topic']:checked")).map(cb => cb.value);
+      if (checkedBoxes.length === 0) return alert("Select at least one subject.");
+
+      const pool = [];
+      checkedBoxes.forEach(subKey => {
+        (DB[subKey]?.chapters || []).forEach(ch => {
+          (ch.questions || []).forEach(q => pool.push(q));
+        });
+      });
+
+      if (pool.length === 0) return alert("No questions available in selected subjects.");
+
+      const shuffled = pool.sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, selectedCustomCount);
+
+      closeCustomTestModal();
+      setupAndRunTest({
+        id: `custom_${Date.now()}`,
+        title: `Custom Mixed Examination (${selected.length} Questions)`,
+        topic: "CUSTOM MIX"
+      }, selected);
     }
 
     // ================= NOTEBOOK ENGINE (BOOKMARKS & MISTAKES) =================
@@ -1609,7 +2072,6 @@
       try {
         const key = getNotebookKey(type);
         const list = JSON.parse(localStorage.getItem(key) || "[]");
-        // Prevent duplicate questions
         if (!list.some(item => item.question === q.question)) {
           list.push({
             id: q.id,
@@ -1630,10 +2092,8 @@
         const bm = JSON.parse(localStorage.getItem(getNotebookKey('bookmarks')) || "[]");
         const ms = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
 
-        const elBm = document.getElementById("quick-bookmark-count");
         const elMs = document.getElementById("quick-mistakes-count");
-        if (elBm) elBm.textContent = `${bm.length} Saved Questions`;
-        if (elMs) elMs.textContent = `${ms.length} Recorded Errors`;
+        if (elMs) elMs.textContent = `${ms.length} Errors Recorded`;
       } catch (e) {}
     }
 
@@ -1663,7 +2123,7 @@
       container.innerHTML = "";
 
       if (list.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No questions saved in this list yet.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No items in this vault.</div>`;
         return;
       }
 
@@ -1716,13 +2176,12 @@
       }, list);
     }
 
-    // ================= PROGRESS & TOPIC ANALYTICS =================
-    function storeExamAnalytics(testTitle, netMarks, maxMarks, correct, wrong, blank, accuracy) {
+    // ================= PROGRESS, WEAKEST TOPICS & BADGES =================
+    function storeExamAnalytics(testTitle, netMarks, maxMarks, correct, wrong, blank, accuracy, luckyGuesses) {
       if (!activeUser) return;
       try {
-        const auditLog = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]");
+        const auditLog = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]");
         
-        // Break down accuracy per topic for this attempt
         const topicBreakdown = {};
         activeExam.questions.forEach((q, idx) => {
           const t = q.topic || "Core Topic";
@@ -1741,30 +2200,87 @@
           wrong: wrong,
           blank: blank,
           accuracy: accuracy,
+          luckyGuesses: luckyGuesses,
           topics: topicBreakdown,
           timestamp: new Date().toLocaleString()
         });
-        localStorage.setItem("mbbs_exam_audit_v3", JSON.stringify(auditLog));
+        localStorage.setItem("mbbs_exam_audit_v4", JSON.stringify(auditLog));
       } catch (e) {}
     }
 
     function openStudentStatsModal() {
       if (!activeUser) return;
       let audit = [];
-      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]"); } catch (e) {}
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]"); } catch (e) {}
       const userRecords = audit.filter(r => r.uid === activeUser.uid);
 
       document.getElementById("student-stats-name").textContent = `${activeUser.name} (${activeUser.uid})`;
       document.getElementById("self-tests-taken").textContent = userRecords.length;
 
       let netMarksTotal = 0;
-      userRecords.forEach(r => netMarksTotal += (r.netMarks || 0));
+      let totalLucky = 0;
+      let totalQuestionsAttempted = 0;
+
+      userRecords.forEach(r => {
+        netMarksTotal += (r.netMarks || 0);
+        totalLucky += (r.luckyGuesses || 0);
+        totalQuestionsAttempted += (r.correct + r.wrong);
+      });
+
       document.getElementById("self-net-marks").textContent = netMarksTotal;
+      document.getElementById("self-lucky-guesses").textContent = totalLucky;
 
       const avg = userRecords.length > 0 ? Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length) : 0;
       document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
 
-      // 1. Weakest Topics First Calculation
+      // 1. Badges & Honors Calculation
+      const streakData = getDailyStreakData();
+      const badgesContainer = document.getElementById("badges-container");
+      badgesContainer.innerHTML = "";
+
+      const badges = [
+        {
+          name: "Century Club",
+          desc: "100+ Qs Solved",
+          icon: "fa-bullseye",
+          earned: totalQuestionsAttempted >= 100
+        },
+        {
+          name: "Streak Master",
+          desc: "7-Day Streak",
+          icon: "fa-fire",
+          earned: streakData.streak >= 7
+        },
+        {
+          name: "Distinction",
+          desc: "90%+ on any Test",
+          icon: "fa-gem",
+          earned: userRecords.some(r => r.accuracy >= 90)
+        },
+        {
+          name: "Memory Beast",
+          desc: "Active Spaced Repetition",
+          icon: "fa-brain",
+          earned: JSON.parse(localStorage.getItem(getSrStorageKey()) || "[]").length > 0
+        }
+      ];
+
+      badges.forEach(b => {
+        const badgeEl = document.createElement("div");
+        const activeStyles = b.earned 
+          ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+          : "border-white/[0.04] bg-slate-900/40 text-slate-600 opacity-40";
+
+        badgeEl.className = `p-3 rounded-2xl border text-center flex flex-col items-center justify-center ${activeStyles}`;
+        badgeEl.innerHTML = `
+          <i class="fa-solid ${b.icon} text-lg mb-1"></i>
+          <span class="text-[11px] font-bold">${b.name}</span>
+          <span class="text-[9px] text-slate-400">${b.desc}</span>
+        `;
+        badgesContainer.appendChild(badgeEl);
+      });
+
+      // 2. Weakest Topics First Calculation
       const topicStats = {};
       userRecords.forEach(r => {
         if (r.topics) {
@@ -1784,11 +2300,10 @@
         return { name: t, accuracy: pct, total: topicStats[t].total };
       });
 
-      // Sort Ascending (Lowest accuracy first = weakest)
       topicList.sort((a, b) => a.accuracy - b.accuracy);
 
       if (topicList.length === 0) {
-        weakTopicsContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">Complete a test to generate your topic accuracy profile.</div>`;
+        weakTopicsContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">Complete an exam to generate your accuracy breakdown.</div>`;
       } else {
         topicList.forEach(item => {
           let color = "bg-rose-500";
@@ -1810,14 +2325,14 @@
         });
       }
 
-      // 2. Chronological Recent Attempts Log
+      // 3. Recent Attempts Log
       const recentContainer = document.getElementById("recent-attempts-container");
       recentContainer.innerHTML = "";
 
       if (userRecords.length === 0) {
-        recentContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">No test attempts logged yet.</div>`;
+        recentContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">No test history logged yet.</div>`;
       } else {
-        userRecords.slice().reverse().slice(0, 5).forEach(r => {
+        userRecords.slice().reverse().slice(0, 6).forEach(r => {
           const row = document.createElement("div");
           row.className = "p-3 bg-slate-900/80 rounded-xl border border-white/[0.06] flex items-center justify-between text-xs";
           row.innerHTML = `
@@ -1827,7 +2342,7 @@
             </div>
             <div class="text-right font-mono">
               <div class="font-bold text-sky-400">${r.netMarks} Marks</div>
-              <div class="text-[10px] ${r.accuracy >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${r.accuracy}% Accuracy</div>
+              <div class="text-[10px] ${r.accuracy >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${r.accuracy}% Acc</div>
             </div>
           `;
           recentContainer.appendChild(row);
@@ -1841,7 +2356,7 @@
       document.getElementById("student-stats-modal").classList.add("hidden");
     }
 
-    // ================= AI PARSER & PDF ENGINE (MODEL: GEMINI-3.8-FLASH) =================
+    // ================= AI PARSER & PDF ENGINE =================
     let stagedPdfFile = null;
     function onAdminPdfChosen(e) {
       const f = e.target.files[0];
@@ -2350,7 +2865,7 @@ ${extractedText.substring(0, 35000)}`;
 
     function renderAdminStudentAnalytics() {
       let audit = [];
-      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v3") || "[]"); } catch (e) {}
+      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]"); } catch (e) {}
       document.getElementById("metric-total-tests").textContent = audit.length;
       if (audit.length > 0) {
         const avg = Math.round(audit.reduce((a, c) => a + (c.accuracy || 0), 0) / audit.length);
