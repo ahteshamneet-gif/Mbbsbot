@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MBBS Admin Command Center</title>
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap)');
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050811; color: #f1f5f9; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
     .glass-panel { background: rgba(11, 18, 33, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
@@ -53,15 +53,53 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="switchTab('students')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-400" id="btn-tab-students">Audits</button>
-        <button onclick="switchTab('importer')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white" id="btn-tab-importer">AI Importer</button>
+        <button onclick="switchTab('importer')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-400" id="btn-tab-importer">AI Importer</button>
+        <button onclick="switchTab('students')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white" id="btn-tab-students">Audits</button>
         <button onclick="switchTab('settings')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white" id="btn-tab-settings">API Keys</button>
         <button onclick="adminLogout()" class="px-3 py-1.5 rounded-xl bg-rose-600/80 text-white text-xs font-bold hover:bg-rose-600 ml-4">Exit</button>
       </div>
     </div>
 
-    <!-- Content 1: Student Audits -->
-    <div id="admin-sec-students" class="p-6 space-y-4">
+    <!-- Content 1: AI Importer -->
+    <div id="admin-sec-importer" class="p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="text-sm font-bold text-white uppercase">AI Medical PDF Question Parser</h4>
+        <span class="text-xs text-slate-400">Uploads directly to Supabase</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block text-slate-400 uppercase font-bold mb-1">Target Subject</label>
+          <select id="import-subject" class="glass-input w-full p-2.5 rounded-xl text-white">
+            <option value="Anatomy">Anatomy</option>
+            <option value="Physiology">Physiology</option>
+            <option value="Biochemistry">Biochemistry</option>
+            <option value="Pharmacology">Pharmacology</option>
+            <option value="Pathology">Pathology</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 uppercase font-bold mb-1">Sub-Topic Tag</label>
+          <input type="text" id="import-subtopic" placeholder="e.g. Lower Limb Anatomy" class="glass-input w-full p-2.5 rounded-xl text-white">
+        </div>
+      </div>
+
+      <div class="border-2 border-dashed border-slate-700 p-6 rounded-2xl text-center bg-slate-950/40">
+        <input type="file" id="pdf-file" accept="application/pdf" class="text-xs text-slate-400">
+        <p class="text-[11px] text-slate-500 mt-2">Extracts MCQs with 4 options, key, and rationale automatically.</p>
+      </div>
+
+      <textarea id="raw-text" rows="3" placeholder="Or paste question text directly here..." class="glass-input w-full p-3 rounded-xl text-xs text-slate-300"></textarea>
+
+      <button onclick="runAiExtraction()" id="parse-btn" class="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-xl text-xs font-bold hover:from-sky-400 hover:to-indigo-500 transition shadow-lg shadow-sky-600/25">
+        Run AI Question Extraction
+      </button>
+
+      <div id="import-status-log" class="p-4 rounded-xl bg-slate-950 font-mono text-xs hidden leading-relaxed"></div>
+    </div>
+
+    <!-- Content 2: Student Audits -->
+    <div id="admin-sec-students" class="p-6 space-y-4 hidden">
       <div class="flex justify-between items-center">
         <h4 class="text-sm font-bold text-white uppercase">Real-Time Candidate Submissions</h4>
         <button onclick="fetchStudentAudits()" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold hover:bg-slate-700">Refresh Data</button>
@@ -85,49 +123,22 @@
       </div>
     </div>
 
-    <!-- Content 2: AI Importer -->
-    <div id="admin-sec-importer" class="p-6 space-y-4 hidden">
-      <h4 class="text-sm font-bold text-white uppercase">AI Medical PDF Question Parser</h4>
-      <div class="grid grid-cols-2 gap-3 text-xs">
-        <div>
-          <label class="block text-slate-400 uppercase font-bold mb-1">Target Subject</label>
-          <select id="import-subject" class="glass-input w-full p-2.5 rounded-xl text-white">
-            <option value="Anatomy">Anatomy</option>
-            <option value="Physiology">Physiology</option>
-            <option value="Biochemistry">Biochemistry</option>
-            <option value="Pharmacology">Pharmacology</option>
-            <option value="Pathology">Pathology</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-slate-400 uppercase font-bold mb-1">Sub-Topic Tag</label>
-          <input type="text" id="import-subtopic" placeholder="e.g. Upper Limb" class="glass-input w-full p-2.5 rounded-xl text-white">
-        </div>
-      </div>
-      <div class="border-2 border-dashed border-slate-700 p-6 rounded-2xl text-center">
-        <input type="file" id="pdf-file" accept="application/pdf" class="text-xs text-slate-400">
-      </div>
-      <textarea id="raw-text" rows="3" placeholder="Or paste question text directly..." class="glass-input w-full p-3 rounded-xl text-xs text-slate-300"></textarea>
-      <button onclick="runAiExtraction()" id="parse-btn" class="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-xl text-xs font-bold hover:from-sky-400 hover:to-indigo-500 transition">
-        Run AI Question Extraction
-      </button>
-      <div id="import-status-log" class="p-3 rounded-xl bg-slate-950 font-mono text-xs hidden"></div>
-    </div>
-
     <!-- Content 3: Settings -->
     <div id="admin-sec-settings" class="p-6 space-y-4 hidden">
       <h4 class="text-sm font-bold text-white uppercase">API Configuration</h4>
-      <div class="glass-panel p-4 rounded-2xl space-y-2 text-xs">
-        <label class="block font-bold text-slate-300">Gemini AI API Key</label>
-        <input type="password" id="gemini-key" placeholder="AIzaSy..." class="glass-input w-full p-2.5 rounded-xl text-white font-mono">
-        <button onclick="saveGeminiKey()" class="px-4 py-2 bg-sky-600 rounded-xl font-bold hover:bg-sky-500">Save AI Key</button>
+      <div class="glass-panel p-5 rounded-2xl space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Gemini AI API Key</label>
+          <p class="text-slate-400 mb-2">Get a free key from <a href="[https://aistudio.google.com/](https://aistudio.google.com/)" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>.</p>
+          <input type="password" id="gemini-key" placeholder="AIzaSy..." class="glass-input w-full p-2.5 rounded-xl text-white font-mono">
+        </div>
+        <button onclick="saveGeminiKey()" class="px-4 py-2 bg-sky-600 rounded-xl font-bold hover:bg-sky-500 text-white">Save AI Key</button>
       </div>
     </div>
   </div>
 
   <script>
-    const API_BASE_URL = "https://mbbsapi.ahteshamneet.workers.dev";
-    const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
+    const SUPABASE_REST = "[https://iafqcssktvejitssqawi.supabase.co/rest/v1](https://iafqcssktvejitssqawi.supabase.co/rest/v1)";
     const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
 
     function handleAdminAuth(e) {
@@ -136,11 +147,10 @@
       if (pass === "mbbsAdmin_MasterPass_9921") {
         document.getElementById("admin-auth-gate").classList.add("hidden");
         document.getElementById("admin-dashboard").classList.remove("hidden");
-        fetchStudentAudits();
         document.getElementById("gemini-key").value = localStorage.getItem("mbbs_gemini_api_key") || "";
       } else {
         const err = document.getElementById("admin-auth-error");
-        err.textContent = "Unauthorized: Invalid passkey.";
+        err.textContent = "Unauthorized: Invalid master passkey.";
         err.classList.remove("hidden");
       }
     }
@@ -151,12 +161,13 @@
     }
 
     function switchTab(t) {
-      ['students', 'importer', 'settings'].forEach(k => {
+      ['importer', 'students', 'settings'].forEach(k => {
         document.getElementById(`admin-sec-${k}`).classList.toggle("hidden", k !== t);
         document.getElementById(`btn-tab-${k}`).className = (k === t) 
           ? "tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-400"
           : "tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white";
       });
+      if (t === 'students') fetchStudentAudits();
     }
 
     async function fetchStudentAudits() {
@@ -188,19 +199,24 @@
 
     function saveGeminiKey() {
       const val = document.getElementById("gemini-key").value.trim();
-      if (val) { localStorage.setItem("mbbs_gemini_api_key", val); alert("Gemini API Key saved!"); }
+      if (val) { 
+        localStorage.setItem("mbbs_gemini_api_key", val); 
+        alert("Gemini API Key saved successfully!"); 
+      }
     }
 
     async function runAiExtraction() {
       const log = document.getElementById("import-status-log");
       const btn = document.getElementById("parse-btn");
       log.classList.remove("hidden");
-      log.textContent = "Processing extraction...";
+      log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-sky-300";
+      log.textContent = "⏳ Extracting text from document...";
       btn.disabled = true;
 
       const apiKey = localStorage.getItem("mbbs_gemini_api_key");
       if (!apiKey) {
-        log.textContent = "Error: Configure Gemini API Key under 'API Keys' first.";
+        log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-amber-400";
+        log.textContent = "⚠️ Please configure your Gemini API Key in 'API Keys' tab first.";
         btn.disabled = false;
         return;
       }
@@ -211,7 +227,7 @@
       if (file) {
         try {
           const buffer = await file.arrayBuffer();
-          pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          pdfjsLib.GlobalWorkerOptions.workerSrc = "[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js)";
           const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
           let accum = "";
           for (let i = 1; i <= doc.numPages; i++) {
@@ -221,57 +237,118 @@
           }
           text = accum + "\n" + text;
         } catch (e) {
-          log.textContent = "PDF Parse error: " + e.message;
+          log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-rose-400";
+          log.textContent = "❌ PDF Reading Error: " + e.message;
           btn.disabled = false;
           return;
         }
       }
 
       if (!text || text.length < 30) {
-        log.textContent = "Provide valid PDF or paste question text.";
+        log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-amber-400";
+        log.textContent = "⚠️ Upload a valid PDF file or paste question text.";
+        btn.disabled = false;
+        return;
+      }
+
+      log.textContent = "🧠 Calling Gemini to format questions & clinical rationales...";
+
+      const prompt = `You are a medical exam creator. Extract all multiple-choice questions from the provided text into a clean JSON array without markdown code fences.
+Format:
+[
+  {
+    "sub_topic": "Anatomy subtopic",
+    "question": "Question text?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "answer": "Option A",
+    "explanation": "Detailed clinical reasoning"
+  }
+]
+Input:
+${text.substring(0, 30000)}`;
+
+      const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      let response = null;
+      let lastErrText = "";
+
+      for (const m of models) {
+        try {
+          response = await fetch(`[https://generativelanguage.googleapis.com/v1beta/models/$](https://generativelanguage.googleapis.com/v1beta/models/$){m}:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+            })
+          });
+          if (response.ok) break;
+          const errData = await response.json();
+          lastErrText = errData.error?.message || `Failed on model ${m}`;
+        } catch (err) {
+          lastErrText = err.message;
+        }
+      }
+
+      if (!response || !response.ok) {
+        log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-rose-400";
+        log.textContent = "❌ AI API Error: " + (lastErrText || "Check your Gemini API Key.");
         btn.disabled = false;
         return;
       }
 
       try {
-        const prompt = `Extract all MCQs from this text into clean JSON array:
-[{"sub_topic":"Topic Name","question":"Question text?","options":["A","B","C","D"],"answer":"A","explanation":"Rationale"}]
-Text:\n${text.substring(0, 30000)}`;
+        const data = await response.json();
+        let rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawContent) {
+          throw new Error("No output content generated by the AI.");
+        }
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-        });
-        const data = await res.json();
-        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        // Clean out markdown backticks if returned
+        rawContent = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
+        const parsed = JSON.parse(rawContent);
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          throw new Error("AI did not find any recognizable MCQs in the provided document.");
+        }
 
         const subject = document.getElementById("import-subject").value;
-        const subtopic = document.getElementById("import-subtopic").value || "General";
+        const subtopic = document.getElementById("import-subtopic").value.trim() || "General";
 
-        // Push directly to Supabase questions table
+        log.textContent = `💾 Uploading ${parsed.length} questions directly to Supabase...`;
+
         const insertPayload = parsed.map(q => ({
           subject: subject,
           sub_topic: q.sub_topic || subtopic,
           question: q.question,
           options: q.options,
           answer: q.answer,
-          explanation: q.explanation || ""
+          explanation: q.explanation || "Clinical reasoning per standard guidelines."
         }));
 
         const sRes = await fetch(`${SUPABASE_REST}/questions`, {
           method: "POST",
-          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": "application/json" },
+          headers: {
+            "apikey": SUPABASE_ANON,
+            "Authorization": `Bearer ${SUPABASE_ANON}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
           body: JSON.stringify(insertPayload)
         });
 
         if (sRes.ok) {
-          log.textContent = `Success! ${insertPayload.length} questions extracted and uploaded directly to Supabase!`;
+          log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-emerald-400";
+          log.textContent = `🎉 Success! Successfully extracted and uploaded ${insertPayload.length} questions to ${subject}! Students can now see and practice them.`;
         } else {
-          log.textContent = "Failed saving to database: " + await sRes.text();
+          const supaErr = await sRes.text();
+          log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-rose-400";
+          log.textContent = "❌ Supabase write failed: " + supaErr;
         }
       } catch (err) {
-        log.textContent = "AI Error: " + err.message;
+        log.className = "p-4 rounded-xl bg-slate-950 font-mono text-xs text-rose-400";
+        log.textContent = "❌ Parsing Error: " + err.message;
       }
+
       btn.disabled = false;
     }
   </script>
