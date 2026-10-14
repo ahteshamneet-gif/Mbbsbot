@@ -95,16 +95,18 @@
       color: #38bdf8;
     }
 
-    .btn-exit {
-      background: rgba(225, 29, 72, 0.2);
-      border: 1px solid rgba(225, 29, 72, 0.4);
-      color: #fda4af;
-      font-weight: 700;
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
       font-size: 0.75rem;
-      border-radius: 0.65rem;
-      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
       cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
     }
+
+    .btn-sm:hover { background: rgba(255, 255, 255, 0.15); }
 
     .btn-danger-sm {
       padding: 0.35rem 0.75rem;
@@ -117,6 +119,8 @@
       color: #fda4af;
     }
 
+    .btn-danger-sm:hover { background: rgba(244, 63, 94, 0.25); }
+
     table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
     th { background: #020617; color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
     td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: #cbd5e1; }
@@ -124,28 +128,8 @@
 </head>
 <body>
 
-  <!-- ADMIN AUTH GATE -->
-  <div id="admin-auth-gate" class="glass-panel" style="max-width: 420px; width: 100%; margin: auto; padding: 2rem; text-align: center;">
-    <div style="width: 3.5rem; height: 3.5rem; border-radius: 1rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
-      <i class="fa-solid fa-shield-halved"></i>
-    </div>
-    <h2 style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">Administrator Center</h2>
-    <p style="font-size: 0.75rem; color: #94a3b8; margin: 0.35rem 0 1.5rem;">Enter master credentials to unlock controls.</p>
-    
-    <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
-      <div>
-        <label style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;">Master Passkey</label>
-        <input type="password" id="admin-passkey" placeholder="Enter passkey..." class="glass-input" autocomplete="current-password">
-      </div>
-      <p id="admin-auth-error" style="display: none; font-size: 0.75rem; color: #f43f5e;"></p>
-      <button type="button" id="login-btn" onclick="executeAdminLogin()" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #b45309);">
-        <i class="fa-solid fa-bolt"></i> Unlock Dashboard
-      </button>
-    </div>
-  </div>
-
-  <!-- ADMIN ACTIVE CONSOLE -->
-  <div id="admin-dashboard" class="glass-panel" style="display: none; max-width: 1100px; width: 100%; overflow: hidden; margin: 0 auto;">
+  <!-- ADMIN ACTIVE CONSOLE (DIRECT ACCESS, NO LOGIN BLOCK) -->
+  <div id="admin-dashboard" class="glass-panel" style="max-width: 1100px; width: 100%; overflow: hidden; margin: 0 auto;">
     
     <!-- Top Navigation -->
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: #0c1322; border-bottom: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap; gap: 0.75rem;">
@@ -155,7 +139,7 @@
         </div>
         <div>
           <h3 style="font-size: 0.875rem; font-weight: 800; color: #ffffff;">MBBS Admin Command Center</h3>
-          <p style="font-size: 0.68rem; color: #94a3b8;">Gemini Pro Extraction & Supabase Sync</p>
+          <p style="font-size: 0.68rem; color: #94a3b8;">Curriculum Editor, AI Parser & Database Hub</p>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -163,7 +147,6 @@
         <button onclick="switchTab('curriculum')" class="btn-nav" id="btn-tab-curriculum"><i class="fa-solid fa-layer-group"></i> Subjects</button>
         <button onclick="switchTab('students')" class="btn-nav" id="btn-tab-students"><i class="fa-solid fa-chart-line"></i> Audits</button>
         <button onclick="switchTab('settings')" class="btn-nav" id="btn-tab-settings"><i class="fa-solid fa-key"></i> API Key</button>
-        <button onclick="adminLogout()" class="btn-exit"><i class="fa-solid fa-power-off"></i> Exit</button>
       </div>
     </div>
 
@@ -178,7 +161,7 @@
         <div>
           <label style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;">Target Subject</label>
           <select id="import-subject" class="glass-input">
-            <!-- Populated from available subjects -->
+            <!-- Dynamically populated -->
           </select>
         </div>
         <div>
@@ -269,7 +252,6 @@
   <script>
     const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
     const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
-    const MASTER_KEY = "mbbsAdmin_MasterPass_9921";
     const HARDCODED_GEMINI_KEY = "AQ.Ab8RN6IBR3bmj8lNKb88IaAsF1b1xppZ-7vFd4MXlj1nwvMVZQ";
 
     let stagedQuestions = [];
@@ -277,43 +259,9 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       loadSubjects();
-      updateSavedKeyStatus();
-      if (sessionStorage.getItem("admin_authenticated") === "true") {
-        showDashboard();
-      }
-    });
-
-    function executeAdminLogin() {
-      const pass = document.getElementById("admin-passkey").value.trim();
-      const errBox = document.getElementById("admin-auth-error");
-
-      if (pass === MASTER_KEY) {
-        sessionStorage.setItem("admin_authenticated", "true");
-        showDashboard();
-      } else {
-        errBox.textContent = "Unauthorized: Incorrect passkey.";
-        errBox.style.display = "block";
-      }
-    }
-
-    function showDashboard() {
-      document.getElementById("admin-auth-gate").style.display = "none";
-      document.getElementById("admin-dashboard").style.display = "block";
-      document.getElementById("admin-sec-importer").style.display = "flex";
       renderSubjectDropdown();
-    }
-
-    document.getElementById("admin-passkey").addEventListener("keydown", function(e) {
-      if (e.key === "Enter") executeAdminLogin();
+      updateSavedKeyStatus();
     });
-
-    function adminLogout() {
-      sessionStorage.removeItem("admin_authenticated");
-      document.getElementById("admin-dashboard").style.display = "none";
-      document.getElementById("admin-auth-gate").style.display = "block";
-      document.getElementById("admin-passkey").value = "";
-      document.getElementById("admin-auth-error").style.display = "none";
-    }
 
     function switchTab(t) {
       ['importer', 'curriculum', 'students', 'settings'].forEach(k => {
@@ -468,138 +416,4 @@
 
       log.textContent = "🧠 Calling Gemini to extract & structure questions...";
 
-      const prompt = `Extract all multiple choice questions from this text into a strict JSON array.
-Return ONLY valid JSON matching this schema:
-[
-  {
-    "sub_topic": "Subtopic name",
-    "question": "Question text?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "answer": "Option A",
-    "explanation": "High-yield clinical rationale"
-  }
-]
-Text:
-${text.substring(0, 30000)}`;
-
-      // Models to try in sequence
-      const models = [
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
-        "gemini-2.0-flash"
-      ];
-
-      let response = null;
-      let lastErr = "";
-
-      for (const m of models) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
-          
-          response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey
-            },
-            body: JSON.stringify({
-              contents: [{
-                role: "user",
-                parts: [{ text: prompt }]
-              }],
-              generationConfig: {
-                responseMimeType: "application/json"
-              }
-            })
-          });
-
-          if (response.ok) break;
-          const errData = await response.json();
-          lastErr = errData.error?.message || `Failed on model ${m}`;
-        } catch (err) {
-          lastErr = err.message;
-        }
-      }
-
-      if (!response || !response.ok) {
-        log.style.color = "#f43f5e";
-        log.textContent = "❌ AI API Error: " + lastErr;
-        btn.disabled = false;
-        return;
-      }
-
-      try {
-        const data = await response.json();
-        let rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawContent) throw new Error("No response output generated by Gemini.");
-
-        rawContent = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
-        const parsed = JSON.parse(rawContent);
-
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error("No structured questions returned by the AI.");
-        }
-
-        const subject = document.getElementById("import-subject").value;
-        const subtopic = document.getElementById("import-subtopic").value.trim() || "General";
-
-        stagedQuestions = parsed.map(q => ({
-          subject: subject,
-          sub_topic: q.sub_topic || subtopic,
-          question: q.question,
-          options: q.options || ["A", "B", "C", "D"],
-          answer: q.answer || (q.options ? q.options[0] : "A"),
-          explanation: q.explanation || "Clinical reasoning per standard guidelines."
-        }));
-
-        log.style.color = "#4ade80";
-        log.textContent = `🎉 Extracted ${stagedQuestions.length} questions! Review and edit below before saving.`;
-        renderStagedReview();
-
-      } catch (err) {
-        log.style.color = "#f43f5e";
-        log.textContent = "❌ Parsing Error: " + err.message;
-      }
-
-      btn.disabled = false;
-    }
-
-    function renderStagedReview() {
-      const container = document.getElementById("staged-review-container");
-      const list = document.getElementById("staged-items-list");
-      const countLabel = document.getElementById("staged-count-label");
-
-      if (stagedQuestions.length === 0) {
-        container.style.display = "none";
-        return;
-      }
-
-      container.style.display = "flex";
-      countLabel.textContent = stagedQuestions.length;
-      list.innerHTML = "";
-
-      stagedQuestions.forEach((q, idx) => {
-        const item = document.createElement("div");
-        item.className = "glass-panel";
-        item.style.padding = "1rem";
-        item.style.display = "flex";
-        item.style.flexDirection = "column";
-        item.style.gap = "0.5rem";
-        item.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.75rem; font-weight: 700; color: #38bdf8;">Question ${idx + 1} (${q.sub_topic})</span>
-            <button onclick="removeStagedQuestion(${idx})" class="btn-danger-sm"><i class="fa-solid fa-trash"></i> Remove</button>
-          </div>
-          <div>
-            <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">PROMPT</label>
-            <input type="text" value="${escapeHtml(q.question)}" onchange="updateStagedField(${idx}, 'question', this.value)" class="glass-input" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-            ${q.options.map((opt, optIdx) => `
-              <div>
-                <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">OPTION ${String.fromCharCode(65 + optIdx)}</label>
-                <input type="text" value="${escapeHtml(opt)}" onchange="updateStagedOption(${idx}, ${optIdx}, this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
-              </div>
-            `).join("")}
-          </div>
-          <div style="display: grid; grid-template
+      const prompt = `Extract all multiple choice questions from this text
