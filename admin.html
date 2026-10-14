@@ -106,19 +106,6 @@
       cursor: pointer;
     }
 
-    .btn-sm {
-      padding: 0.35rem 0.75rem;
-      font-size: 0.75rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.05);
-      color: #e2e8f0;
-    }
-
-    .btn-sm:hover { background: rgba(255, 255, 255, 0.15); }
-
     .btn-danger-sm {
       padding: 0.35rem 0.75rem;
       font-size: 0.75rem;
@@ -129,8 +116,6 @@
       background: rgba(244, 63, 94, 0.1);
       color: #fda4af;
     }
-
-    .btn-danger-sm:hover { background: rgba(244, 63, 94, 0.25); }
 
     table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
     th { background: #020617; color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
@@ -170,19 +155,19 @@
         </div>
         <div>
           <h3 style="font-size: 0.875rem; font-weight: 800; color: #ffffff;">MBBS Admin Command Center</h3>
-          <p style="font-size: 0.68rem; color: #94a3b8;">Full Curriculum & AI Extraction Pipeline</p>
+          <p style="font-size: 0.68rem; color: #94a3b8;">Gemini Pro Extraction & Supabase Sync</p>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
         <button onclick="switchTab('importer')" class="btn-nav active" id="btn-tab-importer"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Importer</button>
         <button onclick="switchTab('curriculum')" class="btn-nav" id="btn-tab-curriculum"><i class="fa-solid fa-layer-group"></i> Subjects</button>
         <button onclick="switchTab('students')" class="btn-nav" id="btn-tab-students"><i class="fa-solid fa-chart-line"></i> Audits</button>
-        <button onclick="switchTab('settings')" class="btn-nav" id="btn-tab-settings"><i class="fa-solid fa-key"></i> API Keys</button>
+        <button onclick="switchTab('settings')" class="btn-nav" id="btn-tab-settings"><i class="fa-solid fa-key"></i> API Key</button>
         <button onclick="adminLogout()" class="btn-exit"><i class="fa-solid fa-power-off"></i> Exit</button>
       </div>
     </div>
 
-    <!-- Section 1: AI Importer & Question Review -->
+    <!-- Section 1: AI Importer -->
     <div id="admin-sec-importer" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">AI Medical PDF Question Parser</h4>
@@ -193,7 +178,7 @@
         <div>
           <label style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;">Target Subject</label>
           <select id="import-subject" class="glass-input">
-            <!-- Populated dynamically via JS -->
+            <!-- Populated from available subjects -->
           </select>
         </div>
         <div>
@@ -215,7 +200,7 @@
 
       <div id="import-status-log" style="display: none; padding: 1rem; border-radius: 0.75rem; background: #020617; font-size: 0.75rem; line-height: 1.5;" class="font-mono"></div>
 
-      <!-- STAGING INSPECTOR / REVIEW PANEL -->
+      <!-- STAGING INSPECTOR -->
       <div id="staged-review-container" style="display: none; flex-direction: column; gap: 1rem; margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h5 style="font-size: 0.85rem; font-weight: 800; color: #ffffff;">
@@ -225,7 +210,7 @@
             <i class="fa-solid fa-cloud-arrow-up"></i> Confirm & Save to Supabase
           </button>
         </div>
-        <p style="font-size: 0.72rem; color: #94a3b8;">Review and edit questions, options, or answer keys before pushing live to the database.</p>
+        <p style="font-size: 0.72rem; color: #94a3b8;">Review, edit options, change answer keys, or remove questions before writing to the database.</p>
         <div id="staged-items-list" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;"></div>
       </div>
     </div>
@@ -236,9 +221,7 @@
         <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">Curriculum Subjects</h4>
         <button onclick="promptAddSubject()" class="btn-nav" style="color: #38bdf8; border-color: rgba(14, 165, 233, 0.4);"><i class="fa-solid fa-plus"></i> Add New Subject</button>
       </div>
-      <div id="subject-cards-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-        <!-- Rendered dynamically -->
-      </div>
+      <div id="subject-cards-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;"></div>
     </div>
 
     <!-- Section 3: Student Audits -->
@@ -270,11 +253,8 @@
     <div id="admin-sec-settings" style="display: none; padding: 1.5rem; flex-direction: column; gap: 1rem;">
       <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #ffffff;">API Key Configuration</h4>
       <div class="glass-panel" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
-        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Google AI Studio Key (Must start with AIzaSy...)</label>
-        <p style="font-size: 0.7rem; color: #94a3b8;">
-          Get your free key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #38bdf8;">aistudio.google.com/apikey</a>.
-        </p>
-        <input type="password" id="gemini-key" placeholder="AIzaSy..." class="glass-input font-mono">
+        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Active Google Gemini API Key</label>
+        <input type="text" id="gemini-key" placeholder="Paste your API key here..." class="glass-input font-mono">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <span id="key-status-text" style="font-size: 0.75rem; color: #64748b;">Checking saved key...</span>
           <button onclick="saveGeminiKey()" class="btn-primary" style="width: auto; padding: 0.5rem 1.25rem;">
@@ -290,6 +270,7 @@
     const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
     const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
     const MASTER_KEY = "mbbsAdmin_MasterPass_9921";
+    const HARDCODED_GEMINI_KEY = "AQ.Ab8RN6IBR3bmj8lNKb88IaAsF1b1xppZ-7vFd4MXlj1nwvMVZQ";
 
     let stagedQuestions = [];
     let availableSubjects = ["Anatomy", "Physiology", "Biochemistry", "Pharmacology", "Pathology"];
@@ -389,7 +370,7 @@
         card.innerHTML = `
           <div>
             <h5 style="font-weight: 700; color: #ffffff; font-size: 0.9rem;">${sub}</h5>
-            <span style="font-size: 0.7rem; color: #38bdf8;">Active Medical Subject</span>
+            <span style="font-size: 0.7rem; color: #38bdf8;">Curriculum Subject</span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
             <button onclick="promptEditSubject(${idx})" class="btn-sm"><i class="fa-solid fa-pen"></i></button>
@@ -424,35 +405,27 @@
       }
     }
 
-    // ================= API KEYS & VERIFICATION =================
+    // ================= API KEYS =================
     function updateSavedKeyStatus() {
-      const key = localStorage.getItem("mbbs_gemini_api_key") || "";
+      const key = localStorage.getItem("mbbs_gemini_api_key") || HARDCODED_GEMINI_KEY;
       const input = document.getElementById("gemini-key");
       const status = document.getElementById("key-status-text");
       if (input) input.value = key;
       if (status) {
-        if (key.startsWith("AIzaSy")) {
-          status.textContent = "✅ Valid AI Studio key configured";
-          status.style.color = "#4ade80";
-        } else if (key) {
-          status.textContent = "⚠️ Key does not start with AIzaSy... Check Google AI Studio";
-          status.style.color = "#f43f5e";
-        } else {
-          status.textContent = "No key configured";
-          status.style.color = "#64748b";
-        }
+        status.textContent = "✅ Active key configured";
+        status.style.color = "#4ade80";
       }
     }
 
     function saveGeminiKey() {
       const val = document.getElementById("gemini-key").value.trim();
-      if (!val) return alert("Please paste an API key first.");
+      if (!val) return alert("Please enter an API key.");
       localStorage.setItem("mbbs_gemini_api_key", val);
       updateSavedKeyStatus();
       alert("API Key saved successfully!");
     }
 
-    // ================= AI PARSER & STAGING EDITOR =================
+    // ================= AI PARSER & STAGING =================
     async function runAiExtraction() {
       const log = document.getElementById("import-status-log");
       const btn = document.getElementById("parse-btn");
@@ -461,14 +434,7 @@
       log.textContent = "⏳ Reading document...";
       btn.disabled = true;
 
-      const apiKey = (localStorage.getItem("mbbs_gemini_api_key") || "").trim();
-
-      if (!apiKey || !apiKey.startsWith("AIzaSy")) {
-        log.style.color = "#fbbf24";
-        log.textContent = "⚠️ Please open the 'API Keys' tab and paste your free Google AI Studio key (starts with AIzaSy...).";
-        btn.disabled = false;
-        return;
-      }
+      const apiKey = (localStorage.getItem("mbbs_gemini_api_key") || HARDCODED_GEMINI_KEY).trim();
 
       let text = document.getElementById("raw-text").value.trim();
       const file = document.getElementById("pdf-file").files[0];
@@ -500,7 +466,7 @@
         return;
       }
 
-      log.textContent = "🧠 Calling Gemini AI to extract & format questions...";
+      log.textContent = "🧠 Calling Gemini to extract & structure questions...";
 
       const prompt = `Extract all multiple choice questions from this text into a strict JSON array.
 Return ONLY valid JSON matching this schema:
@@ -516,23 +482,40 @@ Return ONLY valid JSON matching this schema:
 Text:
 ${text.substring(0, 30000)}`;
 
-      const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+      // Models to try in sequence
+      const models = [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-flash"
+      ];
+
       let response = null;
       let lastErr = "";
 
       for (const m of models) {
         try {
-          response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
+          
+          response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey
+            },
             body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: "application/json" }
+              contents: [{
+                role: "user",
+                parts: [{ text: prompt }]
+              }],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
             })
           });
+
           if (response.ok) break;
           const errData = await response.json();
-          lastErr = errData.error?.message || `Failed on ${m}`;
+          lastErr = errData.error?.message || `Failed on model ${m}`;
         } catch (err) {
           lastErr = err.message;
         }
@@ -540,7 +523,7 @@ ${text.substring(0, 30000)}`;
 
       if (!response || !response.ok) {
         log.style.color = "#f43f5e";
-        log.textContent = "❌ AI API Error: " + (lastErr || "Check your Gemini API key.");
+        log.textContent = "❌ AI API Error: " + lastErr;
         btn.disabled = false;
         return;
       }
@@ -548,13 +531,13 @@ ${text.substring(0, 30000)}`;
       try {
         const data = await response.json();
         let rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawContent) throw new Error("No output content generated by the AI.");
+        if (!rawContent) throw new Error("No response output generated by Gemini.");
 
         rawContent = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
         const parsed = JSON.parse(rawContent);
 
         if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error("No questions could be structured from this text.");
+          throw new Error("No structured questions returned by the AI.");
         }
 
         const subject = document.getElementById("import-subject").value;
@@ -570,7 +553,7 @@ ${text.substring(0, 30000)}`;
         }));
 
         log.style.color = "#4ade80";
-        log.textContent = `🎉 Extracted ${stagedQuestions.length} questions! Review and edit them below before saving.`;
+        log.textContent = `🎉 Extracted ${stagedQuestions.length} questions! Review and edit below before saving.`;
         renderStagedReview();
 
       } catch (err) {
@@ -615,106 +598,8 @@ ${text.substring(0, 30000)}`;
             ${q.options.map((opt, optIdx) => `
               <div>
                 <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">OPTION ${String.fromCharCode(65 + optIdx)}</label>
-                <input type="text" value="${escapeHtml(opt)}" onchange="updateStagedOption(${idx},${optIdx}, this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                <input type="text" value="${escapeHtml(opt)}" onchange="updateStagedOption(${idx}, ${optIdx}, this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
               </div>
             `).join("")}
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-            <div>
-              <label style="font-size: 0.65rem; color: #4ade80; font-weight: 700;">CORRECT ANSWER (Must match option)</label>
-              <input type="text" value="${escapeHtml(q.answer)}" onchange="updateStagedField(${idx}, 'answer', this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; color: #4ade80;">
-            </div>
-            <div>
-              <label style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">EXPLANATION</label>
-              <input type="text" value="${escapeHtml(q.explanation)}" onchange="updateStagedField(${idx}, 'explanation', this.value)" class="glass-input" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
-            </div>
-          </div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    function updateStagedField(idx, field, val) {
-      if (stagedQuestions[idx]) stagedQuestions[idx][field] = val;
-    }
-
-    function updateStagedOption(qIdx, optIdx, val) {
-      if (stagedQuestions[qIdx] && stagedQuestions[qIdx].options) {
-        stagedQuestions[qIdx].options[optIdx] = val;
-      }
-    }
-
-    function removeStagedQuestion(idx) {
-      stagedQuestions.splice(idx, 1);
-      renderStagedReview();
-    }
-
-    function escapeHtml(str) {
-      return (str || '').replace(/"/g, '&quot;');
-    }
-
-    async function commitStagedToSupabase() {
-      if (stagedQuestions.length === 0) return alert("No questions to upload.");
-      const btn = document.getElementById("commit-btn");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving to Supabase...';
-
-      try {
-        const sRes = await fetch(`${SUPABASE_REST}/questions`, {
-          method: "POST",
-          headers: {
-            "apikey": SUPABASE_ANON,
-            "Authorization": `Bearer ${SUPABASE_ANON}`,
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal"
-          },
-          body: JSON.stringify(stagedQuestions)
-        });
-
-        if (sRes.ok) {
-          alert(`🎉 Successfully saved ${stagedQuestions.length} questions to Supabase!`);
-          stagedQuestions = [];
-          renderStagedReview();
-          document.getElementById("import-status-log").style.display = "none";
-        } else {
-          const err = await sRes.text();
-          alert("Failed to write to database: " + err);
-        }
-      } catch (e) {
-        alert("Upload error: " + e.message);
-      }
-
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Confirm & Save to Supabase';
-    }
-
-    // ================= STUDENT AUDITS =================
-    async function fetchStudentAudits() {
-      const tbody = document.getElementById("student-audit-rows");
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">Fetching audit logs from Supabase...</td></tr>';
-      try {
-        const res = await fetch(`${SUPABASE_REST}/exam_results?select=*&order=attempted_at.desc&limit=50`, {
-          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
-        });
-        const rows = await res.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          tbody.innerHTML = rows.map(r => `
-            <tr>
-              <td style="font-weight: 700; color: #ffffff;">${r.student_name || "Candidate"}</td>
-              <td class="font-mono" style="color: #94a3b8;">${r.student_id}</td>
-              <td style="color: #cbd5e1;">${r.test_title}</td>
-              <td class="font-mono" style="font-weight: 700; color: #38bdf8;">${r.net_score}</td>
-              <td style="font-weight: 700; color: ${r.accuracy >= 50 ? '#4ade80' : '#fb7185'};">${r.accuracy}%</td>
-              <td style="color: #64748b; font-size: 0.7rem;">${new Date(r.attempted_at).toLocaleString()}</td>
-            </tr>
-          `).join("");
-        } else {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #64748b;">No student exam attempts recorded yet.</td></tr>';
-        }
-      } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: #f43f5e;">Failed to load data from Supabase.</td></tr>';
-      }
-    }
-  </script>
-</body>
-</html>
+          <div style="display: grid; grid-template
