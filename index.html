@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MBBS Master CBT Q-Bank Portal</title>
+  <title>MBBS Pro CBT - Student Portal</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -62,27 +61,10 @@
     }
 
     @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        padding: 0 !important;
-      }
-      header, #sub-nav-bar, #admin-modal, #student-stats-modal, #notebook-modal, #custom-test-modal, .no-print {
-        display: none !important;
-      }
-      #view-result {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .glass-panel, .glass-input {
-        background: #ffffff !important;
-        border: 1px solid #cccccc !important;
-        color: #000000 !important;
-        box-shadow: none !important;
-      }
+      body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
+      header, #sub-nav-bar, #student-stats-modal, #notebook-modal, #custom-test-modal, .no-print { display: none !important; }
+      #view-result { display: block !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+      .glass-panel, .glass-input { background: #ffffff !important; border: 1px solid #cccccc !important; color: #000000 !important; box-shadow: none !important; }
       .print-black { color: #000000 !important; }
       .print-break { page-break-inside: avoid; }
     }
@@ -90,11 +72,9 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white pb-12">
 
-  <!-- ================= TOP APP HEADER ================= -->
+  <!-- ================= TOP HEADER ================= -->
   <header id="main-header" class="sticky top-0 z-40 bg-[#050811]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3.5 transition-all">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
-      
-      <!-- Brand & Profile -->
       <div class="flex items-center gap-3.5">
         <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-teal-400 p-[1px] shadow-lg shadow-sky-500/20">
           <div class="w-full h-full bg-[#080d1b] rounded-2xl flex items-center justify-center text-sky-400">
@@ -113,7 +93,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="flex items-center gap-2">
         <button id="custom-test-btn" onclick="openCustomTestModal()" class="hidden px-3.5 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-bold hover:bg-sky-500/20 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-sliders text-sky-400"></i>
@@ -130,17 +109,11 @@
           <span class="hidden sm:inline">Analytics</span>
         </button>
 
-        <button id="admin-hub-btn" onclick="openAdminModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-amber-400"></i>
-          <span>Admin</span>
-        </button>
-
         <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-md shadow-sky-600/25 flex items-center gap-1.5">
           <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
           <span>Login</span>
         </button>
       </div>
-
     </div>
 
     <!-- Filter & Subject Navigation Bar -->
@@ -151,14 +124,12 @@
           <span>Subject:</span>
         </label>
         <select id="subject-select" onchange="switchSubject(this.value)" class="glass-input text-slate-100 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none flex-1 max-w-[220px] cursor-pointer">
+          <option value="Anatomy">Anatomy</option>
+          <option value="Physiology">Physiology</option>
+          <option value="Biochemistry">Biochemistry</option>
+          <option value="Pharmacology">Pharmacology</option>
+          <option value="Pathology">Pathology</option>
         </select>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-slate-500 text-xs"></i>
-          <input type="text" id="topic-search-input" onkeyup="filterTestsByKeyword()" placeholder="Search test modules..." class="glass-input rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none w-48 sm:w-64 font-medium">
-        </div>
       </div>
     </div>
   </header>
@@ -178,11 +149,11 @@
 
       <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left">
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Student / Admin ID</label>
-          <input type="text" id="gate-uid" required placeholder="e.g. STU-101 or admin" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none font-mono">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Student ID</label>
+          <input type="text" id="gate-uid" required placeholder="e.g. STU-101" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none font-mono">
         </div>
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Passkey</label>
           <input type="password" id="gate-key" required placeholder="••••••••" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
         </div>
 
@@ -208,18 +179,17 @@
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
               <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
               <span>•</span>
-              <span class="text-slate-300">Live Edge Database (+4 / −1 Scheme)</span>
+              <span class="text-slate-300">Live Serverless Exam Engine (+4 / −1 Scheme)</span>
             </div>
             <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
             <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
-              Streaming directly from Supabase via Cloudflare Serverless edge workers with sub-10ms response times.
+              Competitive medical examinations with sub-10ms cloud question streaming and confidence tags.
             </p>
           </div>
           <div class="flex items-center gap-3">
-            <div class="glass-panel px-4 py-2.5 rounded-2xl text-right border border-white/[0.08]">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Available Modules</div>
-              <div id="tests-count-pill" class="text-sm font-extrabold text-white mt-0.5">Live Database Active</div>
-            </div>
+            <button onclick="launchExamSession()" class="px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/30 flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Start 20-Q CBT Test
+            </button>
           </div>
         </div>
       </div>
@@ -228,82 +198,54 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
         <div class="glass-panel p-4 rounded-2xl border border-amber-500/25 bg-amber-950/20 flex flex-col justify-between">
           <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
-              <i class="fa-solid fa-fire"></i>
-            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-fire"></i></div>
             <div>
               <h4 class="text-xs font-bold text-white">Daily 10 Challenge</h4>
               <p id="daily-status-label" class="text-[10px] text-amber-300/80 font-medium">10 Fresh MCQs Today</p>
             </div>
           </div>
-          <button onclick="launchDaily10()" class="w-full mt-2 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition">
-            Launch Daily 10
-          </button>
+          <button onclick="launchDaily10()" class="w-full mt-2 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition">Launch Daily 10</button>
         </div>
 
         <div class="glass-panel p-4 rounded-2xl border border-rose-500/25 bg-rose-950/20 flex flex-col justify-between">
           <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
-              <i class="fa-solid fa-bolt-lightning"></i>
-            </div>
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg"><i class="fa-solid fa-bolt-lightning"></i></div>
             <div>
               <h4 class="text-xs font-bold text-white">Wrong-Answers Quiz</h4>
               <p id="quick-mistakes-count" class="text-[10px] text-slate-400 font-medium">0 Errors Recorded</p>
             </div>
           </div>
-          <button onclick="launchWrongAnswersQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
-            1-Tap Mistake Drill
-          </button>
+          <button onclick="launchWrongAnswersQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">1-Tap Mistake Drill</button>
         </div>
 
         <div class="glass-panel p-4 rounded-2xl border border-teal-500/25 bg-teal-950/20 flex flex-col justify-between">
           <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg">
-              <i class="fa-solid fa-brain"></i>
-            </div>
+            <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg"><i class="fa-solid fa-brain"></i></div>
             <div>
               <h4 class="text-xs font-bold text-white">Spaced Repetition</h4>
               <p id="sr-due-count" class="text-[10px] text-teal-300/80 font-medium">0 Due (1, 3, 7 Days)</p>
             </div>
           </div>
-          <button onclick="launchSpacedRepetitionQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition">
-            Review Due Items
-          </button>
+          <button onclick="launchSpacedRepetitionQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition">Review Due Items</button>
         </div>
 
         <div class="glass-panel p-4 rounded-2xl border border-sky-500/25 bg-sky-950/20 flex flex-col justify-between">
           <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
-              <i class="fa-solid fa-sliders"></i>
-            </div>
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg"><i class="fa-solid fa-sliders"></i></div>
             <div>
               <h4 class="text-xs font-bold text-white">Custom Mixed Test</h4>
               <p class="text-[10px] text-slate-400 font-medium">Pick topics & length</p>
             </div>
           </div>
-          <button onclick="openCustomTestModal()" class="w-full mt-2 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
-            Build Custom Test
-          </button>
+          <button onclick="openCustomTestModal()" class="w-full mt-2 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Build Custom Test</button>
         </div>
       </div>
-
-      <div class="flex items-center justify-between mb-4 px-1">
-        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <i class="fa-solid fa-layer-group text-sky-400"></i>
-          <span>Curriculum Modules</span>
-        </h3>
-      </div>
-
-      <div id="tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
     <!-- VIEW 2: CBT EXAM SIMULATOR -->
     <section id="view-exam" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        <!-- Left: Question Stage (3 Columns) -->
         <div id="exam-main-panel" class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
-          <!-- Top HUD -->
           <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
             <div>
               <div class="flex items-center gap-2">
@@ -328,7 +270,6 @@
             </div>
           </div>
 
-          <!-- Per-Question Timing & Mode Toggles -->
           <div class="my-4 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3 text-xs font-semibold text-slate-400">
               <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
@@ -342,7 +283,7 @@
             <div class="flex items-center gap-2 bg-slate-900/90 border border-white/[0.08] px-3 py-1.5 rounded-xl text-xs">
               <span class="text-slate-400 font-semibold">Mode:</span>
               <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice</button>
-              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam (+4/−1 Countdown)</button>
+              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam (+4/−1)</button>
             </div>
           </div>
 
@@ -350,13 +291,9 @@
             <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
           </div>
 
-          <!-- Question Stem -->
           <div class="glass-input rounded-2xl p-5 sm:p-6 mb-4 border border-white/[0.06] shadow-inner">
             <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
-                <span id="exam-q-id-badge" class="text-[10px] font-mono text-slate-500">QID-001</span>
-              </div>
+              <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
               <button onclick="toggleFlagCurrentQuestion()" id="exam-flag-btn" class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-bookmark"></i>
                 <span id="exam-flag-label">Flag</span>
@@ -365,10 +302,9 @@
             <p id="exam-q-statement" class="q-text-dyn font-semibold text-slate-100 leading-relaxed">Loading question...</p>
           </div>
 
-          <!-- Confidence Tags -->
           <div class="flex items-center justify-end gap-2 mb-4">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Confidence Tag:</span>
-            <button onclick="setConfidence('sure')" id="conf-btn-sure" class="px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition">
+            <button onclick="setConfidence('sure')" id="conf-btn-sure" class="px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition">
               <i class="fa-solid fa-circle-check mr-1 text-[10px]"></i> 100% Sure
             </button>
             <button onclick="setConfidence('guess')" id="conf-btn-guess" class="px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition">
@@ -376,21 +312,16 @@
             </button>
           </div>
 
-          <!-- Options -->
           <div id="exam-options-list" class="space-y-3 mb-5"></div>
 
-          <!-- Personal Notes Box -->
           <div class="mb-5 p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-2xl">
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] font-bold text-sky-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-pen-nib text-xs"></i> Personal Question Note
-              </span>
+              <span class="text-[11px] font-bold text-sky-400 flex items-center gap-1.5"><i class="fa-solid fa-pen-nib text-xs"></i> Personal Question Note</span>
               <button onclick="saveCurrentQuestionNote()" class="text-[10px] text-slate-400 hover:text-white font-bold">Save Note</button>
             </div>
-            <textarea id="q-note-input" rows="2" placeholder="Write custom mnemonics, clinical pearls or memory aids for this question..." class="glass-input w-full rounded-xl p-2.5 text-xs text-slate-300 focus:outline-none"></textarea>
+            <textarea id="q-note-input" rows="2" placeholder="Write custom mnemonics or clinical pearls for this question..." class="glass-input w-full rounded-xl p-2.5 text-xs text-slate-300 focus:outline-none"></textarea>
           </div>
 
-          <!-- Explanation Card -->
           <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-5 transition-all">
             <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
               <i class="fa-solid fa-circle-check"></i>
@@ -399,19 +330,17 @@
             <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
           </div>
 
-          <!-- Navigation Footer -->
           <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
             <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
               <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
             </button>
-            
             <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center gap-2">
               <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
             </button>
           </div>
         </div>
 
-        <!-- Right: Question Palette Matrix -->
+        <!-- Right Question Palette -->
         <div id="exam-matrix-panel" class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
           <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-table-cells text-sky-400"></i>
@@ -424,7 +353,7 @@
               <span id="matrix-answered-count" class="font-mono text-emerald-400 font-bold">0</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Marked for Review:</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Flagged:</span>
               <span id="matrix-flagged-count" class="font-mono text-amber-400 font-bold">0</span>
             </div>
             <div class="flex items-center justify-between">
@@ -439,14 +368,12 @@
             Submit Complete Exam
           </button>
         </div>
-
       </div>
     </section>
 
     <!-- VIEW 3: SCORECARD SUMMARY -->
     <section id="view-result" class="hidden">
       <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-xl mx-auto shadow-2xl relative overflow-hidden print-break">
-        
         <div class="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-6">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg">🩺</div>
@@ -489,12 +416,8 @@
             <i class="fa-solid fa-list-check"></i>
             <span>Full Answer Key & Rationales Review</span>
           </button>
-          <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
-            Retake Exam (Fresh Shuffle)
-          </button>
-          <button onclick="returnToBrowseView()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
-            Back to Curriculum
-          </button>
+          <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Retake Exam (Fresh Shuffle)</button>
+          <button onclick="returnToBrowseView()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">Back to Curriculum</button>
         </div>
       </div>
     </section>
@@ -505,24 +428,27 @@
   <div id="custom-test-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white/[0.08]">
       <div class="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-sliders"></i></div>
-          <h3 class="text-sm font-extrabold text-white">Custom Test Builder</h3>
-        </div>
+        <h3 class="text-sm font-extrabold text-white">Custom Test Builder</h3>
         <button onclick="closeCustomTestModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="space-y-4 text-xs">
         <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Select Subjects / Topics:</label>
-          <div id="custom-builder-topics" class="max-h-44 overflow-y-auto custom-scroll space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-white/[0.06]"></div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Select Subjects:</label>
+          <div class="grid grid-cols-2 gap-2 bg-slate-950/70 p-3 rounded-xl border border-white/[0.06]">
+            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Anatomy" checked> Anatomy</label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Physiology"> Physiology</label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Biochemistry"> Biochemistry</label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Pharmacology"> Pharmacology</label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Pathology"> Pathology</label>
+          </div>
         </div>
 
         <div>
           <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Question Count:</label>
           <div class="grid grid-cols-4 gap-2">
             <button onclick="selectCustomCount(10)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="10">10 Qs</button>
-            <button onclick="selectCustomCount(20)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="20">20 Qs</button>
+            <button onclick="selectCustomCount(20)" class="count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold" data-val="20">20 Qs</button>
             <button onclick="selectCustomCount(30)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="30">30 Qs</button>
             <button onclick="selectCustomCount(50)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="50">50 Qs</button>
           </div>
@@ -535,59 +461,35 @@
     </div>
   </div>
 
-  <!-- ================= SUBMIT CONFIRMATION AUDIT MODAL ================= -->
+  <!-- ================= SUBMIT CONFIRMATION MODAL ================= -->
   <div id="submit-confirm-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/[0.08] text-center">
       <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl mx-auto mb-3">
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
       <h3 class="text-base font-extrabold text-white">Confirm Exam Submission</h3>
-      <p class="text-xs text-slate-400 mt-1 mb-5">Review your summary before applying the +4 / −1 competitive score:</p>
+      <p class="text-xs text-slate-400 mt-1 mb-5">Your test will be scored with the +4 / −1 competitive standard.</p>
 
       <div class="grid grid-cols-3 gap-2.5 mb-6 text-left">
-        <div class="glass-input p-3 rounded-xl">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Answered</div>
-          <div id="confirm-answered" class="text-base font-bold text-emerald-400 mt-0.5">0</div>
-        </div>
-        <div class="glass-input p-3 rounded-xl">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Flagged</div>
-          <div id="confirm-flagged" class="text-base font-bold text-amber-400 mt-0.5">0</div>
-        </div>
-        <div class="glass-input p-3 rounded-xl">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Blank</div>
-          <div id="confirm-blank" class="text-base font-bold text-rose-400 mt-0.5">0</div>
-        </div>
+        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Answered</div><div id="confirm-answered" class="text-base font-bold text-emerald-400 mt-0.5">0</div></div>
+        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Flagged</div><div id="confirm-flagged" class="text-base font-bold text-amber-400 mt-0.5">0</div></div>
+        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Blank</div><div id="confirm-blank" class="text-base font-bold text-rose-400 mt-0.5">0</div></div>
       </div>
 
       <div class="flex items-center gap-3">
-        <button onclick="closeSubmitConfirmModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
-          Return to Test
-        </button>
-        <button onclick="executeFinalSubmission()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/25">
-          Submit & Finish
-        </button>
+        <button onclick="closeSubmitConfirmModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">Return</button>
+        <button onclick="executeFinalSubmission()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Submit & Finish</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= FULL POST-EXAM ANSWER REVIEW MODAL ================= -->
+  <!-- ================= POST-EXAM REVIEW MODAL ================= -->
   <div id="full-review-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm">
-            <i class="fa-solid fa-list-check"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-extrabold text-white">Full Exam Solution & Rationales Review</h3>
-            <p id="review-subtitle" class="text-[11px] text-slate-400">Detailed answers and clinical pearls</p>
-          </div>
-        </div>
-        <button onclick="closeFullAnswerReview()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
+        <h3 class="text-sm font-extrabold text-white">Full Exam Solution & Rationales Review</h3>
+        <button onclick="closeFullAnswerReview()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-sm"></i></button>
       </div>
-
       <div id="review-questions-container" class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6"></div>
     </div>
   </div>
@@ -596,38 +498,18 @@
   <div id="notebook-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
     <div class="glass-panel bg-[#090d18] rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-sm">
-            <i class="fa-solid fa-book-bookmark"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-extrabold text-white">Clinical Notebook</h3>
-            <p class="text-[11px] text-slate-400">Saved Bookmarks & Automatic Error Vault</p>
-          </div>
-        </div>
-        <button onclick="closeNotebookModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
+        <h3 class="text-sm font-extrabold text-white">Clinical Notebook</h3>
+        <button onclick="closeNotebookModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-sm"></i></button>
       </div>
-
       <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold">
-        <button onclick="switchNotebookTab('bookmarks')" id="nb-tab-bookmarks" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition">
-          <i class="fa-solid fa-bookmark mr-1.5"></i> Saved Bookmarks
-        </button>
-        <button onclick="switchNotebookTab('mistakes')" id="nb-tab-mistakes" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition">
-          <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Mistakes / Wrong Answers
-        </button>
+        <button onclick="switchNotebookTab('bookmarks')" id="nb-tab-bookmarks" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition">Saved Bookmarks</button>
+        <button onclick="switchNotebookTab('mistakes')" id="nb-tab-mistakes" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition">Mistakes Vault</button>
       </div>
-
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <span id="notebook-count-label" class="text-xs text-slate-400 font-semibold">0 items</span>
-          <button onclick="launchCurrentNotebookAsExam()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
-            <i class="fa-solid fa-play text-[10px]"></i>
-            <span>Practise This Set</span>
-          </button>
+          <button onclick="launchCurrentNotebookAsExam()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Practise This Set</button>
         </div>
-
         <div id="notebook-items-container" class="space-y-3"></div>
       </div>
     </div>
@@ -635,603 +517,144 @@
 
   <!-- ================= STUDENT ANALYTICS & BADGES MODAL ================= -->
   <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative border border-white/[0.08] overflow-hidden">
+    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-white/[0.08] overflow-hidden">
       <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm">
-            <i class="fa-solid fa-chart-pie"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-extrabold text-white">Candidate Progress & Badges</h3>
-            <p id="student-stats-name" class="text-[11px] text-slate-400">Performance diagnostic dashboard</p>
-          </div>
-        </div>
-        <button onclick="closeStudentStatsModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <h3 class="text-sm font-extrabold text-white">Candidate Progress & Badges</h3>
+        <button onclick="closeStudentStatsModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
       <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
         <div class="grid grid-cols-4 gap-2.5">
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div>
-            <div id="self-tests-taken" class="text-lg font-black text-white mt-0.5">0</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div>
-            <div id="self-avg-accuracy" class="text-lg font-black text-emerald-400 mt-0.5">0%</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] font-bold text-slate-400 uppercase">Net Marks</div>
-            <div id="self-net-marks" class="text-lg font-black text-amber-400 mt-0.5">0</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] font-bold text-slate-400 uppercase">Lucky Guesses</div>
-            <div id="self-lucky-guesses" class="text-lg font-black text-sky-400 mt-0.5">0</div>
-          </div>
+          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div><div id="self-tests-taken" class="text-lg font-black text-white mt-0.5">0</div></div>
+          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div><div id="self-avg-accuracy" class="text-lg font-black text-emerald-400 mt-0.5">0%</div></div>
+          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Net Marks</div><div id="self-net-marks" class="text-lg font-black text-amber-400 mt-0.5">0</div></div>
+          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Lucky Guesses</div><div id="self-lucky-guesses" class="text-lg font-black text-sky-400 mt-0.5">0</div></div>
         </div>
-
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-medal text-amber-400"></i>
-            <span>Achievements & Badges</span>
-          </h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Achievements & Badges</h4>
           <div id="badges-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
         </div>
-
         <div>
-          <div class="flex items-center justify-between mb-2.5">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-stethoscope text-rose-400"></i>
-              <span>Accuracy by Topic (Weakest First)</span>
-            </h4>
-            <span class="text-[10px] text-slate-500">Self-calibrating</span>
-          </div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Weakest Topics First</h4>
           <div id="weak-topics-container" class="space-y-2.5 max-h-44 overflow-y-auto custom-scroll pr-1"></div>
         </div>
-
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-clock-rotate-left text-sky-400"></i>
-            <span>Recent Test History</span>
-          </h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Recent Test History</h4>
           <div id="recent-attempts-container" class="space-y-2 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ================= ENTERPRISE ADMIN COMMAND CENTER ================= -->
-  <div id="admin-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
-      
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm shadow-inner">
-            <i class="fa-solid fa-shield-halved"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-extrabold text-white">Administrator Command Center</h3>
-            <p class="text-[11px] text-slate-400">Curriculum, AI Parser, Candidate Audit & Live Edge Sync</p>
-          </div>
-        </div>
-        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
-      </div>
-
-      <div class="flex flex-1 overflow-hidden">
-        <aside class="w-56 border-r border-white/[0.08] bg-slate-950/70 p-4 space-y-1.5 hidden md:block">
-          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1">Management</div>
-          <button onclick="switchAdminTab('content')" id="side-btn-content" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition">
-            <i class="fa-solid fa-folder-tree"></i> Curriculum Modules
-          </button>
-          <button onclick="switchAdminTab('importer')" id="side-btn-importer" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
-            <i class="fa-solid fa-robot text-sky-400"></i> AI PDF Importer
-          </button>
-          <button onclick="switchAdminTab('students')" id="side-btn-students" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
-            <i class="fa-solid fa-users-viewfinder"></i> Candidate Audits
-          </button>
-
-          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 pt-4">Integrations</div>
-          <button onclick="switchAdminTab('settings')" id="side-btn-settings" class="w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition">
-            <i class="fa-solid fa-key"></i> API & Sync Settings
-          </button>
-        </aside>
-
-        <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
-
-          <!-- TAB 1: CURRICULUM MODULES -->
-          <div id="admin-tab-content" class="space-y-6">
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-4.5 rounded-2xl border border-white/[0.06]">
-              <div>
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Subject Management</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">Manage curriculum branches and their specific questions</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <button onclick="promptCreateNewSubject()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                  <i class="fa-solid fa-plus text-xs"></i> New Subject
-                </button>
-                <button onclick="promptEditCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/[0.08] transition">
-                  <i class="fa-solid fa-pen-to-square"></i> Rename
-                </button>
-                <button onclick="promptDeleteCurrentSubject()" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition">
-                  <i class="fa-solid fa-trash-can"></i> Delete
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex items-center justify-between mb-3 px-1">
-                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Modules in <span id="admin-cur-subject-name" class="text-sky-400">Anatomy</span></h4>
-                <span id="admin-subject-total-modules" class="text-xs text-slate-400 font-medium">0 Modules</span>
-              </div>
-              <div id="admin-modules-container" class="space-y-3"></div>
-            </div>
-          </div>
-
-          <!-- TAB 2: AI SMART PDF & TEXT IMPORTER -->
-          <div id="admin-tab-importer" class="hidden space-y-5">
-            <div class="glass-panel bg-sky-950/20 border border-sky-500/20 rounded-2xl p-5 text-xs text-slate-300 leading-relaxed">
-              <div class="flex items-center gap-2 font-bold text-sky-400 mb-1">
-                <i class="fa-solid fa-brain"></i>
-                <span>Gemini AI Medical Q-Bank Extractor</span>
-              </div>
-              Upload any medical PDF (even multi-column, unformatted, or past recalls) or paste raw text. The AI auto-extracts questions, formats 4 distinct choices, detects the right answer key, and writes a detailed clinical rationale.
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Target Curriculum Subject</label>
-                <select id="import-target-subject" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white"></select>
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Module Name Override</label>
-                <input type="text" id="import-chapter-override" placeholder="e.g. Upper Limb Clinical MCQs" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white">
-              </div>
-            </div>
-
-            <div class="border-2 border-dashed border-slate-700/80 hover:border-sky-500/60 rounded-3xl p-6 text-center transition cursor-pointer bg-slate-900/40">
-              <input type="file" id="pdf-file-selector" accept="application/pdf" onchange="onAdminPdfChosen(event)" class="hidden">
-              <label for="pdf-file-selector" class="cursor-pointer block">
-                <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl mx-auto mb-2.5">
-                  <i class="fa-solid fa-file-pdf"></i>
-                </div>
-                <div id="pdf-file-status-label" class="text-xs sm:text-sm font-bold text-white">Select Medical PDF to Analyze</div>
-                <p class="text-[11px] text-slate-500 mt-1">Multi-page parsing with automatic OCR text cleaning</p>
-              </label>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <label class="block text-[11px] font-bold uppercase text-slate-400">Or Paste Raw Question Text Directly:</label>
-                <button onclick="document.getElementById('raw-text-paste').value=''" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
-              </div>
-              <textarea id="raw-text-paste" rows="3" placeholder="Paste questions, past recall exams, or notes here..." class="glass-input w-full rounded-xl p-3 text-xs text-slate-300 focus:outline-none"></textarea>
-            </div>
-
-            <button id="pdf-import-action-btn" onclick="executeAiExtraction()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
-              <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-              <span>Run AI Clinical Extraction & Parse</span>
-            </button>
-
-            <div id="pdf-import-live-log" class="text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-white/[0.08] hidden font-mono leading-relaxed"></div>
-
-            <div id="pdf-staging-preview" class="hidden space-y-4 pt-4 border-t border-white/[0.08]">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">AI Verified Staging (<span id="staged-count" class="text-sky-400">0</span> Questions)</h4>
-                  <p class="text-[11px] text-slate-400">Review questions below. Tapping Publish pushes them directly to GitHub for all students!</p>
-                </div>
-                <button onclick="commitStagedQuestionsWithAutoPush()" id="auto-publish-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 flex items-center gap-2">
-                  <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
-                  <span>Confirm & Auto-Publish Live</span>
-                </button>
-              </div>
-
-              <div id="staged-questions-list" class="space-y-3"></div>
-            </div>
-          </div>
-
-          <!-- TAB 3: CANDIDATE PERFORMANCE TRACKER -->
-          <div id="admin-tab-students" class="hidden space-y-5">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Candidate Score Audits</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">Real-time performance logs across all candidate tests</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <input type="text" id="student-search-box" onkeyup="filterStudentAuditTable()" placeholder="Search by ID or name..." class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
-                <button onclick="renderAdminStudentAnalytics()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition">
-                  <i class="fa-solid fa-rotate mr-1"></i> Refresh
-                </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="glass-input rounded-2xl p-4">
-                <div class="text-[10px] font-bold uppercase text-slate-400">Tests Completed</div>
-                <div id="metric-total-tests" class="text-xl font-extrabold text-white mt-1">0</div>
-              </div>
-              <div class="glass-input rounded-2xl p-4">
-                <div class="text-[10px] font-bold uppercase text-slate-400">Avg Accuracy</div>
-                <div id="metric-avg-accuracy" class="text-xl font-extrabold text-emerald-400 mt-1">0%</div>
-              </div>
-              <div class="glass-input rounded-2xl p-4">
-                <div class="text-[10px] font-bold uppercase text-slate-400">Active Candidates</div>
-                <div id="metric-unique-candidates" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
-              </div>
-              <div class="glass-input rounded-2xl p-4">
-                <div class="text-[10px] font-bold uppercase text-slate-400">Distinction Rate</div>
-                <div id="metric-distinction-rate" class="text-xl font-extrabold text-amber-400 mt-1">0%</div>
-              </div>
-            </div>
-
-            <div class="border border-white/[0.08] rounded-2xl overflow-hidden bg-slate-900/50">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                  <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-white/[0.08]">
-                    <tr>
-                      <th class="p-3.5">Candidate</th>
-                      <th class="p-3.5">Student ID</th>
-                      <th class="p-3.5">Test Title</th>
-                      <th class="p-3.5">Net Score (+4/−1)</th>
-                      <th class="p-3.5">Accuracy</th>
-                      <th class="p-3.5">Status</th>
-                      <th class="p-3.5">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody id="student-analytics-records" class="divide-y divide-white/[0.04] font-medium"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 4: API & DIRECT REPOSITORY SYNC -->
-          <div id="admin-tab-settings" class="hidden space-y-4">
-            <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
-              <div class="flex items-center gap-2">
-                <i class="fa-solid fa-brain text-sky-400"></i>
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Engine (gemini-3.8-flash)</h4>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                Free key from <a href="https://aistudio.google.com/" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Used to parse multi-page PDFs and extract clinical explanations.
-              </p>
-              <div>
-                <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
-              </div>
-              <div class="flex items-center justify-between pt-1">
-                <span id="gemini-key-status" class="text-xs text-slate-400 font-mono">Checking AI key...</span>
-                <button onclick="saveGeminiToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save AI Key</button>
-              </div>
-            </div>
-
-            <div class="glass-panel p-5.5 rounded-2xl space-y-3 border border-white/[0.08]">
-              <div class="flex items-center gap-2">
-                <i class="fa-solid fa-lock text-amber-400"></i>
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">GitHub Direct-Sync Token</h4>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                GitHub Personal Access Token (Classic with <code>repo</code> scope) to automatically write changes to <code>data.json</code> in your repository.
-              </p>
-              <div>
-                <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none">
-              </div>
-              <div class="flex items-center justify-between pt-1">
-                <span id="gh-token-status" class="text-xs text-slate-400 font-mono">Checking saved key...</span>
-                <button onclick="saveGitHubToken()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Save GitHub Key</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ================= EDIT SINGLE MCQ MODAL ================= -->
-  <div id="edit-mcq-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll border border-white/[0.08]">
-      <button onclick="closeEditMcqModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
-
-      <div class="mb-4">
-        <h3 class="text-base font-extrabold text-white">Edit Question & Rationale</h3>
-        <p class="text-xs text-slate-400 mt-0.5">Make immediate corrections to the MCQ</p>
-      </div>
-
-      <div class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Sub-Topic Tag</label>
-          <input type="text" id="edit-mcq-topic" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-white focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Question Prompt</label>
-          <textarea id="edit-mcq-question" rows="3" class="glass-input w-full rounded-xl p-3.5 text-white focus:outline-none leading-relaxed"></textarea>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option A</label>
-            <input type="text" id="edit-mcq-opt-0" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option B</label>
-            <input type="text" id="edit-mcq-opt-1" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option C</label>
-            <input type="text" id="edit-mcq-opt-2" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Option D</label>
-            <input type="text" id="edit-mcq-opt-3" class="glass-input w-full rounded-xl px-3 py-2 text-white focus:outline-none">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Correct Answer</label>
-          <select id="edit-mcq-correct-select" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-white focus:outline-none font-bold text-emerald-400">
-            <option value="0">Matches Option A</option>
-            <option value="1">Matches Option B</option>
-            <option value="2">Matches Option C</option>
-            <option value="3">Matches Option D</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Explanation / Clinical Pearl</label>
-          <textarea id="edit-mcq-explanation" rows="2" class="glass-input w-full rounded-xl p-3.5 text-slate-300 focus:outline-none leading-relaxed"></textarea>
-        </div>
-
-        <button onclick="saveActiveMcqEdits()" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition shadow-lg shadow-sky-600/20">
-          Save Changes
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
+  <!-- ================= JAVASCRIPT ENGINE ================= -->
   <script>
-    // --- LIVE BACKEND EDGE CONFIGURATION ---
     const API_BASE_URL = "https://mbbsapi.ahteshamneet.workers.dev";
+    const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
+    const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
 
-    const DEFAULT_SEED_DATA = {
-      "Anatomy": {
-        name: "Anatomy",
-        chapters: [
-          {
-            id: "ch_upper_limb_clinical",
-            title: "Upper Limb Anatomy Clinical MCQs",
-            topic: "Upper Limb",
-            questions: [
-              {
-                id: "ANA-UL-001",
-                topic: "Carpal Tunnel & Hand",
-                question: "A 45-year-old female presents with nocturnal paresthesia in the lateral three and a half digits. Physical exam reveals thenar wasting. Which anatomical structure is spared because its branch does NOT pass through the carpal tunnel?",
-                options: [
-                  "Palmar cutaneous branch of median nerve",
-                  "Flexor pollicis longus tendon",
-                  "Flexor digitorum profundus tendons",
-                  "Main trunk of median nerve"
-                ],
-                answer: "Palmar cutaneous branch of median nerve",
-                explanation: "The palmar cutaneous branch arises proximal to the flexor retinaculum and travels superficial to it, sparing palmar cutaneous sensation over the thenar eminence."
-              },
-              {
-                id: "ANA-UL-002",
-                topic: "Brachial Plexus & Nerve Injury",
-                question: "A motorcyclist suffers traction injury of the upper trunk (C5-C6) of the brachial plexus (Erb-Duchenne palsy). Which classic limb posture is produced?",
-                options: [
-                  "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
-                  "Claw hand with loss of hypothenar eminence",
-                  "Wrist drop with inability to extend digits",
-                  "Ape hand deformity with thenar atrophy"
-                ],
-                answer: "Adducted, internally rotated arm with pronated forearm (Waiter's tip)",
-                explanation: "Loss of abductors (deltoid, supraspinatus) and lateral rotators produces adduction and internal rotation. Loss of biceps causes forearm pronation."
-              }
-            ]
-          }
-        ]
-      },
-      "Physiology": { name: "Physiology", chapters: [] },
-      "Biochemistry": { name: "Biochemistry", chapters: [] },
-      "Pharmacology": { name: "Pharmacology", chapters: [] },
-      "Pathology": { name: "Pathology", chapters: [] }
-    };
-
-    let DB = {};
     let currentSubjectKey = "Anatomy";
     let activeUser = null;
-    let stagedModule = null;
-    let editingContext = null;
-    
     let currentFontScale = 1.0;
     let isFocusModeActive = false;
-
     let isFormalExamMode = false;
+    
     let activeExam = {
-      test: null,
-      questions: [],
-      cursor: 0,
-      answers: {},
-      confidences: {},
-      flagged: new Set(),
-      questionTimes: {},
-      currentQStartTime: Date.now(),
-      qInterval: null,
-      seconds: 0,
-      totalSecondsAllocated: 0,
-      timer: null
+      test: null, questions: [], cursor: 0, answers: {}, confidences: {}, flagged: new Set(),
+      questionTimes: {}, currentQStartTime: Date.now(), qInterval: null, seconds: 0, totalSecondsAllocated: 0, timer: null
     };
 
-    window.addEventListener("DOMContentLoaded", async () => {
-      await loadDatabaseWithGlobalFallback();
+    window.addEventListener("DOMContentLoaded", () => {
       processAuthenticationPipeline();
-      initTokenUI();
       updateNotebookCounters();
       updateDailyStreakUI();
     });
 
-    async function loadDatabaseWithGlobalFallback() {
-      try {
-        const stored = localStorage.getItem("mbbs_cbt_curriculum");
-        if (stored) DB = JSON.parse(stored);
-      } catch (err) {}
+    async function executeRemoteAuth(uid, key) {
+      const cleanUid = uid.trim().toUpperCase();
+      const cleanKey = key.trim();
 
       try {
-        const res = await fetch("./data.json?v=" + Date.now());
-        if (res.ok) {
-          const globalData = await res.json();
-          if (globalData && typeof globalData === "object" && Object.keys(globalData).length > 0) {
-            DB = globalData;
-            commitDatabase(false);
-          }
+        const res = await fetch(`${API_BASE_URL}/api/auth`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: cleanUid, key: cleanKey })
+        });
+        const data = await res.json();
+        if (res.ok && !data.error) {
+          return { uid: data.student_id || data.role, name: data.student_name || "Candidate", role: "student" };
         }
       } catch (e) {}
 
-      if (!DB || typeof DB !== "object" || Object.keys(DB).length === 0 || !DB["Anatomy"]) {
-        DB = JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
-        commitDatabase(false);
-      }
-    }
-
-    function commitDatabase(autoPushToGitHub = true) {
       try {
-        localStorage.setItem("mbbs_cbt_curriculum", JSON.stringify(DB));
+        const queryUrl = `${SUPABASE_REST}/students?student_id=eq.${encodeURIComponent(cleanUid)}&passkey=eq.${encodeURIComponent(cleanKey)}&select=*`;
+        const supaRes = await fetch(queryUrl, { headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` } });
+        const rows = await supaRes.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          return { uid: rows[0].student_id, name: rows[0].student_name || `Dr. ${rows[0].student_id}`, role: "student" };
+        }
       } catch (e) {}
-      if (autoPushToGitHub && activeUser && activeUser.role === "admin") {
-        pushCurriculumToGitHubDirect();
-      }
+
+      return null;
     }
 
-    // ================= AUTHENTICATION VIA CLOUDFLARE EDGE =================
     async function processAuthenticationPipeline() {
-      const searchParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
-
-      const uid = searchParams.get("uid") || hashParams.get("uid");
-      const key = searchParams.get("key") || hashParams.get("key");
-
+      const p = new URLSearchParams(window.location.search);
+      const uid = p.get("uid"), key = p.get("key");
       if (uid && key) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/auth`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid, key })
-          });
-          const data = await res.json();
-          if (res.ok && !data.error) {
-            completeLogin({
-              uid: data.student_id || data.role,
-              name: data.student_name || data.name || "Candidate",
-              role: data.role || "student"
-            });
-            return;
-          }
-        } catch (e) {}
+        const user = await executeRemoteAuth(uid, key);
+        if (user) return completeLogin(user);
       }
-
       try {
-        const savedSession = localStorage.getItem("mbbs_logged_user");
-        if (savedSession) {
-          const user = JSON.parse(savedSession);
-          if (user && user.uid) {
-            completeLogin(user, false);
-            return;
-          }
+        const saved = localStorage.getItem("mbbs_student_session");
+        if (saved) {
+          const user = JSON.parse(saved);
+          if (user && user.uid) return completeLogin(user, false);
         }
       } catch (e) {}
-
       lockPortalDisplay();
     }
 
     async function handleManualLogin(e) {
       e.preventDefault();
-      const uidInput = document.getElementById("gate-uid").value.trim();
-      const keyInput = document.getElementById("gate-key").value.trim();
+      const uid = document.getElementById("gate-uid").value;
+      const key = document.getElementById("gate-key").value;
       const errBox = document.getElementById("gate-error-message");
-      const submitBtn = e.target.querySelector("button[type='submit']");
+      const btn = e.target.querySelector("button[type='submit']");
 
-      const originalBtnText = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/auth`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: uidInput, key: keyInput })
-        });
-        const data = await res.json();
-
-        if (!res.ok || data.error) {
-          errBox.textContent = data.error || "Invalid Credentials. Access restricted to verified candidates.";
-          errBox.classList.remove("hidden");
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalBtnText;
-          return;
-        }
-
+      const user = await executeRemoteAuth(uid, key);
+      if (user) {
         errBox.classList.add("hidden");
-        completeLogin({
-          uid: data.student_id || data.role,
-          name: data.student_name || data.name || "Candidate",
-          role: data.role || "student"
-        });
-      } catch (err) {
-        errBox.textContent = "Server connection error. Please verify Worker deployment.";
+        completeLogin(user);
+      } else {
+        errBox.textContent = "Invalid credentials. Verify your Student ID and Passkey.";
         errBox.classList.remove("hidden");
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+        btn.disabled = false;
+        btn.innerHTML = "Enter Examination Portal";
       }
     }
 
     function completeLogin(userObj, save = true) {
       activeUser = userObj;
-      if (save) {
-        localStorage.setItem("mbbs_logged_user", JSON.stringify(activeUser));
-      }
+      if (save) localStorage.setItem("mbbs_student_session", JSON.stringify(activeUser));
 
       document.getElementById("view-locked").classList.add("hidden");
       document.getElementById("sub-nav-bar").classList.remove("hidden");
       document.getElementById("view-browse").classList.remove("hidden");
 
       const roleBadge = document.getElementById("header-role-badge");
-      const userLabel = document.getElementById("header-user-label");
+      roleBadge.textContent = "VERIFIED SEAT";
+      roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+      document.getElementById("header-user-label").textContent = `${activeUser.name} • ${activeUser.uid}`;
+
       const authBtn = document.getElementById("auth-action-btn");
-      const adminBtn = document.getElementById("admin-hub-btn");
-      const statsBtn = document.getElementById("student-stats-btn");
-      const notebookBtn = document.getElementById("notebook-hub-btn");
-      const customTestBtn = document.getElementById("custom-test-btn");
+      authBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span>Logout</span>';
+      authBtn.className = "px-3.5 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1.5";
 
-      if (activeUser.role === "admin") {
-        roleBadge.textContent = "ADMIN";
-        roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30";
-        userLabel.textContent = "Administrator Controls Enabled";
-        adminBtn.classList.remove("hidden");
-        statsBtn.classList.add("hidden");
-        notebookBtn.classList.remove("hidden");
-        customTestBtn.classList.remove("hidden");
-      } else {
-        roleBadge.textContent = "VERIFIED SEAT";
-        roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-        userLabel.textContent = `${activeUser.name} • ${activeUser.uid}`;
-        adminBtn.classList.add("hidden");
-        statsBtn.classList.remove("hidden");
-        notebookBtn.classList.remove("hidden");
-        customTestBtn.classList.remove("hidden");
-      }
+      document.getElementById("student-stats-btn").classList.remove("hidden");
+      document.getElementById("notebook-hub-btn").classList.remove("hidden");
+      document.getElementById("custom-test-btn").classList.remove("hidden");
 
-      authBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Logout</span>';
-      authBtn.className = "px-3.5 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5";
-
-      syncSubjectDropdowns();
-      renderBrowsePortal();
       updateNotebookCounters();
       updateDailyStreakUI();
     }
@@ -1239,11 +662,9 @@
     function handleAuthButtonClick() {
       if (activeUser) {
         activeUser = null;
-        localStorage.removeItem("mbbs_logged_user");
-        lockPortalDisplay();
-      } else {
-        lockPortalDisplay();
+        localStorage.removeItem("mbbs_student_session");
       }
+      lockPortalDisplay();
     }
 
     function lockPortalDisplay() {
@@ -1251,206 +672,68 @@
       document.getElementById("view-exam").classList.add("hidden");
       document.getElementById("view-result").classList.add("hidden");
       document.getElementById("sub-nav-bar").classList.add("hidden");
-      document.getElementById("admin-hub-btn").classList.add("hidden");
       document.getElementById("student-stats-btn").classList.add("hidden");
       document.getElementById("notebook-hub-btn").classList.add("hidden");
       document.getElementById("custom-test-btn").classList.add("hidden");
-
       document.getElementById("view-locked").classList.remove("hidden");
 
       const roleBadge = document.getElementById("header-role-badge");
-      const userLabel = document.getElementById("header-user-label");
-      const authBtn = document.getElementById("auth-action-btn");
-
       roleBadge.textContent = "LOCKED";
       roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
-      userLabel.textContent = "Guest Access Disabled";
+      document.getElementById("header-user-label").textContent = "Candidate Access Required";
 
+      const authBtn = document.getElementById("auth-action-btn");
       authBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Login</span>';
-      authBtn.className = "px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5";
+      authBtn.className = "px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5";
     }
 
-    function syncSubjectDropdowns() {
-      const topSelect = document.getElementById("subject-select");
-      const importSelect = document.getElementById("import-target-subject");
-
-      topSelect.innerHTML = "";
-      importSelect.innerHTML = "";
-
-      const subjects = Object.keys(DB);
-      if (subjects.length > 0 && !DB[currentSubjectKey]) currentSubjectKey = subjects[0];
-
-      subjects.forEach(sub => {
-        const opt1 = document.createElement("option");
-        opt1.value = sub;
-        opt1.textContent = DB[sub].name || sub;
-        if (sub === currentSubjectKey) opt1.selected = true;
-        topSelect.appendChild(opt1);
-
-        const opt2 = document.createElement("option");
-        opt2.value = sub;
-        opt2.textContent = DB[sub].name || sub;
-        if (sub === currentSubjectKey) opt2.selected = true;
-        importSelect.appendChild(opt2);
-      });
+    function switchSubject(sub) {
+      currentSubjectKey = sub;
+      document.getElementById("active-subject-badge").textContent = sub.toUpperCase();
+      document.getElementById("active-subject-title").textContent = `${sub} Question Bank`;
     }
 
-    function switchSubject(subjectKey) {
-      currentSubjectKey = subjectKey;
-      renderBrowsePortal();
-      if (activeUser && activeUser.role === "admin") renderAdminContentManager();
-    }
-
-    function filterTestsByKeyword() {
-      const query = document.getElementById("topic-search-input").value.toLowerCase().trim();
-      renderBrowsePortal(query);
-    }
-
-    function renderBrowsePortal(filterQuery = "") {
-      const grid = document.getElementById("tests-grid");
-      const badge = document.getElementById("active-subject-badge");
-      const title = document.getElementById("active-subject-title");
-      const countPill = document.getElementById("tests-count-pill");
-
-      const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
-      badge.textContent = curSub.name.toUpperCase();
-      title.textContent = `${curSub.name} Assessment Bank`;
-
-      let chapters = curSub.chapters || [];
-      if (filterQuery) {
-        chapters = chapters.filter(c => 
-          c.title.toLowerCase().includes(filterQuery) || 
-          (c.topic && c.topic.toLowerCase().includes(filterQuery))
-        );
-      }
-
-      countPill.textContent = `${chapters.length} Modules Ready`;
-      grid.innerHTML = "";
-
-      if (chapters.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full py-14 text-center border border-dashed border-white/[0.08] rounded-3xl bg-slate-900/40">
-            <i class="fa-solid fa-cloud-bolt text-3xl text-sky-400 mb-3"></i>
-            <h4 class="text-sm font-bold text-slate-300">Live Edge Module Ready for ${curSub.name}</h4>
-            <p class="text-xs text-slate-500 mt-1">Click below to fetch on-demand question blocks directly from PostgreSQL.</p>
-            <button onclick="launchExamSession('live_module')" class="mt-4 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
-              Launch Live ${curSub.name} Set
-            </button>
-          </div>
-        `;
-        return;
-      }
-
-      chapters.forEach(ch => {
-        const card = document.createElement("div");
-        card.className = "glass-panel rounded-3xl p-6 border border-white/[0.08] hover:border-sky-500/40 transition flex flex-col justify-between group shadow-xl";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || curSub.name}</span>
-              <span class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-list-check text-sky-400 mr-1.5"></i> ${ch.questions.length} MCQs</span>
-            </div>
-            <h4 class="text-sm font-bold text-white group-hover:text-sky-400 transition leading-snug line-clamp-2">${ch.title}</h4>
-          </div>
-          <div class="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-            <span class="text-[11px] text-amber-400 font-semibold font-mono">+4 / −1 Scheme</span>
-            <button onclick="launchExamSession('${ch.id}')" class="px-4 py-2 rounded-xl bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-sky-600/25">
-              <span>Start CBT</span>
-              <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    // ================= FONT SIZING & FOCUS MODE =================
-    function changeFontSize(delta) {
-      currentFontScale = Math.max(0.85, Math.min(1.35, currentFontScale + delta));
-      document.documentElement.style.setProperty('--font-scale', `${currentFontScale}rem`);
-    }
-
-    function toggleFocusMode() {
-      isFocusModeActive = !isFocusModeActive;
-      const header = document.getElementById("main-header");
-      const matrix = document.getElementById("exam-matrix-panel");
-      const mainPanel = document.getElementById("exam-main-panel");
-
-      if (isFocusModeActive) {
-        header.classList.add("hidden");
-        matrix.classList.add("hidden");
-        mainPanel.className = "lg:col-span-4 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative";
-      } else {
-        header.classList.remove("hidden");
-        matrix.classList.remove("hidden");
-        mainPanel.className = "lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative";
-      }
-    }
-
-    // ================= CBT ENGINE & ON-DEMAND STREAMING =================
-    async function launchExamSession(chapterId) {
+    async function launchExamSession() {
       if (!activeUser) return lockPortalDisplay();
-
-      const curSub = DB[currentSubjectKey] || { name: currentSubjectKey };
-
       try {
-        const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(curSub.name || currentSubjectKey)}&limit=20`);
-        const liveQuestions = await res.json();
-
-        if (Array.isArray(liveQuestions) && liveQuestions.length > 0) {
-          setupAndRunTest({
-            id: chapterId || `live_${Date.now()}`,
-            title: `${curSub.name || currentSubjectKey} Exam`,
-            topic: curSub.name || currentSubjectKey
-          }, liveQuestions);
+        const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(currentSubjectKey)}&limit=20`);
+        const qList = await res.json();
+        if (Array.isArray(qList) && qList.length > 0) {
+          setupAndRunTest({ title: `${currentSubjectKey} Standard CBT`, topic: currentSubjectKey }, qList);
           return;
         }
-      } catch (err) {
-        console.warn("Live question fetch failed, evaluating local fallbacks:", err);
-      }
+      } catch (e) {}
 
-      const test = curSub.chapters?.find(c => c.id === chapterId);
-      if (test && test.questions && test.questions.length > 0) {
-        setupAndRunTest(test, test.questions);
-      } else {
-        alert("No questions found for this subject. Upload questions using the Admin AI Importer.");
-      }
+      try {
+        const sRes = await fetch(`${SUPABASE_REST}/questions?subject=eq.${encodeURIComponent(currentSubjectKey)}&limit=20`, {
+          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
+        });
+        const rows = await sRes.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          setupAndRunTest({ title: `${currentSubjectKey} Standard CBT`, topic: currentSubjectKey }, rows);
+          return;
+        }
+      } catch (e) {}
+
+      alert(`No questions found in database for ${currentSubjectKey}. Ask Admin to add questions.`);
     }
 
     function setupAndRunTest(testMeta, questionList) {
       const preparedQuestions = questionList.map((q, idx) => {
-        const shuffledOptions = [...q.options];
-        for (let i = shuffledOptions.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-        }
-
+        const shuffled = [...q.options].sort(() => 0.5 - Math.random());
         return {
           id: q.id || `Q-${idx + 1}`,
-          topic: q.topic || q.sub_topic || testMeta.topic || "Clinical Core",
+          topic: q.sub_topic || q.topic || testMeta.topic || "Core",
           question: q.question,
-          options: shuffledOptions,
+          options: shuffled,
           correctText: q.answer,
-          explanation: q.explanation || "Clinical reasoning per standard guidelines."
+          explanation: q.explanation || "Clinical rationale per standard medical textbooks."
         };
       });
 
-      const timePerQuestionSeconds = 90;
-      const totalSeconds = preparedQuestions.length * timePerQuestionSeconds;
-
       activeExam = {
-        test: testMeta,
-        questions: preparedQuestions,
-        cursor: 0,
-        answers: {},
-        confidences: {},
-        flagged: new Set(),
-        questionTimes: {},
-        currentQStartTime: Date.now(),
-        qInterval: null,
-        seconds: 0,
-        totalSecondsAllocated: totalSeconds,
-        timer: null
+        test: testMeta, questions: preparedQuestions, cursor: 0, answers: {}, confidences: {}, flagged: new Set(),
+        questionTimes: {}, currentQStartTime: Date.now(), qInterval: null, seconds: 0, totalSecondsAllocated: preparedQuestions.length * 90, timer: null
       };
 
       startTimerClock();
@@ -1470,30 +753,19 @@
 
     function startTimerClock() {
       if (activeExam.timer) clearInterval(activeExam.timer);
-
       const display = document.getElementById("exam-timer-display");
       const label = document.getElementById("exam-timer-label");
 
       activeExam.timer = setInterval(() => {
         activeExam.seconds++;
-
         if (isFormalExamMode) {
-          label.textContent = "Countdown Timer";
+          label.textContent = "Countdown";
           const rem = Math.max(0, activeExam.totalSecondsAllocated - activeExam.seconds);
-          const m = String(Math.floor(rem / 60)).padStart(2, '0');
-          const s = String(rem % 60).padStart(2, '0');
-          display.textContent = `${m}:${s}`;
-
-          if (rem <= 0) {
-            clearInterval(activeExam.timer);
-            alert("⏰ Exam time expired! Finalizing submissions.");
-            finalizeExam();
-          }
+          display.textContent = `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`;
+          if (rem <= 0) { clearInterval(activeExam.timer); finalizeExam(); }
         } else {
           label.textContent = "Elapsed Time";
-          const m = String(Math.floor(activeExam.seconds / 60)).padStart(2, '0');
-          const s = String(activeExam.seconds % 60).padStart(2, '0');
-          display.textContent = `${m}:${s}`;
+          display.textContent = `${String(Math.floor(activeExam.seconds / 60)).padStart(2, '0')}:${String(activeExam.seconds % 60).padStart(2, '0')}`;
         }
       }, 1000);
     }
@@ -1506,13 +778,9 @@
       activeExam.qInterval = setInterval(() => {
         const cur = activeExam.cursor;
         const past = activeExam.questionTimes[cur] || 0;
-        const currentElapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000) + past;
-        qDisplay.textContent = `${currentElapsed}s`;
-        if (currentElapsed > 90) {
-          qDisplay.className = "font-mono text-rose-400 font-bold";
-        } else {
-          qDisplay.className = "font-mono text-sky-300";
-        }
+        const elapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000) + past;
+        qDisplay.textContent = `${elapsed}s`;
+        qDisplay.className = elapsed > 90 ? "font-mono text-rose-400 font-bold" : "font-mono text-sky-300";
       }, 1000);
     }
 
@@ -1526,37 +794,23 @@
       isFormalExamMode = formal;
       document.getElementById("mode-btn-practice").className = !formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
       document.getElementById("mode-btn-exam").className = formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-indigo-500/20 text-indigo-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
-      
       startTimerClock();
       renderActiveExamCard();
     }
 
     function setConfidence(type) {
-      const cur = activeExam.cursor;
-      activeExam.confidences[cur] = type;
+      activeExam.confidences[activeExam.cursor] = type;
       updateConfidenceUI(type);
     }
 
     function updateConfidenceUI(type) {
-      const btnSure = document.getElementById("conf-btn-sure");
-      const btnGuess = document.getElementById("conf-btn-guess");
-
-      if (type === 'sure') {
-        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition";
-        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
-      } else if (type === 'guess') {
-        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
-        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-amber-500 bg-amber-500/20 text-amber-300 transition";
-      } else {
-        btnSure.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
-        btnGuess.className = "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
-      }
+      document.getElementById("conf-btn-sure").className = type === 'sure' ? "px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition" : "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
+      document.getElementById("conf-btn-guess").className = type === 'guess' ? "px-3 py-1 rounded-lg text-xs font-bold border border-amber-500 bg-amber-500/20 text-amber-300 transition" : "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
     }
 
     function toggleFlagCurrentQuestion() {
       const cur = activeExam.cursor;
       const q = activeExam.questions[cur];
-
       if (activeExam.flagged.has(cur)) {
         activeExam.flagged.delete(cur);
       } else {
@@ -1571,9 +825,7 @@
     function renderPaletteGrid() {
       const palette = document.getElementById("exam-palette-grid");
       palette.innerHTML = "";
-
-      let answeredCount = 0;
-      let flaggedCount = 0;
+      let answered = 0, flagged = 0;
 
       activeExam.questions.forEach((_, idx) => {
         const btn = document.createElement("button");
@@ -1581,8 +833,8 @@
         const isAnswered = activeExam.answers.hasOwnProperty(idx);
         const isFlagged = activeExam.flagged.has(idx);
 
-        if (isAnswered) answeredCount++;
-        if (isFlagged) flaggedCount++;
+        if (isAnswered) answered++;
+        if (isFlagged) flagged++;
 
         let bg = "bg-slate-800 text-slate-400 border-white/[0.04]";
         if (isAnswered) bg = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
@@ -1601,42 +853,27 @@
         palette.appendChild(btn);
       });
 
-      document.getElementById("matrix-answered-count").textContent = answeredCount;
-      document.getElementById("matrix-flagged-count").textContent = flaggedCount;
-      document.getElementById("matrix-unanswered-count").textContent = activeExam.questions.length - answeredCount;
+      document.getElementById("matrix-answered-count").textContent = answered;
+      document.getElementById("matrix-flagged-count").textContent = flagged;
+      document.getElementById("matrix-unanswered-count").textContent = activeExam.questions.length - answered;
     }
 
     function renderActiveExamCard() {
       const q = activeExam.questions[activeExam.cursor];
-      const total = activeExam.questions.length;
       const cur = activeExam.cursor;
 
       document.getElementById("exam-index-curr").textContent = cur + 1;
-      document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / total) * 100}%`;
-
-      document.getElementById("exam-q-topic-badge").textContent = q.topic || "Core Topic";
-      document.getElementById("exam-q-id-badge").textContent = q.id;
+      document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / activeExam.questions.length) * 100}%`;
+      document.getElementById("exam-q-topic-badge").textContent = q.topic;
       document.getElementById("exam-q-statement").textContent = q.question;
 
-      const flagBtn = document.getElementById("exam-flag-btn");
-      const flagLabel = document.getElementById("exam-flag-label");
-      if (activeExam.flagged.has(cur)) {
-        flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Flagged";
-      } else {
-        flagBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5";
-        flagLabel.textContent = "Flag";
-      }
-
+      document.getElementById("exam-flag-label").textContent = activeExam.flagged.has(cur) ? "Flagged" : "Flag";
       updateConfidenceUI(activeExam.confidences[cur] || null);
 
-      const noteInput = document.getElementById("q-note-input");
-      const noteKey = getNoteStorageKey(q.question);
-      noteInput.value = localStorage.getItem(noteKey) || "";
+      document.getElementById("q-note-input").value = localStorage.getItem(`note_${activeUser.uid}_${btoa(encodeURIComponent(q.question)).slice(0, 32)}`) || "";
 
       const optsContainer = document.getElementById("exam-options-list");
       optsContainer.innerHTML = "";
-
       const isAnswered = activeExam.answers.hasOwnProperty(cur);
       const chosen = activeExam.answers[cur];
       const labels = ["A", "B", "C", "D"];
@@ -1646,34 +883,25 @@
         btn.className = "option-card w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-center justify-between gap-3 ";
 
         if (!isAnswered) {
-          btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800/80 text-slate-200";
+          btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800 text-slate-200";
           btn.onclick = () => recordExamAnswer(cur, optText);
         } else {
           if (isFormalExamMode) {
-            if (optText === chosen) {
-              btn.className += "border-sky-500 bg-sky-500/15 text-sky-200 font-bold";
-            } else {
-              btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-400";
-            }
+            btn.className += optText === chosen ? "border-sky-500 bg-sky-500/15 text-sky-200 font-bold" : "border-white/[0.04] bg-slate-950/40 text-slate-400";
             btn.onclick = () => recordExamAnswer(cur, optText);
           } else {
-            if (optText === q.correctText) {
-              btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold shadow-lg shadow-emerald-500/10";
-            } else if (optText === chosen && chosen !== q.correctText) {
-              btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
-            } else {
-              btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
-            }
+            if (optText === q.correctText) btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold";
+            else if (optText === chosen) btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
+            else btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
           }
         }
 
         btn.innerHTML = `
           <div class="flex items-center gap-3.5">
-            <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
+            <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
             <span>${optText}</span>
           </div>
-          ${!isFormalExamMode && isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>' : ''}
-          ${!isFormalExamMode && isAnswered && optText === chosen && chosen !== q.correctText ? '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i>' : ''}
+          ${!isFormalExamMode && isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
         `;
         optsContainer.appendChild(btn);
       });
@@ -1687,1383 +915,249 @@
       }
 
       document.getElementById("exam-prev-btn").disabled = (cur === 0);
-      const nextBtn = document.getElementById("exam-next-btn");
-      if (cur === total - 1) {
-        nextBtn.innerHTML = 'Review & Submit <i class="fa-solid fa-flag-checkered ml-1.5"></i>';
-      } else {
-        nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>';
-      }
+      document.getElementById("exam-next-btn").innerHTML = (cur === activeExam.questions.length - 1) ? 'Review & Submit <i class="fa-solid fa-flag-checkered ml-1"></i>' : 'Next <i class="fa-solid fa-chevron-right ml-1"></i>';
     }
 
-    function recordExamAnswer(qIdx, optionText) {
-      activeExam.answers[qIdx] = optionText;
+    function recordExamAnswer(qIdx, opt) {
+      activeExam.answers[qIdx] = opt;
       const q = activeExam.questions[qIdx];
+      if (!activeExam.confidences[qIdx]) activeExam.confidences[qIdx] = 'sure';
 
-      if (!activeExam.confidences[qIdx]) {
-        activeExam.confidences[qIdx] = 'sure';
-      }
-
-      if (optionText !== q.correctText) {
+      if (opt !== q.correctText) {
         saveQuestionToNotebook('mistakes', q);
         queueSpacedRepetition(q);
         updateNotebookCounters();
       }
-
       renderActiveExamCard();
       renderPaletteGrid();
     }
 
-    function stepExam(direction) {
+    function stepExam(dir) {
       recordCurrentQuestionElapsed();
-      const nextIdx = activeExam.cursor + direction;
-      if (nextIdx >= 0 && nextIdx < activeExam.questions.length) {
-        activeExam.cursor = nextIdx;
+      const next = activeExam.cursor + dir;
+      if (next >= 0 && next < activeExam.questions.length) {
+        activeExam.cursor = next;
         startQuestionTiming();
         renderActiveExamCard();
         renderPaletteGrid();
-      } else if (nextIdx >= activeExam.questions.length) {
+      } else if (next >= activeExam.questions.length) {
         promptSubmitExam();
       }
-    }
-
-    function getNoteStorageKey(questionText) {
-      const uid = activeUser ? activeUser.uid : 'guest';
-      return `q_note_${uid}_${btoa(encodeURIComponent(questionText)).slice(0, 32)}`;
     }
 
     function saveCurrentQuestionNote() {
       const q = activeExam.questions[activeExam.cursor];
       const val = document.getElementById("q-note-input").value.trim();
-      const key = getNoteStorageKey(q.question);
-      if (val) {
-        localStorage.setItem(key, val);
-        alert("Clinical note saved!");
-      } else {
-        localStorage.removeItem(key);
-      }
+      const k = `note_${activeUser.uid}_${btoa(encodeURIComponent(q.question)).slice(0, 32)}`;
+      if (val) localStorage.setItem(k, val); else localStorage.removeItem(k);
+      alert("Note saved!");
     }
 
-    // ================= CONFIRMATION & SCORING =================
     function promptSubmitExam() {
       recordCurrentQuestionElapsed();
-      const total = activeExam.questions.length;
-      const answered = Object.keys(activeExam.answers).length;
-      const flagged = activeExam.flagged.size;
-      const blank = total - answered;
-
-      document.getElementById("confirm-answered").textContent = answered;
-      document.getElementById("confirm-flagged").textContent = flagged;
-      document.getElementById("confirm-blank").textContent = blank;
-
+      document.getElementById("confirm-answered").textContent = Object.keys(activeExam.answers).length;
+      document.getElementById("confirm-flagged").textContent = activeExam.flagged.size;
+      document.getElementById("confirm-blank").textContent = activeExam.questions.length - Object.keys(activeExam.answers).length;
       document.getElementById("submit-confirm-modal").classList.remove("hidden");
     }
 
-    function closeSubmitConfirmModal() {
-      document.getElementById("submit-confirm-modal").classList.add("hidden");
-    }
-
-    function executeFinalSubmission() {
-      closeSubmitConfirmModal();
-      finalizeExam();
-    }
+    function closeSubmitConfirmModal() { document.getElementById("submit-confirm-modal").classList.add("hidden"); }
+    function executeFinalSubmission() { closeSubmitConfirmModal(); finalizeExam(); }
 
     function finalizeExam() {
       if (activeExam.timer) clearInterval(activeExam.timer);
       if (activeExam.qInterval) clearInterval(activeExam.qInterval);
       recordCurrentQuestionElapsed();
 
-      let correct = 0;
-      let wrong = 0;
-      let blank = 0;
-      let luckyGuesses = 0;
-
-      activeExam.questions.forEach((q, idx) => {
-        if (!activeExam.answers.hasOwnProperty(idx)) {
-          blank++;
-        } else if (activeExam.answers[idx] === q.correctText) {
+      let correct = 0, wrong = 0, lucky = 0;
+      activeExam.questions.forEach((q, i) => {
+        if (activeExam.answers[i] === q.correctText) {
           correct++;
-          if (activeExam.confidences[idx] === 'guess') luckyGuesses++;
-        } else {
+          if (activeExam.confidences[i] === 'guess') lucky++;
+        } else if (activeExam.answers.hasOwnProperty(i)) {
           wrong++;
-          saveQuestionToNotebook('mistakes', q);
-          queueSpacedRepetition(q);
         }
       });
 
       const total = activeExam.questions.length;
-      const netMarks = (correct * 4) - (wrong * 1);
-      const maxPossibleMarks = total * 4;
+      const netMarks = (correct * 4) - wrong;
       const accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
 
-      document.getElementById("print-candidate-meta").textContent = 
-        `${activeUser ? activeUser.name : 'Candidate'} • ID: ${activeUser ? activeUser.uid : 'STU'} • Date: ${new Date().toLocaleDateString()}`;
-
-      document.getElementById("result-test-title").textContent = activeExam.test.title;
-      document.getElementById("result-stat-net-score").innerHTML = `${netMarks} <span class="text-xs text-slate-400 font-normal">/ ${maxPossibleMarks} Max Marks</span>`;
+      document.getElementById("print-candidate-meta").textContent = `${activeUser.name} • ID: ${activeUser.uid} • ${new Date().toLocaleDateString()}`;
+      document.getElementById("result-stat-net-score").innerHTML = `${netMarks} <span class="text-xs text-slate-400 font-normal">/ ${total * 4} Max Marks</span>`;
       document.getElementById("result-stat-correct").textContent = `${correct} (+${correct * 4})`;
       document.getElementById("result-stat-wrong").textContent = `${wrong} (−${wrong})`;
       document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
-      document.getElementById("result-stat-lucky").textContent = `${luckyGuesses} Lucky`;
+      document.getElementById("result-stat-lucky").textContent = `${lucky} Lucky`;
 
-      storeExamAnalytics(activeExam.test.title, netMarks, maxPossibleMarks, correct, wrong, blank, accuracy, luckyGuesses);
+      // Log score to Supabase via Worker
+      fetch(`${API_BASE_URL}/api/submit`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: activeUser.uid, student_name: activeUser.name, test_title: activeExam.test.title, net_score: netMarks, max_score: total * 4, accuracy })
+      }).catch(() => {});
+
+      // Local storage history
+      const hist = JSON.parse(localStorage.getItem(`cbt_hist_${activeUser.uid}`) || "[]");
+      hist.push({ test: activeExam.test.title, netMarks, accuracy, timestamp: new Date().toLocaleDateString() });
+      localStorage.setItem(`cbt_hist_${activeUser.uid}`, JSON.stringify(hist));
+
       advanceDailyStreak();
-
       document.getElementById("view-exam").classList.add("hidden");
       document.getElementById("view-result").classList.remove("hidden");
-      updateNotebookCounters();
     }
 
-    function retakeCurrentExam() {
-      if (activeExam.test) launchExamSession(activeExam.test.id);
-    }
-
-    function terminateExamPrompt() {
-      if (confirm("Terminate this test? Progress will not be registered.")) {
-        if (activeExam.timer) clearInterval(activeExam.timer);
-        if (activeExam.qInterval) clearInterval(activeExam.qInterval);
-        returnToBrowseView();
-      }
-    }
-
+    function retakeCurrentExam() { launchExamSession(); }
+    function terminateExamPrompt() { if (confirm("Quit this session?")) returnToBrowseView(); }
     function returnToBrowseView() {
       document.getElementById("view-exam").classList.add("hidden");
       document.getElementById("view-result").classList.add("hidden");
       document.getElementById("view-browse").classList.remove("hidden");
-      renderBrowsePortal();
-      updateNotebookCounters();
-      updateDailyStreakUI();
     }
 
-    // ================= POST-EXAM FULL SOLUTION REVIEW =================
+    // ================= REVIEW & HELPERS =================
     function openFullAnswerReview() {
-      const container = document.getElementById("review-questions-container");
-      container.innerHTML = "";
-
-      document.getElementById("review-subtitle").textContent = `${activeExam.test.title} • Reviewing ${activeExam.questions.length} Items`;
-
-      activeExam.questions.forEach((q, idx) => {
-        const chosen = activeExam.answers[idx];
-        const isAnswered = activeExam.answers.hasOwnProperty(idx);
-        const isCorrect = isAnswered && chosen === q.correctText;
-        const isWrong = isAnswered && chosen !== q.correctText;
-        const conf = activeExam.confidences[idx] || "none";
-        const timeSpent = activeExam.questionTimes[idx] || 0;
-
-        let badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Unanswered</span>';
-        if (isCorrect) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Correct (+4)</span>';
-        if (isWrong) badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">Incorrect (−1)</span>';
-
-        const savedNote = localStorage.getItem(getNoteStorageKey(q.question)) || "";
-
+      const c = document.getElementById("review-questions-container");
+      c.innerHTML = "";
+      activeExam.questions.forEach((q, i) => {
+        const chosen = activeExam.answers[i];
+        const isCorrect = chosen === q.correctText;
         const card = document.createElement("div");
         card.className = "glass-panel p-5 rounded-2xl border border-white/[0.08] space-y-3";
         card.innerHTML = `
-          <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-slate-400 font-bold text-xs">Q${idx + 1}.</span>
-              <span class="text-[10px] font-bold text-indigo-300 uppercase px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">${q.topic}</span>
-              <span class="text-[10px] font-mono text-slate-400">⏱️ ${timeSpent}s</span>
-              ${conf === 'guess' ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Guessed</span>' : ''}
-            </div>
-            ${badge}
+          <div class="flex justify-between border-b border-white/[0.06] pb-2">
+            <span class="text-xs font-mono font-bold text-slate-400">Q${i + 1}. (${q.topic})</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${isCorrect ? 'Correct (+4)' : 'Wrong (-1)'}</span>
           </div>
-
-          <p class="text-sm font-semibold text-slate-100">${q.question}</p>
-
-          <div class="space-y-2 text-xs">
-            ${q.options.map((opt) => {
-              let optStyle = "border-white/[0.06] bg-slate-900/60 text-slate-300";
-              let icon = "";
-              if (opt === q.correctText) {
-                optStyle = "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-bold";
-                icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>';
-              } else if (opt === chosen && isWrong) {
-                optStyle = "border-rose-500/40 bg-rose-500/10 text-rose-300 font-semibold";
-                icon = '<i class="fa-solid fa-circle-xmark text-rose-400 text-xs"></i>';
-              }
-              return `
-                <div class="p-3 rounded-xl border flex items-center justify-between ${optStyle}">
-                  <span>${opt}</span>
-                  ${icon}
-                </div>
-              `;
-            }).join("")}
+          <p class="text-sm font-semibold">${q.question}</p>
+          <div class="space-y-1.5 text-xs">
+            ${q.options.map(opt => `
+              <div class="p-2.5 rounded-xl border ${opt === q.correctText ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-bold' : (opt === chosen ? 'border-rose-500/50 bg-rose-500/10 text-rose-300' : 'border-white/[0.04] bg-slate-900/50 text-slate-400')}">
+                ${opt}
+              </div>
+            `).join("")}
           </div>
-
-          <div class="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] text-xs space-y-1">
-            <span class="text-emerald-400 font-bold flex items-center gap-1.5">
-              <i class="fa-solid fa-lightbulb"></i> Clinical Pearl & Rationale
-            </span>
-            <p class="text-slate-300 leading-relaxed">${q.explanation}</p>
-          </div>
-
-          ${savedNote ? `
-            <div class="p-3 rounded-xl bg-sky-950/30 border border-sky-500/20 text-xs text-sky-200">
-              <span class="font-bold">📝 Your Note:</span> ${savedNote}
-            </div>
-          ` : ''}
+          <div class="p-3 rounded-xl bg-slate-950 text-xs text-slate-300"><span class="text-emerald-400 font-bold">Rationale:</span> ${q.explanation}</div>
         `;
-        container.appendChild(card);
+        c.appendChild(card);
       });
-
       document.getElementById("full-review-modal").classList.remove("hidden");
     }
+    function closeFullAnswerReview() { document.getElementById("full-review-modal").classList.add("hidden"); }
 
-    function closeFullAnswerReview() {
-      document.getElementById("full-review-modal").classList.add("hidden");
+    function changeFontSize(d) {
+      currentFontScale = Math.max(0.85, Math.min(1.35, currentFontScale + d));
+      document.documentElement.style.setProperty('--font-scale', `${currentFontScale}rem`);
     }
 
-    // ================= SPACED REPETITION ENGINE =================
-    function getSrStorageKey() {
-      const uid = activeUser ? activeUser.uid : 'guest';
-      return `mbbs_spaced_repetition_${uid}`;
+    function toggleFocusMode() {
+      isFocusModeActive = !isFocusModeActive;
+      document.getElementById("main-header").classList.toggle("hidden", isFocusModeActive);
+      document.getElementById("exam-matrix-panel").classList.toggle("hidden", isFocusModeActive);
+      document.getElementById("exam-main-panel").className = isFocusModeActive ? "lg:col-span-4 glass-panel rounded-3xl p-5 sm:p-8" : "lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8";
     }
 
-    function queueSpacedRepetition(q) {
-      try {
-        const key = getSrStorageKey();
-        const queue = JSON.parse(localStorage.getItem(key) || "[]");
-        const existing = queue.find(item => item.question === q.question);
-
-        const now = Date.now();
-        if (!existing) {
-          queue.push({
-            q: q,
-            stage: 1,
-            nextReviewDate: now + (1 * 24 * 60 * 60 * 1000)
-          });
-        } else {
-          existing.stage = Math.min(3, (existing.stage || 1) + 1);
-          const days = existing.stage === 2 ? 3 : 7;
-          existing.nextReviewDate = now + (days * 24 * 60 * 60 * 1000);
-        }
-        localStorage.setItem(key, JSON.stringify(queue));
-      } catch (e) {}
-    }
-
-    function launchSpacedRepetitionQuiz() {
-      const key = getSrStorageKey();
-      const queue = JSON.parse(localStorage.getItem(key) || "[]");
-      const now = Date.now();
-      
-      const due = queue.filter(item => item.nextReviewDate <= now).map(item => item.q);
-      if (due.length === 0) {
-        return alert("🎉 Great job! No spaced repetition questions are due today. Keep studying!");
-      }
-
-      setupAndRunTest({
-        id: "spaced_repetition_test",
-        title: `Spaced Repetition Review (${due.length} Items Due)`,
-        topic: "MEMORY RETENTION"
-      }, due);
-    }
-
-    // ================= 1-TAP WRONG-ANSWERS QUIZ =================
-    function launchWrongAnswersQuiz() {
-      const mistakes = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
-      if (mistakes.length === 0) {
-        return alert("🎯 Clean record! You have no saved wrong answers in your vault.");
-      }
-
-      setupAndRunTest({
-        id: "wrong_answers_drill",
-        title: `Wrong-Answers Remediation Quiz (${mistakes.length} MCQs)`,
-        topic: "ERROR LOG"
-      }, mistakes);
-    }
-
-    // ================= DAILY 10 WITH CONSECUTIVE STREAK =================
-    function getDailyStreakData() {
-      const uid = activeUser ? activeUser.uid : 'guest';
-      return JSON.parse(localStorage.getItem(`daily_streak_${uid}`) || JSON.stringify({
-        streak: 0,
-        lastCompletedDate: null
-      }));
-    }
-
-    function updateDailyStreakUI() {
-      const data = getDailyStreakData();
-      const streakBadge = document.getElementById("header-streak-badge");
-      const streakCounter = document.getElementById("streak-counter");
-      
-      if (streakCounter) streakCounter.textContent = data.streak;
-      if (streakBadge && data.streak > 0) streakBadge.classList.remove("hidden");
-
-      const todayStr = new Date().toDateString();
-      const statusLabel = document.getElementById("daily-status-label");
-      if (statusLabel) {
-        if (data.lastCompletedDate === todayStr) {
-          statusLabel.textContent = "Completed for Today! 🎉";
-        } else {
-          statusLabel.textContent = "10 Fresh Questions Waiting";
-        }
-      }
-
-      const queue = JSON.parse(localStorage.getItem(getSrStorageKey()) || "[]");
-      const dueCount = queue.filter(item => item.nextReviewDate <= Date.now()).length;
-      const dueLabel = document.getElementById("sr-due-count");
-      if (dueLabel) dueLabel.textContent = `${dueCount} Due for Review`;
-    }
-
+    // Daily 10 & Spaced Repetition
+    function getDailyStreakData() { return JSON.parse(localStorage.getItem(`streak_${activeUser?.uid}`) || '{"streak":0,"lastDate":""}'); }
     function advanceDailyStreak() {
-      const uid = activeUser ? activeUser.uid : 'guest';
-      const data = getDailyStreakData();
-      const today = new Date();
-      const todayStr = today.toDateString();
-
-      if (data.lastCompletedDate === todayStr) return;
-
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-      if (data.lastCompletedDate === yesterday) {
-        data.streak += 1;
-      } else {
-        data.streak = 1;
-      }
-      data.lastCompletedDate = todayStr;
-      localStorage.setItem(`daily_streak_${uid}`, JSON.stringify(data));
+      const d = getDailyStreakData();
+      const today = new Date().toDateString();
+      if (d.lastDate === today) return;
+      d.streak = (d.lastDate === new Date(Date.now() - 86400000).toDateString()) ? d.streak + 1 : 1;
+      d.lastDate = today;
+      localStorage.setItem(`streak_${activeUser?.uid}`, JSON.stringify(d));
       updateDailyStreakUI();
     }
-
+    function updateDailyStreakUI() {
+      const d = getDailyStreakData();
+      if (document.getElementById("streak-counter")) document.getElementById("streak-counter").textContent = d.streak;
+      if (d.streak > 0) document.getElementById("header-streak-badge").classList.remove("hidden");
+    }
     async function launchDaily10() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/questions?subject=Anatomy&limit=10`);
-        const liveDaily = await res.json();
-        if (Array.isArray(liveDaily) && liveDaily.length > 0) {
-          setupAndRunTest({
-            id: `daily_10_${new Date().toISOString().slice(0, 10)}`,
-            title: `Daily 10 Challenge (${new Date().toLocaleDateString()})`,
-            topic: "DAILY STREAK"
-          }, liveDaily);
-          return;
-        }
-      } catch (e) {}
-
-      const allQs = [];
-      Object.keys(DB).forEach(sub => {
-        (DB[sub].chapters || []).forEach(ch => {
-          (ch.questions || []).forEach(q => allQs.push(q));
-        });
-      });
-
-      if (allQs.length < 10) return alert("Not enough questions loaded in database to create a Daily 10.");
-
-      const shuffled = [...allQs].sort(() => 0.5 - Math.random());
-      const dailySet = shuffled.slice(0, 10);
-
-      setupAndRunTest({
-        id: `daily_10_${new Date().toISOString().slice(0, 10)}`,
-        title: `Daily 10 Challenge (${new Date().toLocaleDateString()})`,
-        topic: "DAILY STREAK"
-      }, dailySet);
+      const res = await fetch(`${API_BASE_URL}/api/questions?subject=Anatomy&limit=10`);
+      const qs = await res.json();
+      if (Array.isArray(qs) && qs.length > 0) setupAndRunTest({ title: "Daily 10 Challenge", topic: "DAILY 10" }, qs);
     }
 
-    // ================= CUSTOM TEST BUILDER =================
-    let selectedCustomCount = 20;
-
-    function openCustomTestModal() {
-      const container = document.getElementById("custom-builder-topics");
-      container.innerHTML = "";
-
-      Object.keys(DB).forEach(subKey => {
-        const sub = DB[subKey];
-        const row = document.createElement("label");
-        row.className = "flex items-center gap-2 p-2 rounded-lg hover:bg-slate-900 cursor-pointer text-slate-300";
-        row.innerHTML = `
-          <input type="checkbox" name="custom_topic" value="${subKey}" checked class="rounded border-slate-700 bg-slate-900 text-sky-500">
-          <span class="font-bold">${sub.name}</span>
-          <span class="text-[10px] text-slate-500">(${sub.chapters?.length || 0} modules)</span>
-        `;
-        container.appendChild(row);
-      });
-
-      selectCustomCount(20);
-      document.getElementById("custom-test-modal").classList.remove("hidden");
+    // Notebook & Mistakes
+    function getNotebookKey(t) { return `nb_${t}_${activeUser?.uid}`; }
+    function saveQuestionToNotebook(t, q) {
+      const k = getNotebookKey(t);
+      const list = JSON.parse(localStorage.getItem(k) || "[]");
+      if (!list.some(x => x.question === q.question)) { list.push(q); localStorage.setItem(k, JSON.stringify(list)); }
     }
-
-    function closeCustomTestModal() {
-      document.getElementById("custom-test-modal").classList.add("hidden");
-    }
-
-    function selectCustomCount(cnt) {
-      selectedCustomCount = cnt;
-      document.querySelectorAll(".count-btn").forEach(btn => {
-        if (parseInt(btn.dataset.val) === cnt) {
-          btn.className = "count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold";
-        } else {
-          btn.className = "count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 text-slate-400 font-bold hover:border-sky-500";
-        }
-      });
-    }
-
-    async function generateAndLaunchCustomTest() {
-      const checkedBoxes = Array.from(document.querySelectorAll("input[name='custom_topic']:checked")).map(cb => cb.value);
-      if (checkedBoxes.length === 0) return alert("Select at least one subject.");
-
-      try {
-        const firstSub = checkedBoxes[0];
-        const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(firstSub)}&limit=${selectedCustomCount}`);
-        const liveItems = await res.json();
-        if (Array.isArray(liveItems) && liveItems.length > 0) {
-          closeCustomTestModal();
-          setupAndRunTest({
-            id: `custom_${Date.now()}`,
-            title: `Custom Mixed Examination (${liveItems.length} Questions)`,
-            topic: "CUSTOM MIX"
-          }, liveItems);
-          return;
-        }
-      } catch (e) {}
-
-      const pool = [];
-      checkedBoxes.forEach(subKey => {
-        (DB[subKey]?.chapters || []).forEach(ch => {
-          (ch.questions || []).forEach(q => pool.push(q));
-        });
-      });
-
-      if (pool.length === 0) return alert("No questions available in selected subjects.");
-
-      const shuffled = pool.sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, selectedCustomCount);
-
-      closeCustomTestModal();
-      setupAndRunTest({
-        id: `custom_${Date.now()}`,
-        title: `Custom Mixed Examination (${selected.length} Questions)`,
-        topic: "CUSTOM MIX"
-      }, selected);
-    }
-
-    // ================= NOTEBOOK ENGINE =================
-    function getNotebookKey(type) {
-      const uid = activeUser ? activeUser.uid : 'guest';
-      return `mbbs_notebook_${type}_${uid}`;
-    }
-
-    function saveQuestionToNotebook(type, q) {
-      try {
-        const key = getNotebookKey(type);
-        const list = JSON.parse(localStorage.getItem(key) || "[]");
-        if (!list.some(item => item.question === q.question)) {
-          list.push({
-            id: q.id,
-            topic: q.topic || q.sub_topic,
-            question: q.question,
-            options: q.options,
-            answer: q.correctText || q.answer,
-            explanation: q.explanation,
-            addedAt: new Date().toLocaleDateString()
-          });
-          localStorage.setItem(key, JSON.stringify(list));
-        }
-      } catch (e) {}
-    }
-
     function updateNotebookCounters() {
-      try {
-        const ms = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
-        const elMs = document.getElementById("quick-mistakes-count");
-        if (elMs) elMs.textContent = `${ms.length} Errors Recorded`;
-      } catch (e) {}
+      const ms = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
+      if (document.getElementById("quick-mistakes-count")) document.getElementById("quick-mistakes-count").textContent = `${ms.length} Errors Recorded`;
+    }
+    function launchWrongAnswersQuiz() {
+      const list = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
+      if (list.length === 0) return alert("No wrong answers recorded yet!");
+      setupAndRunTest({ title: "1-Tap Mistake Drill", topic: "MISTAKES" }, list);
+    }
+    function queueSpacedRepetition(q) {
+      const k = `sr_${activeUser?.uid}`;
+      const queue = JSON.parse(localStorage.getItem(k) || "[]");
+      queue.push({ q, nextDate: Date.now() + 86400000 });
+      localStorage.setItem(k, JSON.stringify(queue));
+    }
+    function launchSpacedRepetitionQuiz() {
+      const queue = JSON.parse(localStorage.getItem(`sr_${activeUser?.uid}`) || "[]");
+      const due = queue.filter(x => x.nextDate <= Date.now()).map(x => x.q);
+      if (due.length === 0) return alert("No spaced repetition items due today!");
+      setupAndRunTest({ title: "Spaced Repetition Drill", topic: "MEMORY" }, due);
     }
 
+    // Modals
     let activeNotebookTab = 'bookmarks';
-    function openNotebookModal() {
-      switchNotebookTab('bookmarks');
-      document.getElementById("notebook-modal").classList.remove("hidden");
+    function openNotebookModal() { switchNotebookTab('bookmarks'); document.getElementById("notebook-modal").classList.remove("hidden"); }
+    function closeNotebookModal() { document.getElementById("notebook-modal").classList.add("hidden"); }
+    function switchNotebookTab(t) {
+      activeNotebookTab = t;
+      const list = JSON.parse(localStorage.getItem(getNotebookKey(t)) || "[]");
+      const c = document.getElementById("notebook-items-container");
+      c.innerHTML = list.length === 0 ? '<div class="p-6 text-center text-slate-500">No questions saved.</div>' : list.map((q, i) => `
+        <div class="p-3 bg-slate-900 rounded-xl border border-white/[0.04] flex justify-between gap-3 text-xs">
+          <div><p class="font-bold text-white">${q.question}</p><p class="text-emerald-400 mt-1">Ans: ${q.correctText || q.answer}</p></div>
+        </div>
+      `).join("");
+      document.getElementById("notebook-count-label").textContent = `${list.length} Items`;
     }
-
-    function closeNotebookModal() {
-      document.getElementById("notebook-modal").classList.add("hidden");
-    }
-
-    function switchNotebookTab(tab) {
-      activeNotebookTab = tab;
-      const isBm = tab === 'bookmarks';
-      document.getElementById("nb-tab-bookmarks").className = isBm ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition" : "py-3 px-4 text-slate-400 hover:text-slate-200 transition";
-      document.getElementById("nb-tab-mistakes").className = !isBm ? "py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition" : "py-3 px-4 text-slate-400 hover:text-slate-200 transition";
-
-      renderNotebookItems();
-    }
-
-    function renderNotebookItems() {
-      const container = document.getElementById("notebook-items-container");
-      const list = JSON.parse(localStorage.getItem(getNotebookKey(activeNotebookTab)) || "[]");
-      document.getElementById("notebook-count-label").textContent = `${list.length} Questions Saved`;
-      container.innerHTML = "";
-
-      if (list.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No items in this vault.</div>`;
-        return;
-      }
-
-      list.forEach((q, idx) => {
-        const item = document.createElement("div");
-        item.className = "p-4 bg-slate-900/80 rounded-2xl border border-white/[0.06] space-y-2 text-xs";
-        item.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">${q.topic}</span>
-            <button onclick="removeQuestionFromNotebook('${activeNotebookTab}', ${idx})" class="text-rose-400 hover:text-rose-300">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-          <p class="font-medium text-slate-200">${q.question}</p>
-          <p class="text-emerald-400 font-bold font-mono">Key: ${q.answer}</p>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function removeQuestionFromNotebook(type, idx) {
-      const key = getNotebookKey(type);
-      const list = JSON.parse(localStorage.getItem(key) || "[]");
-      list.splice(idx, 1);
-      localStorage.setItem(key, JSON.stringify(list));
-      renderNotebookItems();
-      updateNotebookCounters();
-    }
-
     function launchCurrentNotebookAsExam() {
       const list = JSON.parse(localStorage.getItem(getNotebookKey(activeNotebookTab)) || "[]");
-      if (list.length === 0) return alert("No questions to practice in this list.");
-
+      if (list.length === 0) return alert("List is empty!");
       closeNotebookModal();
-      setupAndRunTest({
-        id: `custom_${activeNotebookTab}`,
-        title: activeNotebookTab === 'bookmarks' ? "Targeted Practice: Bookmarks" : "Targeted Practice: Mistakes Vault",
-        topic: activeNotebookTab.toUpperCase()
-      }, list);
+      setupAndRunTest({ title: `Practice: ${activeNotebookTab}`, topic: activeNotebookTab.toUpperCase() }, list);
     }
 
-    function launchTargetedPractice(type) {
-      const list = JSON.parse(localStorage.getItem(getNotebookKey(type)) || "[]");
-      if (list.length === 0) return alert(`No questions in ${type} yet.`);
-
-      setupAndRunTest({
-        id: `custom_${type}`,
-        title: type === 'bookmarks' ? "Targeted Practice: Bookmarks" : "Targeted Practice: Mistakes Vault",
-        topic: type.toUpperCase()
-      }, list);
+    let selectedCount = 20;
+    function openCustomTestModal() { document.getElementById("custom-test-modal").classList.remove("hidden"); }
+    function closeCustomTestModal() { document.getElementById("custom-test-modal").classList.add("hidden"); }
+    function selectCustomCount(c) {
+      selectedCount = c;
+      document.querySelectorAll(".count-btn").forEach(b => b.className = (parseInt(b.dataset.val) === c) ? "count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold" : "count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold text-slate-400");
     }
-
-    // ================= PROGRESS, WEAKEST TOPICS & CLOUD SCORE SYNC =================
-    function storeExamAnalytics(testTitle, netMarks, maxMarks, correct, wrong, blank, accuracy, luckyGuesses) {
-      if (!activeUser) return;
-      try {
-        const auditLog = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]");
-        
-        const topicBreakdown = {};
-        activeExam.questions.forEach((q, idx) => {
-          const t = q.topic || "Core Topic";
-          if (!topicBreakdown[t]) topicBreakdown[t] = { correct: 0, total: 0 };
-          topicBreakdown[t].total++;
-          if (activeExam.answers[idx] === q.correctText) topicBreakdown[t].correct++;
-        });
-
-        auditLog.push({
-          uid: activeUser.uid,
-          name: activeUser.name,
-          test: testTitle,
-          netMarks: netMarks,
-          maxMarks: maxMarks,
-          correct: correct,
-          wrong: wrong,
-          blank: blank,
-          accuracy: accuracy,
-          luckyGuesses: luckyGuesses,
-          topics: topicBreakdown,
-          timestamp: new Date().toLocaleString()
-        });
-        localStorage.setItem("mbbs_exam_audit_v4", JSON.stringify(auditLog));
-      } catch (e) {}
-
-      // Background sync exam result to Supabase via Cloudflare Worker
-      fetch(`${API_BASE_URL}/api/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          student_id: activeUser.uid,
-          student_name: activeUser.name,
-          test_title: testTitle,
-          net_score: netMarks,
-          max_score: maxMarks,
-          accuracy: accuracy
-        })
-      }).catch(err => console.log("Cloud result sync skipped:", err));
+    async function generateAndLaunchCustomTest() {
+      const subs = Array.from(document.querySelectorAll("input[name='custom_topic']:checked")).map(cb => cb.value);
+      if (subs.length === 0) return alert("Select at least 1 subject");
+      closeCustomTestModal();
+      const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(subs[0])}&limit=${selectedCount}`);
+      const qs = await res.json();
+      setupAndRunTest({ title: `Custom Mix (${qs.length} Qs)`, topic: "MIXED" }, qs);
     }
 
     function openStudentStatsModal() {
-      if (!activeUser) return;
-      let audit = [];
-      try { audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]"); } catch (e) {}
-      const userRecords = audit.filter(r => r.uid === activeUser.uid);
-
-      document.getElementById("student-stats-name").textContent = `${activeUser.name} (${activeUser.uid})`;
-      document.getElementById("self-tests-taken").textContent = userRecords.length;
-
-      let netMarksTotal = 0;
-      let totalLucky = 0;
-      let totalQuestionsAttempted = 0;
-
-      userRecords.forEach(r => {
-        netMarksTotal += (r.netMarks || 0);
-        totalLucky += (r.luckyGuesses || 0);
-        totalQuestionsAttempted += (r.correct + r.wrong);
-      });
-
-      document.getElementById("self-net-marks").textContent = netMarksTotal;
-      document.getElementById("self-lucky-guesses").textContent = totalLucky;
-
-      const avg = userRecords.length > 0 ? Math.round(userRecords.reduce((a, c) => a + (c.accuracy || 0), 0) / userRecords.length) : 0;
-      document.getElementById("self-avg-accuracy").textContent = `${avg}%`;
-
-      // Badges
-      const streakData = getDailyStreakData();
-      const badgesContainer = document.getElementById("badges-container");
-      badgesContainer.innerHTML = "";
-
-      const badges = [
-        {
-          name: "Century Club",
-          desc: "100+ Qs Solved",
-          icon: "fa-bullseye",
-          earned: totalQuestionsAttempted >= 100
-        },
-        {
-          name: "Streak Master",
-          desc: "7-Day Streak",
-          icon: "fa-fire",
-          earned: streakData.streak >= 7
-        },
-        {
-          name: "Distinction",
-          desc: "90%+ on any Test",
-          icon: "fa-gem",
-          earned: userRecords.some(r => r.accuracy >= 90)
-        },
-        {
-          name: "Memory Beast",
-          desc: "Active Spaced Repetition",
-          icon: "fa-brain",
-          earned: JSON.parse(localStorage.getItem(getSrStorageKey()) || "[]").length > 0
-        }
-      ];
-
-      badges.forEach(b => {
-        const badgeEl = document.createElement("div");
-        const activeStyles = b.earned 
-          ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-          : "border-white/[0.04] bg-slate-900/40 text-slate-600 opacity-40";
-
-        badgeEl.className = `p-3 rounded-2xl border text-center flex flex-col items-center justify-center ${activeStyles}`;
-        badgeEl.innerHTML = `
-          <i class="fa-solid ${b.icon} text-lg mb-1"></i>
-          <span class="text-[11px] font-bold">${b.name}</span>
-          <span class="text-[9px] text-slate-400">${b.desc}</span>
-        `;
-        badgesContainer.appendChild(badgeEl);
-      });
-
-      // Weakest Topics Calculation
-      const topicStats = {};
-      userRecords.forEach(r => {
-        if (r.topics) {
-          Object.keys(r.topics).forEach(t => {
-            if (!topicStats[t]) topicStats[t] = { correct: 0, total: 0 };
-            topicStats[t].correct += r.topics[t].correct;
-            topicStats[t].total += r.topics[t].total;
-          });
-        }
-      });
-
-      const weakTopicsContainer = document.getElementById("weak-topics-container");
-      weakTopicsContainer.innerHTML = "";
-
-      const topicList = Object.keys(topicStats).map(t => {
-        const pct = Math.round((topicStats[t].correct / topicStats[t].total) * 100);
-        return { name: t, accuracy: pct, total: topicStats[t].total };
-      });
-
-      topicList.sort((a, b) => a.accuracy - b.accuracy);
-
-      if (topicList.length === 0) {
-        weakTopicsContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">Complete an exam to generate your accuracy breakdown.</div>`;
-      } else {
-        topicList.forEach(item => {
-          let color = "bg-rose-500";
-          if (item.accuracy >= 70) color = "bg-emerald-500";
-          else if (item.accuracy >= 50) color = "bg-amber-500";
-
-          const row = document.createElement("div");
-          row.className = "glass-input p-3 rounded-xl space-y-1.5 text-xs";
-          row.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-slate-200">${item.name}</span>
-              <span class="font-mono font-bold ${item.accuracy < 50 ? 'text-rose-400' : 'text-emerald-400'}">${item.accuracy}% (${item.total} Qs)</span>
-            </div>
-            <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-              <div class="${color} h-full" style="width: ${item.accuracy}%"></div>
-            </div>
-          `;
-          weakTopicsContainer.appendChild(row);
-        });
-      }
-
-      // Recent Attempts
-      const recentContainer = document.getElementById("recent-attempts-container");
-      recentContainer.innerHTML = "";
-
-      if (userRecords.length === 0) {
-        recentContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs border border-dashed border-white/[0.08] rounded-xl">No test history logged yet.</div>`;
-      } else {
-        userRecords.slice().reverse().slice(0, 6).forEach(r => {
-          const row = document.createElement("div");
-          row.className = "p-3 bg-slate-900/80 rounded-xl border border-white/[0.06] flex items-center justify-between text-xs";
-          row.innerHTML = `
-            <div>
-              <h5 class="font-bold text-white">${r.test}</h5>
-              <span class="text-[10px] text-slate-400">${r.timestamp}</span>
-            </div>
-            <div class="text-right font-mono">
-              <div class="font-bold text-sky-400">${r.netMarks} Marks</div>
-              <div class="text-[10px] ${r.accuracy >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${r.accuracy}% Acc</div>
-            </div>
-          `;
-          recentContainer.appendChild(row);
-        });
-      }
-
-      document.getElementById("student-stats-modal").classList.remove("hidden");
-    }
-
-    function closeStudentStatsModal() {
-      document.getElementById("student-stats-modal").classList.add("hidden");
-    }
-
-    // ================= AI PARSER & PDF ENGINE =================
-    let stagedPdfFile = null;
-    function onAdminPdfChosen(e) {
-      const f = e.target.files[0];
-      if (!f) return;
-      stagedPdfFile = f;
-      document.getElementById("pdf-file-status-label").textContent = `Selected: ${f.name}`;
-    }
-
-    async function executeAiExtraction() {
-      const log = document.getElementById("pdf-import-live-log");
-      log.classList.remove("hidden");
-      log.textContent = "⏳ Preparing content for AI analysis...";
-
-      let extractedText = document.getElementById("raw-text-paste").value.trim();
-
-      if (stagedPdfFile) {
-        log.textContent = "⏳ Reading textual pages from uploaded PDF...";
-        try {
-          const buffer = await stagedPdfFile.arrayBuffer();
-          if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-          }
-          const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
-          let pdfAccum = "";
-          for (let i = 1; i <= doc.numPages; i++) {
-            const page = await doc.getPage(i);
-            const content = await page.getTextContent();
-            pdfAccum += content.items.map(it => it.str).join(" ") + "\n";
-          }
-          extractedText = pdfAccum + "\n" + extractedText;
-        } catch (err) {
-          log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
-          log.textContent = `❌ PDF Read Error: ${err.message}`;
-          return;
-        }
-      }
-
-      if (!extractedText || extractedText.length < 30) {
-        log.className = "text-xs text-amber-400 bg-slate-950 p-4 rounded-xl border border-amber-500/30 font-mono";
-        log.textContent = "⚠️ Please select a valid PDF file or paste question text in the box above.";
-        return;
-      }
-
-      const apiKey = localStorage.getItem("mbbs_gemini_api_key") || "";
-      if (!apiKey) {
-        log.className = "text-xs text-amber-400 bg-slate-950 p-4 rounded-xl border border-amber-500/30 font-mono";
-        log.textContent = "⚠️ Missing Gemini API Key! Enter and save it in 'API & Sync Settings'.";
-        return;
-      }
-
-      log.textContent = "🧠 Connecting to Gemini 3.8-Flash: Structuring options & writing rationales...";
-
-      try {
-        const prompt = `You are an expert MBBS medical professor and test creator.
-Parse the following unformatted medical text or PDF transcript. Extract ALL multiple-choice questions (MCQs).
-For each question:
-1. Ensure the question stem is clinically phrased and clean.
-2. Provide exactly 4 options.
-3. Identify the single correct answer text (must match one of the 4 options verbatim).
-4. Provide a high-yield clinical explanation and rationale.
-5. Provide a specific medical sub-topic name (e.g. "Brachial Plexus", "Myocardial Infarction").
-
-Respond ONLY with valid, raw JSON (no markdown backticks, no code blocks, no preamble) conforming to this exact structure:
-[
-  {
-    "topic": "Sub Topic",
-    "question": "Question statement...",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "answer": "Option B",
-    "explanation": "Detailed clinical rationale..."
-  }
-]
-
-Input Content:
-${extractedText.substring(0, 35000)}`;
-
-        const modelsToTry = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.7-flash"];
-        let response = null;
-        let lastError = null;
-
-        for (const model of modelsToTry) {
-          try {
-            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-              })
-            });
-            if (response.ok) break;
-            const errData = await response.json();
-            lastError = errData.error?.message || `Failed on ${model}`;
-          } catch (e) {
-            lastError = e.message;
-          }
-        }
-
-        if (!response || !response.ok) {
-          throw new Error(lastError || "All Gemini endpoints failed.");
-        }
-
-        const data = await response.json();
-        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        
-        let parsedList = JSON.parse(jsonText);
-        if (!Array.isArray(parsedList) || parsedList.length === 0) {
-          throw new Error("AI did not return a valid list of questions.");
-        }
-
-        const overrideName = document.getElementById("import-chapter-override").value.trim();
-        const fallbackName = stagedPdfFile ? stagedPdfFile.name.replace(/\.pdf$/i, "") : "AI Extracted Clinical MCQs";
-        const moduleTitle = overrideName || fallbackName;
-
-        stagedModule = {
-          id: `mod_${Date.now()}`,
-          title: moduleTitle,
-          topic: moduleTitle,
-          questions: parsedList.map((q, i) => ({
-            id: `AI-${i + 1}`,
-            topic: q.topic || moduleTitle,
-            question: q.question,
-            options: q.options,
-            answer: q.answer,
-            explanation: q.explanation || "Clinical rationale per standard medical textbooks."
-          }))
-        };
-
-        log.className = "text-xs text-emerald-400 bg-slate-950 p-4 rounded-xl border border-emerald-500/30 font-mono";
-        log.textContent = `🎉 AI successfully structured ${stagedModule.questions.length} clinical questions! Review below and tap Publish.`;
-
-        renderStagedReviewList();
-        document.getElementById("pdf-staging-preview").scrollIntoView({ behavior: "smooth" });
-
-      } catch (err) {
-        console.error("AI Extraction Error:", err);
-        log.className = "text-xs text-rose-400 bg-slate-950 p-4 rounded-xl border border-rose-500/30 font-mono";
-        log.textContent = `❌ AI Parsing Failed: ${err.message}`;
-      }
-    }
-
-    function renderStagedReviewList() {
-      const container = document.getElementById("staged-questions-list");
-      const stagePreview = document.getElementById("pdf-staging-preview");
-      const countEl = document.getElementById("staged-count");
-      
-      if (!stagedModule || stagedModule.questions.length === 0) {
-        stagePreview.classList.add("hidden");
-        return;
-      }
-
-      countEl.textContent = stagedModule.questions.length;
-      stagePreview.classList.remove("hidden");
-      container.innerHTML = "";
-
-      const groupEl = document.createElement("div");
-      groupEl.className = "p-5 bg-slate-900/90 border border-white/[0.08] rounded-2xl space-y-3.5";
-      groupEl.innerHTML = `
-        <div class="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded border border-sky-500/20">AI Verified Test Module</span>
-            <h5 class="text-xs font-bold text-white mt-1">${stagedModule.title} (${stagedModule.questions.length} MCQs)</h5>
-          </div>
-        </div>
-        <div class="space-y-2">
-          ${stagedModule.questions.map((q, qIdx) => `
-            <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
-              <div class="flex-1 space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-mono text-slate-500 font-bold">Q${qIdx + 1}.</span>
-                  <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">${q.topic}</span>
-                </div>
-                <p class="font-medium text-slate-200">${q.question}</p>
-                <p class="text-[11px] text-emerald-400 font-mono">Answer: ${q.answer}</p>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <button onclick="openEditMcqModal('${stagedModule.id}',${qIdx}, true)" class="px-2.5 py-1 rounded bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 text-xs">Edit</button>
-                <button onclick="deleteStagedMcq(${qIdx})" class="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs">Delete</button>
-              </div>
-            </div>
-          `).join("")}
-        </div>
-      `;
-      container.appendChild(groupEl);
-    }
-
-    function deleteStagedMcq(qIdx) {
-      stagedModule.questions.splice(qIdx, 1);
-      renderStagedReviewList();
-    }
-
-    async function commitStagedQuestionsWithAutoPush() {
-      if (!stagedModule || stagedModule.questions.length === 0) return;
-      const targetSub = document.getElementById("import-target-subject").value;
-      if (!DB[targetSub]) DB[targetSub] = { name: targetSub, chapters: [] };
-
-      DB[targetSub].chapters.unshift(stagedModule);
-
-      const btn = document.getElementById("auto-publish-btn");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Pushing to GitHub...</span>';
-
-      stagedModule = null;
-      document.getElementById("pdf-staging-preview").classList.add("hidden");
-
-      currentSubjectKey = targetSub;
-      syncSubjectDropdowns();
-      renderBrowsePortal();
-      renderAdminContentManager();
-
-      const success = await pushCurriculumToGitHubDirect();
-      if (success) {
-        document.getElementById("pdf-import-live-log").textContent = `🎉 Auto-Published directly to GitHub! All students can now view the new module.`;
-      } else {
-        document.getElementById("pdf-import-live-log").textContent = `Saved locally. Configure GitHub Token in 'API & Sync Settings' for direct auto-publishing.`;
-      }
-
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Confirm & Auto-Publish Live</span>';
-    }
-
-    // ================= SETTINGS & GITHUB SYNC =================
-    const GITHUB_REPO = "ahteshamneet-gif/Mbbsbot";
-    const GITHUB_FILE = "data.json";
-
-    function initTokenUI() {
-      const ghToken = localStorage.getItem("mbbs_gh_token") || "";
-      const ghInput = document.getElementById("gh-token-input");
-      const ghStatus = document.getElementById("gh-token-status");
-      if (ghInput) ghInput.value = ghToken;
-      if (ghStatus) {
-        ghStatus.textContent = ghToken ? "✅ GitHub Token active" : "⚠️ No key saved";
-        ghStatus.className = ghToken ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
-      }
-
-      const geminiKey = localStorage.getItem("mbbs_gemini_api_key") || "";
-      const geminiInput = document.getElementById("gemini-api-key-input");
-      const geminiStatus = document.getElementById("gemini-key-status");
-      if (geminiInput) geminiInput.value = geminiKey;
-      if (geminiStatus) {
-        geminiStatus.textContent = geminiKey ? "✅ Gemini AI Key active" : "⚠️ No key saved";
-        geminiStatus.className = geminiKey ? "text-xs text-emerald-400 font-mono font-bold" : "text-xs text-amber-400 font-mono font-bold";
-      }
-    }
-
-    function saveGitHubToken() {
-      const token = document.getElementById("gh-token-input").value.trim();
-      if (!token) return;
-      localStorage.setItem("mbbs_gh_token", token);
-      initTokenUI();
-      alert("GitHub token saved!");
-    }
-
-    function saveGeminiToken() {
-      const key = document.getElementById("gemini-api-key-input").value.trim();
-      if (!key) return;
-      localStorage.setItem("mbbs_gemini_api_key", key);
-      initTokenUI();
-      alert("Gemini AI API key saved!");
-    }
-
-    async function pushCurriculumToGitHubDirect() {
-      const token = localStorage.getItem("mbbs_gh_token");
-      if (!token) return false;
-
-      try {
-        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
-        let sha = null;
-        try {
-          const getRes = await fetch(url, {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Accept": "application/vnd.github.v3+json"
-            }
-          });
-          if (getRes.ok) {
-            const fileInfo = await getRes.json();
-            sha = fileInfo.sha;
-          }
-        } catch (e) {}
-
-        const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
-        const payload = {
-          message: "Auto-sync question bank via AI Admin Panel",
-          content: contentBase64
-        };
-        if (sha) payload.sha = sha;
-
-        const putRes = await fetch(url, {
-          method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "Accept": "application/vnd.github.v3+json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        return putRes.ok;
-      } catch (err) {
-        console.error("Auto-push error:", err);
-        return false;
-      }
-    }
-
-    // ================= MODAL & EDIT HELPERS =================
-    function openAdminModal() {
-      if (!activeUser || activeUser.role !== "admin") return;
-      document.getElementById("admin-modal").classList.remove("hidden");
-      renderAdminContentManager();
-      renderAdminStudentAnalytics();
-      initTokenUI();
-    }
-
-    function closeAdminModal() {
-      document.getElementById("admin-modal").classList.add("hidden");
-    }
-
-    function switchAdminTab(tabKey) {
-      document.getElementById("admin-tab-content").classList.toggle("hidden", tabKey !== 'content');
-      document.getElementById("admin-tab-importer").classList.toggle("hidden", tabKey !== 'importer');
-      document.getElementById("admin-tab-students").classList.toggle("hidden", tabKey !== 'students');
-      document.getElementById("admin-tab-settings").classList.toggle("hidden", tabKey !== 'settings');
-
-      ['content', 'importer', 'students', 'settings'].forEach(k => {
-        const sideBtn = document.getElementById(`side-btn-${k}`);
-        if (sideBtn) {
-          sideBtn.className = (k === tabKey)
-            ? "w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-2.5 transition"
-            : "w-full text-left py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-900 hover:text-slate-200 flex items-center gap-2.5 transition";
-        }
-      });
-
-      if (tabKey === 'content') renderAdminContentManager();
-      if (tabKey === 'students') renderAdminStudentAnalytics();
-    }
-
-    function renderAdminContentManager() {
-      const curSub = DB[currentSubjectKey] || { name: currentSubjectKey, chapters: [] };
-      document.getElementById("admin-cur-subject-name").textContent = curSub.name;
-      document.getElementById("admin-subject-total-modules").textContent = `${curSub.chapters.length} Modules`;
-
-      const container = document.getElementById("admin-modules-container");
-      container.innerHTML = "";
-
-      if (curSub.chapters.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-500 border border-dashed border-white/[0.08] rounded-2xl">No test modules in ${curSub.name}. Upload a PDF using the AI Importer.</div>`;
-        return;
-      }
-
-      curSub.chapters.forEach((ch) => {
-        const modCard = document.createElement("div");
-        modCard.className = "glass-panel rounded-2xl p-4.5 transition border border-white/[0.06]";
-        modCard.innerHTML = `
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">${ch.topic || "General"}</span>
-                <span class="text-xs text-slate-400 font-mono">${ch.questions.length} MCQs</span>
-              </div>
-              <h4 class="text-sm font-bold text-white">${ch.title}</h4>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="toggleModuleMcqs('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition flex items-center gap-1.5">
-                <i class="fa-solid fa-list-ul text-sky-400 text-xs"></i>
-                <span id="btn-label-${ch.id}">Manage MCQs</span>
-              </button>
-              <button onclick="promptEditModuleTitle('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/[0.08] transition"><i class="fa-solid fa-pen"></i></button>
-              <button onclick="deleteModule('${ch.id}')" class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/30 transition"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>
-          <div id="mcq-list-${ch.id}" class="hidden mt-4 pt-4 border-t border-white/[0.06] space-y-3">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-bold uppercase text-slate-400">Questions in this Module</span>
-              <button onclick="addNewBlankMcq('${ch.id}')" class="text-xs text-sky-400 hover:underline font-bold">+ Add Question</button>
-            </div>
-            <div class="space-y-2.5">${renderMcqItemRows(ch)}</div>
-          </div>
-        `;
-        container.appendChild(modCard);
-      });
-    }
-
-    function renderMcqItemRows(ch) {
-      if (!ch.questions || ch.questions.length === 0) return `<div class="text-xs text-slate-500 p-2">No MCQs registered.</div>`;
-      return ch.questions.map((q, idx) => `
-        <div class="p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-xl flex items-start justify-between gap-3 text-xs">
-          <div class="space-y-1.5 flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-slate-500 font-bold">Q${idx + 1}.</span>
-              <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">${q.topic || "Topic"}</span>
-              <p class="font-semibold text-slate-200 line-clamp-1">${q.question}</p>
-            </div>
-            <div class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
-              <i class="fa-solid fa-check text-[10px]"></i> Answer: ${q.answer}
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="openEditMcqModal('${ch.id}', ${idx}, false)" class="px-2.5 py-1 rounded-lg bg-sky-600/10 text-sky-400 hover:bg-sky-600/20 border border-sky-500/20 text-xs">Edit</button>
-            <button onclick="deleteMcqFromModule('${ch.id}', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 text-xs">Delete</button>
-          </div>
+      const hist = JSON.parse(localStorage.getItem(`cbt_hist_${activeUser.uid}`) || "[]");
+      document.getElementById("self-tests-taken").textContent = hist.length;
+      document.getElementById("self-avg-accuracy").textContent = hist.length > 0 ? `${Math.round(hist.reduce((a, b) => a + b.accuracy, 0) / hist.length)}%` : "0%";
+      document.getElementById("recent-attempts-container").innerHTML = hist.slice().reverse().slice(0, 5).map(h => `
+        <div class="p-2.5 bg-slate-900 rounded-xl flex justify-between text-xs">
+          <span>${h.test}</span>
+          <span class="font-mono text-emerald-400 font-bold">${h.accuracy}%</span>
         </div>
       `).join("");
+      document.getElementById("student-stats-modal").classList.remove("hidden");
     }
-
-    function toggleModuleMcqs(moduleId) {
-      const el = document.getElementById(`mcq-list-${moduleId}`);
-      const btnLabel = document.getElementById(`btn-label-${moduleId}`);
-      if (!el) return;
-      const isHidden = el.classList.contains("hidden");
-      el.classList.toggle("hidden", !isHidden);
-      btnLabel.textContent = isHidden ? "Close List" : "Manage MCQs";
-    }
-
-    function addNewBlankMcq(moduleId) {
-      const curSub = DB[currentSubjectKey];
-      const mod = curSub.chapters.find(c => c.id === moduleId);
-      if (!mod) return;
-      const newQ = {
-        id: `MAN-${Date.now()}`,
-        topic: mod.topic || "Core",
-        question: "New Question Statement Here...",
-        options: ["Option A", "Option B", "Option C", "Option D"],
-        answer: "Option A",
-        explanation: "Clinical rationale and reference."
-      };
-      mod.questions.push(newQ);
-      commitDatabase();
-      renderAdminContentManager();
-      renderBrowsePortal();
-      openEditMcqModal(moduleId, mod.questions.length - 1, false);
-    }
-
-    function deleteMcqFromModule(moduleId, qIdx) {
-      const curSub = DB[currentSubjectKey];
-      const mod = curSub.chapters.find(c => c.id === moduleId);
-      if (!mod) return;
-      if (confirm(`Delete Question ${qIdx + 1}?`)) {
-        mod.questions.splice(qIdx, 1);
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      }
-    }
-
-    function openEditMcqModal(moduleId, questionIndex, isStaged = false) {
-      editingContext = { moduleId, questionIndex, isStaged };
-      let q = null;
-      if (isStaged) {
-        if (stagedModule) q = stagedModule.questions[questionIndex];
-      } else {
-        const curSub = DB[currentSubjectKey];
-        const mod = curSub.chapters.find(c => c.id === moduleId);
-        if (mod) q = mod.questions[questionIndex];
-      }
-      if (!q) return;
-
-      document.getElementById("edit-mcq-topic").value = q.topic || "";
-      document.getElementById("edit-mcq-question").value = q.question;
-      document.getElementById("edit-mcq-opt-0").value = q.options[0] || "";
-      document.getElementById("edit-mcq-opt-1").value = q.options[1] || "";
-      document.getElementById("edit-mcq-opt-2").value = q.options[2] || "";
-      document.getElementById("edit-mcq-opt-3").value = q.options[3] || "";
-      document.getElementById("edit-mcq-explanation").value = q.explanation || "";
-
-      let matchIdx = q.options.indexOf(q.answer);
-      if (matchIdx === -1) matchIdx = 0;
-      document.getElementById("edit-mcq-correct-select").value = String(matchIdx);
-      document.getElementById("edit-mcq-modal").classList.remove("hidden");
-    }
-
-    function closeEditMcqModal() {
-      document.getElementById("edit-mcq-modal").classList.add("hidden");
-      editingContext = null;
-    }
-
-    function saveActiveMcqEdits() {
-      if (!editingContext) return;
-      const { moduleId, questionIndex, isStaged } = editingContext;
-      let q = isStaged ? stagedModule?.questions[questionIndex] : DB[currentSubjectKey]?.chapters.find(c => c.id === moduleId)?.questions[questionIndex];
-      if (!q) return;
-
-      const opts = [
-        document.getElementById("edit-mcq-opt-0").value.trim(),
-        document.getElementById("edit-mcq-opt-1").value.trim(),
-        document.getElementById("edit-mcq-opt-2").value.trim(),
-        document.getElementById("edit-mcq-opt-3").value.trim()
-      ];
-      const correctIdx = parseInt(document.getElementById("edit-mcq-correct-select").value);
-
-      q.topic = document.getElementById("edit-mcq-topic").value.trim() || "Core";
-      q.question = document.getElementById("edit-mcq-question").value.trim();
-      q.options = opts;
-      q.answer = opts[correctIdx] || opts[0];
-      q.explanation = document.getElementById("edit-mcq-explanation").value.trim();
-
-      if (!isStaged) {
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      } else {
-        renderStagedReviewList();
-      }
-      closeEditMcqModal();
-    }
-
-    async function renderAdminStudentAnalytics() {
-      const tbody = document.getElementById("student-analytics-records");
-      tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-slate-500 font-medium">Fetching real-time audits from Supabase...</td></tr>`;
-
-      let audit = [];
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/submit`, { method: "OPTIONS" });
-        audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]");
-      } catch (e) {
-        audit = JSON.parse(localStorage.getItem("mbbs_exam_audit_v4") || "[]");
-      }
-
-      document.getElementById("metric-total-tests").textContent = audit.length;
-      if (audit.length > 0) {
-        const avg = Math.round(audit.reduce((a, c) => a + (c.accuracy || 0), 0) / audit.length);
-        document.getElementById("metric-avg-accuracy").textContent = `${avg}%`;
-        const uniqueUids = new Set(audit.map(r => r.uid));
-        document.getElementById("metric-unique-candidates").textContent = uniqueUids.size;
-        const distinctions = audit.filter(r => r.accuracy >= 75).length;
-        document.getElementById("metric-distinction-rate").textContent = `${Math.round((distinctions / audit.length) * 100)}%`;
-      } else {
-        document.getElementById("metric-avg-accuracy").textContent = "0%";
-        document.getElementById("metric-unique-candidates").textContent = "0";
-        document.getElementById("metric-distinction-rate").textContent = "0%";
-      }
-
-      tbody.innerHTML = "";
-      if (audit.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-slate-500 font-medium">No student exam attempts recorded yet.</td></tr>`;
-        return;
-      }
-
-      audit.slice().reverse().forEach(row => {
-        let badgeColor = row.accuracy >= 75 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : (row.accuracy >= 50 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20");
-        let status = row.accuracy >= 75 ? "Distinction" : (row.accuracy >= 50 ? "Passed" : "Needs Review");
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40 transition border-b border-white/[0.04]";
-        tr.innerHTML = `
-          <td class="p-3.5 font-bold text-white">${row.name || "Candidate"}</td>
-          <td class="p-3.5 font-mono text-slate-400 font-semibold">${row.uid}</td>
-          <td class="p-3.5 text-slate-300 max-w-[180px] truncate">${row.test}</td>
-          <td class="p-3.5 font-mono text-slate-200">${row.netMarks}/${row.maxMarks}</td>
-          <td class="p-3.5 font-bold text-emerald-400">${row.accuracy}%</td>
-          <td class="p-3.5"><span class="text-[10px] font-bold px-2.5 py-0.5 rounded border ${badgeColor}">${status}</span></td>
-          <td class="p-3.5 text-slate-500 text-[11px] whitespace-nowrap">${row.timestamp}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function filterStudentAuditTable() {
-      const q = document.getElementById("student-search-box").value.toLowerCase().trim();
-      document.querySelectorAll("#student-analytics-records tr").forEach(r => {
-        r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
-      });
-    }
-
-    function promptCreateNewSubject() {
-      const name = prompt("Enter Subject Name:");
-      if (!name || !name.trim() || DB[name.trim()]) return;
-      DB[name.trim()] = { name: name.trim(), chapters: [] };
-      commitDatabase();
-      currentSubjectKey = name.trim();
-      syncSubjectDropdowns();
-      renderBrowsePortal();
-      renderAdminContentManager();
-    }
-
-    function promptEditCurrentSubject() {
-      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      const updated = prompt(`Rename Subject "${cur}":`, cur);
-      if (!updated || !updated.trim() || updated.trim() === cur) return;
-      const newKey = updated.trim();
-      const existing = DB[currentSubjectKey];
-      existing.name = newKey;
-      delete DB[currentSubjectKey];
-      DB[newKey] = existing;
-      currentSubjectKey = newKey;
-      commitDatabase();
-      syncSubjectDropdowns();
-      renderBrowsePortal();
-      renderAdminContentManager();
-    }
-
-    function promptDeleteCurrentSubject() {
-      const cur = DB[currentSubjectKey]?.name || currentSubjectKey;
-      if (confirm(`Delete subject "${cur}"?`)) {
-        delete DB[currentSubjectKey];
-        currentSubjectKey = Object.keys(DB)[0] || "";
-        commitDatabase();
-        syncSubjectDropdowns();
-        renderBrowsePortal();
-        renderAdminContentManager();
-      }
-    }
-
-    function promptEditModuleTitle(moduleId) {
-      const mod = DB[currentSubjectKey]?.chapters.find(c => c.id === moduleId);
-      if (!mod) return;
-      const newTitle = prompt("Edit Title:", mod.title);
-      if (newTitle && newTitle.trim()) {
-        mod.title = newTitle.trim();
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      }
-    }
-
-    function deleteModule(moduleId) {
-      const curSub = DB[currentSubjectKey];
-      if (confirm("Delete this module?")) {
-        curSub.chapters = curSub.chapters.filter(c => c.id !== moduleId);
-        commitDatabase();
-        renderAdminContentManager();
-        renderBrowsePortal();
-      }
-    }
+    function closeStudentStatsModal() { document.getElementById("student-stats-modal").classList.add("hidden"); }
   </script>
 </body>
 </html>
