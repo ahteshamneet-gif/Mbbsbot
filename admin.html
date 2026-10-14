@@ -1,459 +1,353 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MBBS Admin Command Center</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      background: #090d16;
-      color: #f1f5f9;
-      padding: 20px 12px;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 950px;
-      margin: 0 auto;
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #1e293b;
-      padding-bottom: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    h1 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #38bdf8;
-    }
-
-    .nav-bar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .nav-btn {
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.8rem;
-      transition: all 0.15s ease;
-    }
-
-    .nav-btn:hover {
-      background: #334155;
-      color: #ffffff;
-    }
-
-    .nav-btn.active {
-      background: #0284c7;
-      color: #ffffff;
-      border-color: #0284c7;
-    }
-
-    .section {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .section.active {
-      display: flex;
-    }
-
-    label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    input[type="text"], input[type="password"], select, textarea {
-      width: 100%;
-      background: #050811;
-      border: 1px solid #334155;
-      color: #ffffff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      outline: none;
-      transition: border-color 0.15s ease;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: #38bdf8;
-    }
-
-    .btn {
-      background: #0284c7;
-      color: #ffffff;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.85rem;
-      text-align: center;
-      transition: opacity 0.15s ease;
-    }
-
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .btn-green { background: #10b981; }
-    .btn-green:hover { background: #059669; }
-
-    .btn-danger {
-      background: #e11d48;
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      border-radius: 6px;
-      border: none;
-      color: #ffffff;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-danger:hover { background: #be123c; }
-
-    .file-box {
-      border: 2px dashed #334155;
-      padding: 24px;
-      text-align: center;
-      border-radius: 10px;
-      background: #050811;
-    }
-
-    #log {
-      padding: 14px;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 0.8rem;
-      display: none;
-      line-height: 1.5;
-    }
-
-    .q-card {
-      background: #050811;
-      border: 1px solid #1e293b;
-      border-radius: 10px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.8rem;
-    }
-
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #1e293b;
-      text-align: left;
-    }
-
-    th {
-      background: #050811;
-      color: #94a3b8;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBBS Admin Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#090d16;color:#f1f5f9;padding:16px 10px;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-size:1.2rem;color:#38bdf8}h2{font-size:.95rem;color:#38bdf8}
+.sub{font-size:.72rem;color:#64748b;margin-top:2px}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
+.nb{background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.78rem}
+.nb:hover{background:#334155;color:#fff}.nb.on{background:#0284c7;border-color:#0284c7;color:#fff}
+.sec{display:none;flex-direction:column;gap:14px}.sec.on{display:flex}
+label{font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:5px;display:block}
+input[type=text],input[type=password],input[type=number],select,textarea{width:100%;background:#050811;border:1px solid #334155;color:#fff;padding:9px 11px;border-radius:8px;font-size:.85rem;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#38bdf8}
+.btn{background:#0284c7;color:#fff;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem}
+.btn:hover{opacity:.9}.btn:disabled{opacity:.5;cursor:not-allowed}
+.g{background:#10b981}.gr{background:#334155}.d{background:#e11d48}.sm{padding:5px 10px;font-size:.72rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1;min-width:150px}.row>.btn{flex:0 0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.file{border:2px dashed #334155;padding:18px;text-align:center;border-radius:10px;background:#050811;font-size:.75rem;color:#64748b}
+#log{padding:12px;border-radius:8px;font-family:monospace;font-size:.78rem;display:none;line-height:1.5;background:#050811;white-space:pre-wrap}
+.card{background:#050811;border:1px solid #1e293b;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card.dup{border-color:#f59e0b}
+.opt{display:flex;gap:8px;align-items:center}.opt input[type=text]{flex:1}
+.stat{background:#050811;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:#38bdf8}.stat span{font-size:.7rem;color:#94a3b8;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th,td{padding:9px 10px;border-bottom:1px solid #1e293b;text-align:left;vertical-align:top}
+th{background:#050811;color:#94a3b8;font-size:.68rem;text-transform:uppercase}
+.tw{overflow-x:auto;border:1px solid #1e293b;border-radius:8px;max-height:520px;overflow-y:auto}
+.tag{display:inline-block;background:#1e293b;color:#7dd3fc;border-radius:6px;padding:1px 7px;font-size:.68rem}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #38bdf8;color:#fff;padding:10px 16px;border-radius:8px;font-size:.8rem;display:none;z-index:9}
+</style>
 </head>
 <body>
-
-<div class="container">
-  <header>
-    <div>
-      <h1>MBBS Command Center</h1>
-      <p style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Direct Cloud & Supabase Operations</p>
-    </div>
-    <div class="nav-bar">
-      <button type="button" class="nav-btn active" onclick="setTab(event, 'importer')">AI Importer</button>
-      <button type="button" class="nav-btn" onclick="setTab(event, 'curriculum')">Curriculum</button>
-      <button type="button" class="nav-btn" onclick="setTab(event, 'audits')">Audits</button>
-      <button type="button" class="nav-btn" onclick="setTab(event, 'settings')">API Keys</button>
-    </div>
-  </header>
-
-  <!-- TAB 1: AI IMPORTER -->
-  <div id="tab-importer" class="section active">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-      <div>
-        <label>Target Subject</label>
-        <select id="sel-subject"></select>
-      </div>
-      <div>
-        <label>Sub-Topic Tag</label>
-        <input type="text" id="txt-subtopic" placeholder="e.g. Lower Limb Anatomy">
-      </div>
-    </div>
-
-    <div class="file-box">
-      <input type="file" id="pdf-input" accept="application/pdf">
-      <p style="color: #64748b; font-size: 0.75rem; margin-top: 8px;">Upload question PDF to automatically extract MCQs, 4 choices, and rationales.</p>
-    </div>
-
-    <div>
-      <label>Or Paste Question Text Directly</label>
-      <textarea id="raw-text" rows="3" placeholder="Paste questions here..."></textarea>
-    </div>
-
-    <button type="button" id="btn-parse" class="btn" onclick="startExtraction()">Run AI Question Extraction</button>
-
-    <div id="log"></div>
-
-    <!-- EDIT & REVIEW STAGING AREA -->
-    <div id="stage-box" style="display: none; flex-direction: column; gap: 16px; border-top: 1px solid #1e293b; padding-top: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div>
-          <h2 style="font-size: 0.95rem; font-weight: 800; color: #38bdf8;">Extracted Questions Preview (<span id="q-count">0</span>)</h2>
-          <p style="font-size: 0.72rem; color: #64748b;">Edit prompts, options, or answer keys before pushing to database.</p>
-        </div>
-        <button type="button" id="btn-save-db" class="btn btn-green" onclick="saveToSupabase()">Save to Supabase Database</button>
-      </div>
-      <div id="q-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 550px; overflow-y: auto; padding-right: 4px;"></div>
-    </div>
+<div class="wrap">
+<header>
+  <div><h1>MBBS Command Center</h1><p class="sub">AI import · Question bank · Audits · Supabase</p></div>
+  <div class="nav" id="nav">
+    <button class="nb on" data-tab="dash">Dashboard</button>
+    <button class="nb" data-tab="importer">AI Importer</button>
+    <button class="nb" data-tab="bank">Question Bank</button>
+    <button class="nb" data-tab="curriculum">Subjects</button>
+    <button class="nb" data-tab="audits">Audits</button>
+    <button class="nb" data-tab="settings">Settings</button>
   </div>
+</header>
 
-  <!-- TAB 2: CURRICULUM -->
-  <div id="tab-curriculum" class="section">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <h2 style="font-size: 0.95rem; font-weight: 800; color: #ffffff;">Manage Subjects</h2>
-        <p style="font-size: 0.72rem; color: #64748b;">Add or edit subjects available to students.</p>
-      </div>
-      <button type="button" class="btn" style="padding: 6px 14px; font-size: 0.75rem;" onclick="addSubject()">+ Add Subject</button>
-    </div>
-    <div id="subject-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+<!-- DASHBOARD -->
+<div id="tab-dash" class="sec on">
+  <div class="grid">
+    <div class="stat"><b id="st-q">–</b><span>Questions</span></div>
+    <div class="stat"><b id="st-s">–</b><span>Submissions</span></div>
+    <div class="stat"><b id="st-a">–</b><span>Avg accuracy</span></div>
+    <div class="stat"><b id="st-c" style="font-size:1rem">–</b><span>Connection</span></div>
   </div>
+  <div><h2>Questions per subject</h2><div id="st-sub" class="grid" style="margin-top:8px"></div></div>
+  <button class="btn gr" style="align-self:flex-start" data-act="refreshDash">Refresh</button>
+</div>
 
-  <!-- TAB 3: AUDITS -->
-  <div id="tab-audits" class="section">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <h2 style="font-size: 0.95rem; font-weight: 800; color: #ffffff;">Recent Candidate Exam Submissions</h2>
-        <p style="font-size: 0.72rem; color: #64748b;">Live scorecards logged from Supabase.</p>
-      </div>
-      <button type="button" class="btn" style="padding: 6px 14px; font-size: 0.75rem;" onclick="loadAudits()">Refresh</button>
-    </div>
-    <div style="overflow-x: auto; border: 1px solid #1e293b; border-radius: 8px;">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>ID</th>
-            <th>Test</th>
-            <th>Score</th>
-            <th>Accuracy</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody id="audit-rows">
-          <tr><td colspan="6" style="color: #64748b; text-align: center;">Click refresh to load logs.</td></tr>
-        </tbody>
-      </table>
-    </div>
+<!-- IMPORTER -->
+<div id="tab-importer" class="sec">
+  <div class="grid">
+    <div><label>Target Subject</label><select id="sel-subject"></select></div>
+    <div><label>Sub-Topic Tag</label><input type="text" id="txt-subtopic" placeholder="e.g. Lower Limb"></div>
+    <div><label>Difficulty</label><select id="sel-diff"><option>Medium</option><option>Easy</option><option>Hard</option></select></div>
   </div>
-
-  <!-- TAB 4: API KEYS -->
-  <div id="tab-settings" class="section">
-    <div>
-      <label>Google Gemini API Key</label>
-      <input type="text" id="api-key-input" placeholder="AIzaSy... or AQ...">
-      <p style="font-size: 0.72rem; color: #64748b; margin-top: 6px;">Supports standard Google AI Studio keys and project auth keys.</p>
+  <div class="file"><input type="file" id="pdf-input" accept="application/pdf"><p style="margin-top:8px">Upload a question PDF (text-based; scanned images need OCR first)</p></div>
+  <div><label>Or paste question text</label><textarea id="raw-text" rows="4" placeholder="Paste questions here..."></textarea></div>
+  <div class="row">
+    <button class="btn" id="btn-parse" data-act="extract">Run AI Extraction</button>
+    <button class="btn gr" data-act="addBlank">+ Add question manually</button>
+  </div>
+  <div id="log"></div>
+  <div id="stage" style="display:none;flex-direction:column;gap:12px;border-top:1px solid #1e293b;padding-top:14px">
+    <div class="row">
+      <div><h2>Preview (<span id="q-count">0</span>)</h2><p class="sub">Edit anything, then save. Amber = looks like a duplicate.</p></div>
+      <button class="btn gr sm" data-act="clearStage">Clear all</button>
+      <button class="btn gr sm" data-act="dlJson">Download JSON</button>
+      <button class="btn g" id="btn-save" data-act="save">Save to Supabase</button>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span id="key-status" style="font-size: 0.8rem; color: #94a3b8;">Checking saved status...</span>
-      <button type="button" class="btn" style="width: auto; padding: 8px 16px;" onclick="saveApiKey()">Save API Key</button>
-    </div>
+    <div id="q-list" style="display:flex;flex-direction:column;gap:10px;max-height:600px;overflow-y:auto"></div>
   </div>
 </div>
 
+<!-- BANK -->
+<div id="tab-bank" class="sec">
+  <div class="row">
+    <div><label>Subject</label><select id="bk-subject"></select></div>
+    <div><label>Search</label><input type="text" id="bk-search" placeholder="Search question text..."></div>
+    <button class="btn" data-act="loadBank">Load</button>
+    <button class="btn gr" data-act="dlBankCsv">CSV</button>
+  </div>
+  <p class="sub" id="bk-info">Click Load to fetch questions.</p>
+  <div class="tw"><table><thead><tr><th>#</th><th>Question</th><th>Subject</th><th>Ans</th><th></th></tr></thead><tbody id="bk-rows"></tbody></table></div>
+</div>
+
+<!-- SUBJECTS -->
+<div id="tab-curriculum" class="sec">
+  <div class="row"><div><h2>Manage Subjects</h2><p class="sub">Used in dropdowns. Saved in this browser.</p></div><button class="btn sm" data-act="addSubject">+ Add Subject</button></div>
+  <div id="subject-list" style="display:flex;flex-direction:column;gap:8px"></div>
+</div>
+
+<!-- AUDITS -->
+<div id="tab-audits" class="sec">
+  <div class="row">
+    <div><label>Filter student / test</label><input type="text" id="au-search" placeholder="Type to filter..."></div>
+    <button class="btn" data-act="loadAudits">Refresh</button>
+    <button class="btn gr" data-act="dlAuditCsv">CSV</button>
+  </div>
+  <div class="tw"><table><thead><tr><th>Student</th><th>ID</th><th>Test</th><th>Score</th><th>Accuracy</th><th>Time</th></tr></thead>
+  <tbody id="audit-rows"><tr><td colspan="6" style="color:#64748b;text-align:center">Click refresh to load.</td></tr></tbody></table></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="sec">
+  <div><label>Google Gemini API Key</label><input type="password" id="set-key" placeholder="AIza... or AQ..."></div>
+  <div class="grid">
+    <div><label>Gemini model</label><input type="text" id="set-model" placeholder="gemini-2.0-flash"></div>
+    <div><label>Questions table</label><input type="text" id="set-tq" placeholder="questions"></div>
+    <div><label>Submissions table</label><input type="text" id="set-ts" placeholder="submissions"></div>
+  </div>
+  <div class="grid">
+    <div><label>Supabase REST URL</label><input type="text" id="set-url"></div>
+    <div><label>Supabase anon / publishable key</label><input type="password" id="set-anon"></div>
+  </div>
+  <div class="row">
+    <button class="btn" data-act="saveSettings">Save settings</button>
+    <button class="btn gr" data-act="testConn">Test connections</button>
+  </div>
+  <p class="sub" id="set-status"></p>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
 <script>
-  const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
-  const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
-  const HARDCODED_GEMINI_KEY = "AQ.Ab8RN6IBR3bmj8lNKb88IaAsF1b1xppZ-7vFd4MXlj1nwvMVZQ";
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const DEF={url:"https://iafqcssktvejitssqawi.supabase.co/rest/v1",anon:"sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C",model:"gemini-2.0-flash",tq:"questions",ts:"submissions"};
+const cfg=()=>({key:LS.get("gemini_key",""),url:LS.get("sb_url",DEF.url).replace(/\/$/,""),anon:LS.get("sb_anon",DEF.anon),model:LS.get("g_model",DEF.model),tq:LS.get("t_q",DEF.tq),ts:LS.get("t_s",DEF.ts)});
+let subjects=["Anatomy","Physiology","Biochemistry","Pharmacology","Pathology"];
+try{const s=JSON.parse(LS.get("sub_list","null"));if(Array.isArray(s)&&s.length)subjects=s}catch(e){}
+let staged=[],bankRows=[],auditRows=[];
 
-  let subjects = ["Anatomy", "Physiology", "Biochemistry", "Pharmacology", "Pathology"];
-  let parsedQuestions = [];
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",2800)}
+function log(m,color){const l=$("log");l.style.display="block";l.style.color=color||"#38bdf8";l.textContent=m}
 
-  window.onload = function() {
-    loadSubjects();
-    initKey();
-  };
+async function sb(path,opt){
+  const c=cfg();opt=opt||{};
+  const r=await fetch(c.url+"/"+path,{method:opt.method||"GET",headers:Object.assign({apikey:c.anon,Authorization:"Bearer "+c.anon,"Content-Type":"application/json"},opt.headers||{}),body:opt.body});
+  if(!r.ok){let t="";try{t=await r.text()}catch(e){}throw new Error("Supabase "+r.status+": "+t.slice(0,250))}
+  return r;
+}
+const countOf=async t=>{const r=await sb(t+"?select=*&limit=1",{headers:{Prefer:"count=exact"}});const m=(r.headers.get("content-range")||"").split("/")[1];return m?+m:0};
 
-  function setTab(e, name) {
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+/* ---------- Tabs ---------- */
+function setTab(name){
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="tab-"+name));
+  if(name==="dash")refreshDash();if(name==="curriculum")renderSubjects();if(name==="settings")fillSettings();
+}
 
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add("active");
+/* ---------- Subjects ---------- */
+function saveSubs(){LS.set("sub_list",JSON.stringify(subjects));fillSubjectDropdowns();renderSubjects()}
+function fillSubjectDropdowns(){
+  $("sel-subject").innerHTML=subjects.map(s=>`<option>${esc(s)}</option>`).join("");
+  $("bk-subject").innerHTML='<option value="">All subjects</option>'+subjects.map(s=>`<option>${esc(s)}</option>`).join("");
+}
+function renderSubjects(){
+  $("subject-list").innerHTML=subjects.map((s,i)=>`<div class="card" style="flex-direction:row;justify-content:space-between;align-items:center"><b>${esc(s)}</b><button class="btn d sm" data-act="delSubject" data-i="${i}">Delete</button></div>`).join("");
+}
+
+/* ---------- Settings ---------- */
+function fillSettings(){
+  const c=cfg();$("set-key").value=c.key;$("set-model").value=c.model;$("set-tq").value=c.tq;$("set-ts").value=c.ts;$("set-url").value=c.url;$("set-anon").value=c.anon;
+  $("set-status").textContent=c.key?"✅ Gemini key saved in this browser":"⚠️ No Gemini key yet — paste it above and save.";
+}
+function saveSettings(){
+  LS.set("gemini_key",$("set-key").value.trim());LS.set("g_model",$("set-model").value.trim()||DEF.model);
+  LS.set("t_q",$("set-tq").value.trim()||DEF.tq);LS.set("t_s",$("set-ts").value.trim()||DEF.ts);
+  LS.set("sb_url",$("set-url").value.trim()||DEF.url);LS.set("sb_anon",$("set-anon").value.trim()||DEF.anon);
+  fillSettings();toast("Settings saved");
+}
+async function testConn(){
+  const st=$("set-status");st.textContent="Testing...";let out=[];
+  try{await countOf(cfg().tq);out.push("✅ Supabase OK")}catch(e){out.push("❌ "+e.message)}
+  const c=cfg();
+  if(!c.key)out.push("⚠️ No Gemini key");
+  else{try{const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+c.model+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.key},body:JSON.stringify({contents:[{parts:[{text:"Say OK"}]}]})});out.push(r.ok?"✅ Gemini OK":"❌ Gemini "+r.status)}catch(e){out.push("❌ Gemini: "+e.message)}}
+  st.textContent=out.join("   ");
+}
+
+/* ---------- Dashboard ---------- */
+async function refreshDash(){
+  const c=cfg();
+  try{
+    $("st-q").textContent=await countOf(c.tq);$("st-c").textContent="Online";$("st-c").style.color="#4ade80";
+    try{$("st-s").textContent=await countOf(c.ts)}catch(e){$("st-s").textContent="n/a"}
+    const r=await(await sb(c.tq+"?select=subject&limit=5000")).json();const m={};r.forEach(x=>{const k=x.subject||"Unknown";m[k]=(m[k]||0)+1});
+    $("st-sub").innerHTML=Object.keys(m).sort().map(k=>`<div class="stat"><b style="font-size:1.1rem">${m[k]}</b><span>${esc(k)}</span></div>`).join("")||'<p class="sub">No questions yet.</p>';
+    try{const a=await(await sb(c.ts+"?select=*&limit=200")).json();const v=a.map(x=>parseFloat(x.accuracy)).filter(n=>!isNaN(n));$("st-a").textContent=v.length?Math.round(v.reduce((s,n)=>s+n,0)/v.length)+"%":"–"}catch(e){}
+  }catch(e){$("st-c").textContent="Error";$("st-c").style.color="#f43f5e";toast(e.message)}
+}
+
+/* ---------- Extraction ---------- */
+async function readPdf(file){
+  if(!window.pdfjsLib)throw new Error("PDF library failed to load (check internet).");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let t="";
+  for(let i=1;i<=doc.numPages;i++){log("⏳ Reading PDF page "+i+"/"+doc.numPages);const p=await doc.getPage(i);const c=await p.getTextContent();t+=c.items.map(x=>x.str).join(" ")+"\n"}
+  return t;
+}
+function chunk(t,n){const out=[];let i=0;while(i<t.length){let e=Math.min(i+n,t.length);if(e<t.length){const b=t.lastIndexOf("\n",e);if(b>i+n/2)e=b}out.push(t.slice(i,e));i=e}return out}
+function parseJson(s){
+  s=s.replace(/```json|```/g,"").trim();
+  try{return JSON.parse(s)}catch(e){const a=s.indexOf("["),b=s.lastIndexOf("]");if(a>=0&&b>a)return JSON.parse(s.slice(a,b+1));throw e}
+}
+async function gemini(text){
+  const c=cfg();
+  const prompt='Extract every multiple-choice question from the text below. Return ONLY a JSON array. Each item: {"question":string,"options":[exactly 4 strings without A/B/C/D prefixes],"correct":integer 0-3 index of the right option,"explanation":string}. If the answer key is not given, choose the most likely correct answer using medical knowledge. If no explanation is given, write a concise 1-2 sentence rationale. Skip anything that is not an MCQ.\n\nTEXT:\n'+text;
+  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+c.model+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.key},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:"application/json"}})});
+  if(!r.ok){let t="";try{t=(await r.json()).error.message}catch(e){}throw new Error("Gemini "+r.status+": "+t)}
+  const j=await r.json();const out=j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts.map(p=>p.text).join("");
+  if(!out)throw new Error("Gemini returned no content (possibly blocked).");
+  return parseJson(out);
+}
+function normQ(q){
+  const o=Array.isArray(q.options)?q.options.slice(0,4).map(x=>String(x).replace(/^\s*[A-Da-d][\).:]\s*/,"")):[];while(o.length<4)o.push("");
+  let c=parseInt(q.correct);if(isNaN(c)&&typeof q.correct==="string"){c="ABCD".indexOf(q.correct.trim().toUpperCase()[0])}
+  if(isNaN(c)||c<0||c>3)c=0;
+  return{question:String(q.question||"").trim(),options:o,correct:c,explanation:String(q.explanation||"").trim()};
+}
+async function extract(){
+  const btn=$("btn-parse");const c=cfg();
+  if(!c.key){log("Add your Gemini API key in Settings first.","#f43f5e");return setTab("settings")}
+  btn.disabled=true;
+  try{
+    let text=$("raw-text").value.trim();const f=$("pdf-input").files[0];
+    if(f)text=(await readPdf(f))+"\n"+text;
+    if(text.length<30)throw new Error("Upload a readable PDF or paste at least 30 characters.");
+    const parts=chunk(text,12000);let all=[];
+    for(let i=0;i<parts.length;i++){
+      log("🧠 Gemini parsing part "+(i+1)+"/"+parts.length+" ("+all.length+" found so far)...");
+      try{const r=await gemini(parts[i]);if(Array.isArray(r))all=all.concat(r.map(normQ))}
+      catch(e){log("⚠️ Part "+(i+1)+" failed: "+e.message+"\nContinuing...","#f59e0b");await new Promise(r=>setTimeout(r,1500))}
     }
-    document.getElementById("tab-" + name).classList.add("active");
+    all=all.filter(q=>q.question.length>5);
+    if(!all.length)throw new Error("No questions could be extracted.");
+    staged=staged.concat(all);renderStage();log("✅ Extracted "+all.length+" questions. Review below, then save.","#4ade80");
+  }catch(e){log("❌ "+e.message,"#f43f5e")}
+  btn.disabled=false;
+}
 
-    if (name === "audits") loadAudits();
-    if (name === "curriculum") renderSubjects();
-    if (name === "settings") initKey();
-  }
+/* ---------- Staging ---------- */
+const keyOf=q=>q.question.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,120);
+function renderStage(){
+  $("stage").style.display=staged.length?"flex":"none";$("q-count").textContent=staged.length;
+  const seen={};
+  $("q-list").innerHTML=staged.map((q,i)=>{
+    const k=keyOf(q);const dup=seen[k];seen[k]=1;
+    return `<div class="card ${dup?"dup":""}" data-i="${i}">
+    <div class="row" style="align-items:center"><b style="flex:0 0 auto">Q${i+1}</b>${dup?'<span class="tag" style="background:#78350f;color:#fcd34d">duplicate</span>':""}<span style="flex:1"></span><button class="btn d sm" data-act="delStage" data-i="${i}" style="flex:0 0 auto">Remove</button></div>
+    <textarea rows="2" data-f="question" data-i="${i}">${esc(q.question)}</textarea>
+    ${q.options.map((o,j)=>`<div class="opt"><input type="radio" name="c${i}" data-f="correct" data-i="${i}" data-j="${j}" ${q.correct===j?"checked":""}><b>${"ABCD"[j]}</b><input type="text" data-f="opt" data-i="${i}" data-j="${j}" value="${esc(o)}"></div>`).join("")}
+    <textarea rows="2" data-f="explanation" data-i="${i}" placeholder="Explanation">${esc(q.explanation)}</textarea></div>`}).join("");
+}
+function onStageEdit(e){
+  const t=e.target,f=t.dataset.f;if(!f)return;const i=+t.dataset.i,j=+t.dataset.j;if(!staged[i])return;
+  if(f==="opt")staged[i].options[j]=t.value;else if(f==="correct")staged[i].correct=j;else staged[i][f]=t.value;
+}
+function addBlank(){staged.push({question:"",options:["","","",""],correct:0,explanation:""});renderStage();$("stage").scrollIntoView({behavior:"smooth"})}
+function toRow(q){ // adjust column names here if your table differs
+  return{subject:$("sel-subject").value,subtopic:$("txt-subtopic").value.trim(),difficulty:$("sel-diff").value,question:q.question,options:q.options,correct:q.correct,explanation:q.explanation};
+}
+async function save(){
+  const bad=staged.findIndex(q=>q.question.trim().length<5||q.options.some(o=>!o.trim()));
+  if(bad>=0){toast("Q"+(bad+1)+" is incomplete — fill all fields");return}
+  const seen={},rows=[];let skipped=0;
+  staged.forEach(q=>{const k=keyOf(q);if(seen[k]){skipped++;return}seen[k]=1;rows.push(toRow(q))});
+  const btn=$("btn-save");btn.disabled=true;btn.textContent="Saving...";
+  try{
+    for(let i=0;i<rows.length;i+=50)await sb(cfg().tq,{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(rows.slice(i,i+50))});
+    toast("✅ Saved "+rows.length+" questions"+(skipped?" ("+skipped+" duplicates skipped)":""));staged=[];renderStage();$("raw-text").value="";
+  }catch(e){log("❌ Save failed: "+e.message+"\nTip: check table name in Settings, column names in toRow(), and that Row Level Security allows inserts.","#f43f5e")}
+  btn.disabled=false;btn.textContent="Save to Supabase";
+}
 
-  // --- API KEY CONFIGURATION ---
-  function initKey() {
-    const k = localStorage.getItem("gemini_key") || HARDCODED_GEMINI_KEY;
-    document.getElementById("api-key-input").value = k;
-    const st = document.getElementById("key-status");
-    if (k) {
-      st.textContent = "✅ Active key configured";
-      st.style.color = "#4ade80";
-    } else {
-      st.textContent = "⚠️ No key saved";
-      st.style.color = "#f43f5e";
-    }
-  }
+/* ---------- Bank ---------- */
+async function loadBank(){
+  const sub=$("bk-subject").value;let p=cfg().tq+"?select=*&order=id.desc&limit=500";
+  if(sub)p+="&subject=eq."+encodeURIComponent(sub);
+  try{bankRows=await(await sb(p)).json();renderBank()}catch(e){try{bankRows=await(await sb(cfg().tq+"?select=*&limit=500"+(sub?"&subject=eq."+encodeURIComponent(sub):""))).json();renderBank()}catch(e2){toast(e2.message)}}
+}
+function renderBank(){
+  const s=$("bk-search").value.toLowerCase();const rows=bankRows.filter(r=>!s||String(r.question).toLowerCase().includes(s));
+  $("bk-info").textContent=rows.length+" of "+bankRows.length+" shown";
+  $("bk-rows").innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(String(r.question).slice(0,180))}</td><td><span class="tag">${esc(r.subject||"")}</span></td><td>${"ABCD"[r.correct]||""}</td><td><button class="btn d sm" data-act="delBank" data-id="${esc(r.id)}">Delete</button></td></tr>`).join("")||'<tr><td colspan="5" style="text-align:center;color:#64748b">No questions.</td></tr>';
+}
+async function delBank(id){
+  if(!confirm("Delete this question permanently?"))return;
+  try{await sb(cfg().tq+"?id=eq."+encodeURIComponent(id),{method:"DELETE"});bankRows=bankRows.filter(r=>String(r.id)!==String(id));renderBank();toast("Deleted")}catch(e){toast(e.message)}
+}
 
-  function saveApiKey() {
-    const val = document.getElementById("api-key-input").value.trim();
-    if (!val) return alert("Please enter an API key.");
-    localStorage.setItem("gemini_key", val);
-    initKey();
-    alert("API Key saved successfully!");
-  }
+/* ---------- Audits ---------- */
+async function loadAudits(){
+  $("audit-rows").innerHTML='<tr><td colspan="6" style="text-align:center">Loading...</td></tr>';
+  try{auditRows=await(await sb(cfg().ts+"?select=*&order=created_at.desc&limit=200")).json()}
+  catch(e){try{auditRows=await(await sb(cfg().ts+"?select=*&limit=200")).json()}catch(e2){$("audit-rows").innerHTML='<tr><td colspan="6" style="color:#f43f5e">'+esc(e2.message)+"</td></tr>";return}}
+  renderAudits();
+}
+const A=r=>[r.student_name||r.student||r.name||"",r.student_id||r.user_id||r.id||"",r.test_name||r.test||"",r.score==null?"":r.score,r.accuracy==null?"":r.accuracy,r.time_taken||r.time||r.created_at||""];
+function renderAudits(){
+  const s=$("au-search").value.toLowerCase();const rows=auditRows.filter(r=>!s||A(r).join(" ").toLowerCase().includes(s));
+  $("audit-rows").innerHTML=rows.map(r=>"<tr>"+A(r).map(x=>"<td>"+esc(x)+"</td>").join("")+"</tr>").join("")||'<tr><td colspan="6" style="text-align:center;color:#64748b">No submissions.</td></tr>';
+}
 
-  // --- SUBJECTS MANAGEMENT ---
-  function loadSubjects() {
-    const s = localStorage.getItem("sub_list");
-    if (s) {
-      try { subjects = JSON.parse(s); } catch (e) {}
-    }
-    renderSubjectDropdown();
-  }
+/* ---------- Downloads ---------- */
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const csv=rows=>rows.map(r=>r.map(x=>'"'+String(x==null?"":x).replace(/"/g,'""')+'"').join(",")).join("\n");
 
-  function renderSubjectDropdown() {
-    const dd = document.getElementById("sel-subject");
-    dd.innerHTML = "";
-    subjects.forEach(sub => {
-      const o = document.createElement("option");
-      o.value = sub;
-      o.textContent = sub;
-      dd.appendChild(o);
-    });
-  }
-
-  function renderSubjects() {
-    const container = document.getElementById("subject-list");
-    container.innerHTML = "";
-    subjects.forEach((sub, i) => {
-      const div = document.createElement("div");
-      div.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #050811; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e293b;";
-      div.innerHTML = `
-        <span style="font-weight: 700; color: #ffffff; font-size: 0.85rem;">${sub}</span>
-        <button type="button" class="btn-danger" onclick="deleteSubject(${i})">Delete</button>
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  function addSubject() {
-    const name = prompt("Enter new subject name:");
-    if (name && name.trim() && !subjects.includes(name.trim())) {
-      subjects.push(name.trim());
-      localStorage.setItem("sub_list", JSON.stringify(subjects));
-      renderSubjectDropdown();
-      renderSubjects();
-    }
-  }
-
-  function deleteSubject(idx) {
-    if (confirm("Delete subject '" + subjects[idx] + "'?")) {
-      subjects.splice(idx, 1);
-      localStorage.setItem("sub_list", JSON.stringify(subjects));
-      renderSubjectDropdown();
-      renderSubjects();
-    }
-  }
-
-  // --- AI EXTRACTION WITH PROPER HEADERS ---
-  async function startExtraction() {
-    const log = document.getElementById("log");
-    const btn = document.getElementById("btn-parse");
-    log.style.display = "block";
-    log.style.background = "#050811";
-    log.style.color = "#38bdf8";
-    log.textContent = "⏳ Reading input document...";
-    btn.disabled = true;
-
-    const key = (localStorage.getItem("gemini_key") || HARDCODED_GEMINI_KEY).trim();
-    if (!key) {
-      log.style.color = "#f43f5e";
-      log.textContent = "Error: Configure your API key in the 'API Keys' tab first.";
-      btn.disabled = false;
-      return;
-    }
-
-    let text = document.getElementById("raw-text").value.trim();
-    const file = document.getElementById("pdf-input").files[0];
-
-    if (file) {
-      log.textContent = "⏳ Reading textual pages from PDF...";
-      try {
-        const buffer = await file.arrayBuffer();
-        if (window.pdfjsLib) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-        }
-        const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
-        let accum = "";
-        for (let i = 1; i <= doc.numPages; i++) {
-          const page = await doc.getPage(i);
-          const content = await page.getTextContent();
-          accum += content.items.map(it => it.str).join(" ") + "\n";
-        }
-        text = accum + "\n" + text;
-      } catch (err) {
-        log.style.color = "#f43f5e";
-        log.textContent = "❌ PDF Reading Error: " + err.message;
-        btn.disabled = false;
-        return;
-      }
-    }
-
-    if (!text || text.length < 30) {
-      log.style.color = "#f43f5e";
-      log.textContent = "Error: Please upload a readable PDF or paste at least 30 characters of question text.";
-      btn.disabled = false;
-      return;
-    }
-
-    log.textContent = "🧠 Calling Gemini AI to parse questions, options, and explanations...";
-
-    const prompt = "Extract all multiple-choice questions
+/* ---------- Event wiring ---------- */
+const ACT={
+  refreshDash,extract,addBlank,save,loadBank,loadAudits,saveSettings,testConn,
+  clearStage:()=>{if(confirm("Clear all staged questions?")){staged=[];renderStage()}},
+  dlJson:()=>dl("questions.json",JSON.stringify(staged,null,2),"application/json"),
+  dlBankCsv:()=>dl("bank.csv",csv([["subject","question","A","B","C","D","correct","explanation"]].concat(bankRows.map(r=>{const o=r.options||[];return[r.subject,r.question,o[0],o[1],o[2],o[3],"ABCD"[r.correct],r.explanation]}))),"text/csv"),
+  dlAuditCsv:()=>dl("audits.csv",csv([["student","id","test","score","accuracy","time"]].concat(auditRows.map(A))),"text/csv"),
+  addSubject:()=>{const n=(prompt("New subject name:")||"").trim();if(n&&!subjects.includes(n)){subjects.push(n);saveSubs()}},
+  delSubject:t=>{const i=+t.dataset.i;if(confirm("Delete '"+subjects[i]+"'?")){subjects.splice(i,1);saveSubs()}},
+  delStage:t=>{staged.splice(+t.dataset.i,1);renderStage()},
+  delBank:t=>delBank(t.dataset.id)
+};
+document.addEventListener("click",e=>{
+  const nb=e.target.closest(".nb");if(nb)return setTab(nb.dataset.tab);
+  const b=e.target.closest("[data-act]");if(!b)return;const f=ACT[b.dataset.act];if(f)f(b);
+});
+$("q-list").addEventListener("input",onStageEdit);$("q-list").addEventListener("change",onStageEdit);
+$("bk-search").addEventListener("input",renderBank);$("au-search").addEventListener("input",renderAudits);
+fillSubjectDropdowns();renderSubjects();fillSettings();refreshDash();
+})();
+</script>
+</body>
+</html>
