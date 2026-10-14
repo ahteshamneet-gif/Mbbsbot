@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBBS Admin Command Center</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050811; color: #f1f5f9; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(11, 18, 33, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-input { background: rgba(7, 12, 24, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 sm:p-8">
+
+  <!-- ADMIN AUTH GATE -->
+  <div id="admin-auth-gate" class="max-w-md w-full mx-auto my-auto glass-panel p-8 rounded-3xl text-center">
+    <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-4 border border-amber-500/30">
+      <i class="fa-solid fa-shield-halved"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white">Administrator Command Center</h2>
+    <p class="text-xs text-slate-400 mt-1 mb-6">Restricted management gateway.</p>
+    
+    <form onsubmit="handleAdminAuth(event)" class="space-y-4 text-left">
+      <div>
+        <label class="block text-[11px] font-bold text-slate-400 uppercase">Master Passkey</label>
+        <input type="password" id="admin-passkey" required placeholder="Enter master key..." class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
+      </div>
+      <p id="admin-auth-error" class="text-xs text-rose-400 hidden"></p>
+      <button type="submit" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition">
+        Enter Dashboard
+      </button>
+    </form>
+  </div>
+
+  <!-- ADMIN ACTIVE CONSOLE -->
+  <div id="admin-dashboard" class="max-w-6xl w-full mx-auto glass-panel rounded-3xl flex flex-col overflow-hidden hidden">
+    <!-- Top Nav -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-extrabold text-white">MBBS Admin Console</h3>
+          <p class="text-[11px] text-slate-400">Live Edge & Database Management</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="switchTab('students')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-400" id="btn-tab-students">Audits</button>
+        <button onclick="switchTab('importer')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white" id="btn-tab-importer">AI Importer</button>
+        <button onclick="switchTab('settings')" class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white" id="btn-tab-settings">API Keys</button>
+        <button onclick="adminLogout()" class="px-3 py-1.5 rounded-xl bg-rose-600/80 text-white text-xs font-bold hover:bg-rose-600 ml-4">Exit</button>
+      </div>
+    </div>
+
+    <!-- Content 1: Student Audits -->
+    <div id="admin-sec-students" class="p-6 space-y-4">
+      <div class="flex justify-between items-center">
+        <h4 class="text-sm font-bold text-white uppercase">Real-Time Candidate Submissions</h4>
+        <button onclick="fetchStudentAudits()" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold hover:bg-slate-700">Refresh Data</button>
+      </div>
+      <div class="overflow-x-auto rounded-2xl border border-white/[0.08]">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-white/[0.08]">
+            <tr>
+              <th class="p-3">Candidate</th>
+              <th class="p-3">Student ID</th>
+              <th class="p-3">Test Title</th>
+              <th class="p-3">Net Score</th>
+              <th class="p-3">Accuracy</th>
+              <th class="p-3">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="student-audit-rows" class="divide-y divide-white/[0.04]">
+            <tr><td colspan="6" class="p-4 text-center text-slate-500">Loading records from Supabase...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Content 2: AI Importer -->
+    <div id="admin-sec-importer" class="p-6 space-y-4 hidden">
+      <h4 class="text-sm font-bold text-white uppercase">AI Medical PDF Question Parser</h4>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block text-slate-400 uppercase font-bold mb-1">Target Subject</label>
+          <select id="import-subject" class="glass-input w-full p-2.5 rounded-xl text-white">
+            <option value="Anatomy">Anatomy</option>
+            <option value="Physiology">Physiology</option>
+            <option value="Biochemistry">Biochemistry</option>
+            <option value="Pharmacology">Pharmacology</option>
+            <option value="Pathology">Pathology</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 uppercase font-bold mb-1">Sub-Topic Tag</label>
+          <input type="text" id="import-subtopic" placeholder="e.g. Upper Limb" class="glass-input w-full p-2.5 rounded-xl text-white">
+        </div>
+      </div>
+      <div class="border-2 border-dashed border-slate-700 p-6 rounded-2xl text-center">
+        <input type="file" id="pdf-file" accept="application/pdf" class="text-xs text-slate-400">
+      </div>
+      <textarea id="raw-text" rows="3" placeholder="Or paste question text directly..." class="glass-input w-full p-3 rounded-xl text-xs text-slate-300"></textarea>
+      <button onclick="runAiExtraction()" id="parse-btn" class="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-xl text-xs font-bold hover:from-sky-400 hover:to-indigo-500 transition">
+        Run AI Question Extraction
+      </button>
+      <div id="import-status-log" class="p-3 rounded-xl bg-slate-950 font-mono text-xs hidden"></div>
+    </div>
+
+    <!-- Content 3: Settings -->
+    <div id="admin-sec-settings" class="p-6 space-y-4 hidden">
+      <h4 class="text-sm font-bold text-white uppercase">API Configuration</h4>
+      <div class="glass-panel p-4 rounded-2xl space-y-2 text-xs">
+        <label class="block font-bold text-slate-300">Gemini AI API Key</label>
+        <input type="password" id="gemini-key" placeholder="AIzaSy..." class="glass-input w-full p-2.5 rounded-xl text-white font-mono">
+        <button onclick="saveGeminiKey()" class="px-4 py-2 bg-sky-600 rounded-xl font-bold hover:bg-sky-500">Save AI Key</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "https://mbbsapi.ahteshamneet.workers.dev";
+    const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
+    const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
+
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const pass = document.getElementById("admin-passkey").value.trim();
+      if (pass === "mbbsAdmin_MasterPass_9921") {
+        document.getElementById("admin-auth-gate").classList.add("hidden");
+        document.getElementById("admin-dashboard").classList.remove("hidden");
+        fetchStudentAudits();
+        document.getElementById("gemini-key").value = localStorage.getItem("mbbs_gemini_api_key") || "";
+      } else {
+        const err = document.getElementById("admin-auth-error");
+        err.textContent = "Unauthorized: Invalid passkey.";
+        err.classList.remove("hidden");
+      }
+    }
+
+    function adminLogout() {
+      document.getElementById("admin-dashboard").classList.add("hidden");
+      document.getElementById("admin-auth-gate").classList.remove("hidden");
+    }
+
+    function switchTab(t) {
+      ['students', 'importer', 'settings'].forEach(k => {
+        document.getElementById(`admin-sec-${k}`).classList.toggle("hidden", k !== t);
+        document.getElementById(`btn-tab-${k}`).className = (k === t) 
+          ? "tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-400"
+          : "tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white";
+      });
+    }
+
+    async function fetchStudentAudits() {
+      const tbody = document.getElementById("student-audit-rows");
+      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Fetching audit logs from Supabase...</td></tr>';
+      try {
+        const res = await fetch(`${SUPABASE_REST}/exam_results?select=*&order=attempted_at.desc&limit=50`, {
+          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
+        });
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          tbody.innerHTML = rows.map(r => `
+            <tr class="border-b border-white/[0.04]">
+              <td class="p-3 font-bold text-white">${r.student_name || "Candidate"}</td>
+              <td class="p-3 font-mono text-slate-400">${r.student_id}</td>
+              <td class="p-3 text-slate-300">${r.test_title}</td>
+              <td class="p-3 font-mono text-sky-400 font-bold">${r.net_score}</td>
+              <td class="p-3 font-bold ${r.accuracy >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${r.accuracy}%</td>
+              <td class="p-3 text-slate-500 text-[11px]">${new Date(r.attempted_at).toLocaleString()}</td>
+            </tr>
+          `).join("");
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">No student exam attempts recorded yet.</td></tr>';
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rose-400">Failed to load data from Supabase.</td></tr>';
+      }
+    }
+
+    function saveGeminiKey() {
+      const val = document.getElementById("gemini-key").value.trim();
+      if (val) { localStorage.setItem("mbbs_gemini_api_key", val); alert("Gemini API Key saved!"); }
+    }
+
+    async function runAiExtraction() {
+      const log = document.getElementById("import-status-log");
+      const btn = document.getElementById("parse-btn");
+      log.classList.remove("hidden");
+      log.textContent = "Processing extraction...";
+      btn.disabled = true;
+
+      const apiKey = localStorage.getItem("mbbs_gemini_api_key");
+      if (!apiKey) {
+        log.textContent = "Error: Configure Gemini API Key under 'API Keys' first.";
+        btn.disabled = false;
+        return;
+      }
+
+      let text = document.getElementById("raw-text").value.trim();
+      const file = document.getElementById("pdf-file").files[0];
+
+      if (file) {
+        try {
+          const buffer = await file.arrayBuffer();
+          pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+          let accum = "";
+          for (let i = 1; i <= doc.numPages; i++) {
+            const page = await doc.getPage(i);
+            const content = await page.getTextContent();
+            accum += content.items.map(it => it.str).join(" ") + "\n";
+          }
+          text = accum + "\n" + text;
+        } catch (e) {
+          log.textContent = "PDF Parse error: " + e.message;
+          btn.disabled = false;
+          return;
+        }
+      }
+
+      if (!text || text.length < 30) {
+        log.textContent = "Provide valid PDF or paste question text.";
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const prompt = `Extract all MCQs from this text into clean JSON array:
+[{"sub_topic":"Topic Name","question":"Question text?","options":["A","B","C","D"],"answer":"A","explanation":"Rationale"}]
+Text:\n${text.substring(0, 30000)}`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+        });
+        const data = await res.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+
+        const subject = document.getElementById("import-subject").value;
+        const subtopic = document.getElementById("import-subtopic").value || "General";
+
+        // Push directly to Supabase questions table
+        const insertPayload = parsed.map(q => ({
+          subject: subject,
+          sub_topic: q.sub_topic || subtopic,
+          question: q.question,
+          options: q.options,
+          answer: q.answer,
+          explanation: q.explanation || ""
+        }));
+
+        const sRes = await fetch(`${SUPABASE_REST}/questions`, {
+          method: "POST",
+          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": "application/json" },
+          body: JSON.stringify(insertPayload)
+        });
+
+        if (sRes.ok) {
+          log.textContent = `Success! ${insertPayload.length} questions extracted and uploaded directly to Supabase!`;
+        } else {
+          log.textContent = "Failed saving to database: " + await sRes.text();
+        }
+      } catch (err) {
+        log.textContent = "AI Error: " + err.message;
+      }
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
