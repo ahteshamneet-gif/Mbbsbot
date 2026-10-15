@@ -62,6 +62,7 @@ select:focus,input:focus,textarea:focus{border-color:#0284c7}
 
 <!-- BROWSE -->
 <section id="v-browse" class="hidden">
+ <div id="trial" class="hidden mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-semibold"><i class="fa-solid fa-hourglass-half"></i> <span id="trial-t"></span></div>
  <div class="gp rounded-3xl p-5 sm:p-7 mb-5 border-sky-500/20">
   <span class="chip text-sky-400 bg-sky-500/10 border-sky-500/30" id="sub-badge">ANATOMY</span>
   <h2 id="sub-title" class="text-xl font-black mt-2">Anatomy Question Bank</h2>
@@ -174,21 +175,23 @@ window.addEventListener("DOMContentLoaded",()=>{fillSubjects();boot();loadSubjec
 
 /* ---------- AUTH ---------- */
 async function remoteAuth(uid,key){uid=uid.trim().toUpperCase();key=key.trim();
- try{const r=await fetch(API+"/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,key})});const d=await r.json();if(r.ok&&!d.error)return{uid:d.student_id||uid,name:d.student_name||"Candidate"}}catch{}
- try{const r=await fetch(`${REST}/students?student_id=eq.${encodeURIComponent(uid)}&passkey=eq.${encodeURIComponent(key)}&select=*`,{headers:H}),d=await r.json();if(Array.isArray(d)&&d[0])return{uid:d[0].student_id,name:d[0].student_name||"Dr. "+d[0].student_id}}catch{}
+ try{const r=await fetch(`${REST}/students?student_id=eq.${encodeURIComponent(uid)}&passkey=eq.${encodeURIComponent(key)}&select=*`,{headers:H}),d=await r.json();
+  if(Array.isArray(d)&&d[0]){const s=d[0];if(s.active===false)return{err:"This account is disabled. Contact the administrator."};if(s.expires_at&&new Date(s.expires_at)<new Date())return{err:"Your trial has expired. Contact @Nothing_0786 for full access."};return{uid:s.student_id,name:s.student_name||"Dr. "+s.student_id,demo:!!s.is_demo,exp:s.expires_at||null}}}catch{}
+ try{const r=await fetch(API+"/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,key})}),d=await r.json();if(r.ok&&!d.error)return{uid:d.student_id||uid,name:d.student_name||"Candidate",demo:/^DEMO/.test(uid)}}catch{}
+ if(uid==="DEMO-001"&&key==="demo123")return{uid:"DEMO-001",name:"Demo Candidate",demo:true,exp:null};
  return null}
 async function boot(){const p=new URLSearchParams(location.search),u=p.get("uid"),k=p.get("key");
- if(u&&k){const x=await remoteAuth(u,k);history.replaceState(null,"",location.pathname);if(x)return login(x)}
- const s=LS("mbbs_student_session",null);if(s&&s.uid)return login(s,false);lock()}
+ if(u&&k){const x=await remoteAuth(u,k);history.replaceState(null,"",location.pathname);if(x&&!x.err)return login(x)}
+ const s=LS("mbbs_student_session",null);if(s&&s.uid&&!(s.exp&&new Date(s.exp)<new Date()))return login(s,false);lock()}
 async function manualLogin(e){e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;b.textContent="Verifying…";
  const x=await remoteAuth($("g-uid").value,$("g-key").value);
- if(x){$("g-err").classList.add("hidden");login(x)}else{$("g-err").textContent="Invalid credentials. Check Student ID and Passkey.";$("g-err").classList.remove("hidden")}
+ if(x&&!x.err){$("g-err").classList.add("hidden");login(x)}else{$("g-err").textContent=x?.err||"Invalid credentials. Check Student ID and Passkey.";$("g-err").classList.remove("hidden")}
  b.disabled=false;b.textContent="Enter Examination Portal"}
 function login(u,save=true){user=u;if(save)SV("mbbs_student_session",u);
  ["v-lock"].forEach(i=>$(i).classList.add("hidden"));["subnav","v-browse"].forEach(i=>$(i).classList.remove("hidden"));["b-custom","b-nb","b-stats"].forEach(i=>$(i).classList.remove("hidden"));
- $("role").textContent="Verified";$("role").className="chip text-emerald-400 bg-emerald-500/20 border-emerald-500/30";$("ulabel").textContent=`${u.name} • ${u.uid}`;
+ $("role").textContent=u.demo?"Trial":"Verified";$("role").className="chip "+(u.demo?"text-amber-300 bg-amber-500/20 border-amber-500/30":"text-emerald-400 bg-emerald-500/20 border-emerald-500/30");$("trial").classList.toggle("hidden",!u.demo);$("trial-t").textContent="Trial account · tests limited to 10 questions"+(u.exp?" · expires "+new Date(u.exp).toLocaleDateString():"");$("ulabel").textContent=`${u.name} • ${u.uid}`;
  $("b-auth").innerHTML='<i class="fa-solid fa-power-off"></i>';$("b-auth").className="btn !px-3.5 bg-rose-600/80 text-white";
- counters();streakUI();switchSubject(subject)}
+ counters();streakUI();switchSubject(subject);flushSubs()}
 function lock(){["v-browse","v-exam","v-result","subnav","b-custom","b-nb","b-stats","bar"].forEach(i=>$(i).classList.add("hidden"));$("v-lock").classList.remove("hidden");
  $("role").textContent="Locked";$("role").className="chip text-slate-400 bg-slate-800 border-slate-700";$("ulabel").textContent="Candidate access required";$("b-auth").textContent="Login";$("b-auth").className="btn b1 !px-3.5"}
 function authClick(){if(user){stopTimers();user=null;localStorage.removeItem("mbbs_student_session")}lock()}
@@ -204,7 +207,7 @@ async function switchSubject(s){subject=s;$("sub-badge").textContent=s.toUpperCa
   $("f-topic").innerHTML=`<option value="">All topics (${Object.values(c).reduce((a,b)=>a+b,0)})</option>`+Object.keys(c).sort().map(t=>`<option value="${esc(t)}">${esc(t)} (${c[t]})</option>`).join("")}catch{}}
 
 /* ---------- QUESTION FETCH ---------- */
-async function fetchQs({subs,topic,diff,n}){let rows=[];
+async function fetchQs({subs,topic,diff,n}){let rows=[];if(user?.demo)n=Math.min(n,10);
  try{let u=`${REST}/questions?select=*&limit=500&subject=in.(${subs.map(s=>encodeURIComponent('"'+s+'"')).join(",")})`;
   if(topic)u+="&sub_topic=eq."+encodeURIComponent(topic);if(diff)u+="&difficulty=eq."+diff;
   const d=await(await fetch(u,{headers:H})).json();if(Array.isArray(d))rows=d}catch{}
@@ -291,7 +294,7 @@ function finalize(){stopTimers();recT();let c=0,w=0,l=0;const tp={},df={};
  $("r-net").innerHTML=`${net} <span class="text-xs text-slate-400 font-normal">/ ${total*4}</span>`;$("r-c").textContent=`${c} (+${c*4})`;$("r-w").textContent=`${w} (−${w})`;$("r-a").textContent=acc+"%";$("r-l").textContent=l;
  const row=(n,[a,b],chip)=>`<div class="gi p-2.5 rounded-xl"><div class="flex justify-between gap-2 mb-1"><span>${chip}</span><b class="mono">${a}/${b}</b></div><div class="h-1.5 bg-slate-800 rounded-full"><div class="h-full rounded-full ${a/b>=.7?"bg-emerald-500":a/b>=.4?"bg-amber-500":"bg-rose-500"}" style="width:${a/b*100}%"></div></div></div>`;
  $("r-break").innerHTML=Object.entries(df).map(([k,v])=>row(k,v,dchip(k)||esc(k))).join("")+Object.entries(tp).map(([k,v])=>row(k,v,tchip(k))).join("");
- fetch(API+"/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({student_id:user.uid,student_name:user.name,test_title:ex.meta.title,net_score:net,max_score:total*4,accuracy:acc,correct:c,wrong:w})}).catch(()=>{});
+ pushSub({student_id:user.uid,student_name:user.name,test_title:ex.meta.title,net_score:net,max_score:total*4,accuracy:acc,correct:c,wrong:w,lucky:l,is_demo:!!user.demo,topic_stats:tp});
  const h=LS("cbt_hist_"+user.uid,[]);h.push({test:ex.meta.title,net,acc,accuracy:acc,lucky:l,topics:tp,diffs:df,ts:new Date().toLocaleDateString()});SV("cbt_hist_"+user.uid,h);
  streakAdvance();["v-exam","bar"].forEach(i=>$(i).classList.add("hidden"));$("exam-matrix").classList.remove("mob-open");$("v-result").classList.remove("hidden");scrollTo(0,0)}
 function sheet(t,h){$("sheet-t").textContent=t;$("sheet-b").innerHTML=h;$("sheet").classList.remove("hidden")}
@@ -308,11 +311,19 @@ function openNotebook(t){tabNB=typeof t==="string"?t:"bookmarks";const l=LS(nbk(
 function delNB(i){const l=LS(nbk(tabNB),[]);l.splice(i,1);SV(nbk(tabNB),l);counters();openNotebook(tabNB)}
 function practiceNB(){const l=LS(nbk(tabNB),[]);if(!l.length)return alert("List is empty!");$("sheet").classList.add("hidden");run({title:"Practice: "+tabNB,topic:tabNB.toUpperCase()},l)}
 
+/* ---------- SYNC ---------- */
+async function pushSub(x){const q=LS("pend_subs",[]);q.push(x);SV("pend_subs",q);await flushSubs()}
+async function flushSubs(){const q=LS("pend_subs",[]),keep=[];for(const x of q){let ok=false;
+ try{ok=(await fetch(REST+"/submissions",{method:"POST",headers:{...H,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(x)})).ok}catch{}
+ if(!ok)try{ok=(await fetch(API+"/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(x)})).ok}catch{}
+ if(!ok)keep.push(x)}SV("pend_subs",keep)}
+async function histOf(){const loc=LS("cbt_hist_"+user.uid,[]);try{const d=await(await fetch(`${REST}/submissions?student_id=eq.${encodeURIComponent(user.uid)}&select=*&order=created_at.desc&limit=100`,{headers:H})).json();
+ if(Array.isArray(d)&&d.length>=loc.length)return d.reverse().map(r=>({test:r.test_title||r.test_name||"Test",net:r.net_score||0,acc:Math.round(+r.accuracy||0),lucky:r.lucky||0,topics:r.topic_stats||{},ts:new Date(r.created_at).toLocaleDateString()}))}catch{}return loc}
 /* ---------- STREAK / STATS ---------- */
 const stk=()=>LS("streak_"+user?.uid,{streak:0,last:""});
 function streakAdvance(){const d=stk(),t=new Date().toDateString();if(d.last===t)return;d.streak=d.last===new Date(Date.now()-864e5).toDateString()?d.streak+1:1;d.last=t;SV("streak_"+user.uid,d);streakUI()}
 function streakUI(){const d=stk();$("streakn").textContent=d.streak;$("streak").classList.toggle("hidden",!d.streak)}
-function openStats(){const h=LS("cbt_hist_"+user.uid,[]),n=h.length,acc=n?Math.round(h.reduce((a,b)=>a+(b.acc??b.accuracy??0),0)/n):0,net=h.reduce((a,b)=>a+(b.net||0),0),lucky=h.reduce((a,b)=>a+(b.lucky||0),0),st=stk().streak;
+async function openStats(){const h=await histOf(),n=h.length,acc=n?Math.round(h.reduce((a,b)=>a+(b.acc??b.accuracy??0),0)/n):0,net=h.reduce((a,b)=>a+(b.net||0),0),lucky=h.reduce((a,b)=>a+(b.lucky||0),0),st=stk().streak;
  const tp={};h.forEach(x=>Object.entries(x.topics||{}).forEach(([k,[a,b]])=>{const t=tp[k]??=[0,0];t[0]+=a;t[1]+=b}));
  const weak=Object.entries(tp).filter(([,v])=>v[1]>=3).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]).slice(0,8);
  const B=[["First test",n>=1,"fa-flag"],["10 tests",n>=10,"fa-medal"],["3-day streak",st>=3,"fa-fire"],["Sharpshooter 90%+",h.some(x=>(x.acc??0)>=90),"fa-bullseye"]];
