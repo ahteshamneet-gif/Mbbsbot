@@ -12,6 +12,9 @@ from aiohttp import web
 from telethon import TelegramClient, events, Button
 from telethon.errors import FloodWaitError
 
+import qbank_patch
+qbank_patch.apply(globals())
+
 # ============================================================
 # CONFIGURATION & ENVIRONMENT
 # ============================================================
