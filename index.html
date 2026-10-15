@@ -1,1163 +1,324 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MBBS Pro CBT - Student Portal</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
-    
-    :root {
-      --bg-dark: #050811;
-      --card-bg: rgba(11, 18, 33, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --font-scale: 1rem;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--bg-dark);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
-      background-attachment: fixed;
-      color: #f1f5f9;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .font-mono { font-family: 'JetBrains Mono', monospace; }
-    .q-text-dyn { font-size: var(--font-scale); }
-    
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #070c18; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 99px; }
-
-    .glass-panel {
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
-    }
-
-    .glass-input {
-      background: rgba(7, 12, 24, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.2s ease;
-    }
-    .glass-input:focus {
-      border-color: #0284c7;
-      box-shadow: 0 0 15px -3px rgba(14, 165, 233, 0.25);
-    }
-
-    .option-card {
-      transition: all 0.15s ease-in-out;
-    }
-    .option-card:hover {
-      transform: translateY(-1px);
-    }
-
-    @media print {
-      body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
-      header, #sub-nav-bar, #student-stats-modal, #notebook-modal, #custom-test-modal, .no-print { display: none !important; }
-      #view-result { display: block !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-      .glass-panel, .glass-input { background: #ffffff !important; border: 1px solid #cccccc !important; color: #000000 !important; box-shadow: none !important; }
-      .print-black { color: #000000 !important; }
-      .print-break { page-break-inside: avoid; }
-    }
-  </style>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050811">
+<title>MBBS Pro CBT - Student Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+:root{--fs:1rem}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#050811 radial-gradient(at 0 0,rgba(14,165,233,.12),transparent 50%) fixed;color:#f1f5f9;-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
+.mono{font-family:'JetBrains Mono',monospace}.qdyn{font-size:var(--fs)}
+.gp{background:rgba(11,18,33,.88);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08)}
+.gi{background:rgba(7,12,24,.85);border:1px solid rgba(255,255,255,.08)}
+select,input[type=text],input[type=password],textarea{background:rgba(7,12,24,.9);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;border-radius:.75rem;outline:0}
+select:focus,input:focus,textarea:focus{border-color:#0284c7}
+.cs::-webkit-scrollbar{width:5px}.cs::-webkit-scrollbar-thumb{background:#1e293b;border-radius:9px}
+.mob-open{display:block!important;position:fixed;left:.75rem;right:.75rem;bottom:calc(5rem + env(safe-area-inset-bottom));z-index:45;max-height:65vh;overflow:auto}
+@media print{header,#bar,.no-print{display:none!important}body{background:#fff!important;color:#000!important}.gp,.gi{background:#fff!important;border-color:#ccc!important;color:#000!important}}
+</style>
+<style type="text/tailwindcss">@layer components{.btn{@apply px-4 py-3 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-30}.b1{@apply bg-sky-600 hover:bg-sky-500 text-white}.b2{@apply bg-slate-800 hover:bg-slate-700 text-slate-300}.b3{@apply bg-emerald-600 hover:bg-emerald-500 text-white}.chip{@apply inline-block text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-0.5 rounded-full border}.lbl{@apply block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5}}</style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white pb-12">
+<body class="min-h-screen flex flex-col">
 
-  <!-- ================= TOP HEADER ================= -->
-  <header id="main-header" class="sticky top-0 z-40 bg-[#050811]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3.5 transition-all">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-teal-400 p-[1px] shadow-lg shadow-sky-500/20">
-          <div class="w-full h-full bg-[#080d1b] rounded-2xl flex items-center justify-center text-sky-400">
-            <i class="fa-solid fa-stethoscope text-base"></i>
-          </div>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight">MBBS Pro CBT</h1>
-            <span id="header-role-badge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60">Verifying...</span>
-            <span id="header-streak-badge" class="hidden text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-              <i class="fa-solid fa-fire text-amber-400"></i> <span id="streak-counter">0</span>d Streak
-            </span>
-          </div>
-          <p id="header-user-label" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs font-medium">Authenticating profile...</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button id="custom-test-btn" onclick="openCustomTestModal()" class="hidden px-3.5 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-bold hover:bg-sky-500/20 transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-sliders text-sky-400"></i>
-          <span class="hidden sm:inline">Custom Builder</span>
-        </button>
-
-        <button id="notebook-hub-btn" onclick="openNotebookModal()" class="hidden px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold hover:bg-indigo-500/20 transition flex items-center gap-2">
-          <i class="fa-solid fa-book-bookmark text-indigo-400"></i>
-          <span class="hidden sm:inline">Notebook</span>
-        </button>
-
-        <button id="student-stats-btn" onclick="openStudentStatsModal()" class="hidden px-3.5 py-2 rounded-xl bg-slate-800/80 border border-white/[0.08] text-slate-300 text-xs font-bold hover:bg-slate-700/80 transition flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-sky-400"></i>
-          <span class="hidden sm:inline">Analytics</span>
-        </button>
-
-        <button id="auth-action-btn" onclick="handleAuthButtonClick()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-md shadow-sky-600/25 flex items-center gap-1.5">
-          <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
-          <span>Login</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Filter & Subject Navigation Bar -->
-    <div id="sub-nav-bar" class="hidden max-w-7xl mx-auto mt-3.5 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2 flex-1 min-w-[240px]">
-        <label for="subject-select" class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-book-medical text-sky-400"></i>
-          <span>Subject:</span>
-        </label>
-        <select id="subject-select" onchange="switchSubject(this.value)" class="glass-input text-slate-100 text-xs rounded-xl px-3.5 py-2 font-bold focus:outline-none flex-1 max-w-[220px] cursor-pointer">
-          <option value="Anatomy">Anatomy</option>
-          <option value="Physiology">Physiology</option>
-          <option value="Biochemistry">Biochemistry</option>
-          <option value="Pharmacology">Pharmacology</option>
-          <option value="Pathology">Pathology</option>
-        </select>
-      </div>
-    </div>
-  </header>
-
-  <!-- ================= CORE VIEWPORT ================= -->
-  <main class="max-w-7xl mx-auto px-4 mt-7 flex-1 w-full">
-
-    <!-- VIEW 0: LOGIN GATE -->
-    <section id="view-locked" class="glass-panel rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto mt-10 shadow-2xl relative overflow-hidden">
-      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner">
-        <i class="fa-solid fa-lock"></i>
-      </div>
-      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Candidate Authentication</h2>
-      <p class="text-xs sm:text-sm text-slate-400 mt-2 mb-7 leading-relaxed font-medium">
-        Enter your verified student credentials or launch directly from the MBBS Telegram Study Bot.
-      </p>
-
-      <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left">
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Student ID</label>
-          <input type="text" id="gate-uid" required placeholder="e.g. STU-101" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none font-mono">
-        </div>
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Passkey</label>
-          <input type="password" id="gate-key" required placeholder="••••••••" class="glass-input w-full rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
-        </div>
-
-        <p id="gate-error-message" class="text-xs text-rose-400 font-medium hidden text-center py-1"></p>
-
-        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-sky-500/25 tracking-wide">
-          Enter Examination Portal
-        </button>
-      </form>
-
-      <div class="mt-8 pt-6 border-t border-white/[0.06] text-center">
-        <span class="text-[11px] text-slate-500">Need verification?</span>
-        <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-extrabold text-sky-400 hover:text-sky-300 transition mt-1.5">Contact Administrator @Nothing_0786</a>
-      </div>
-    </section>
-
-    <!-- VIEW 1: STUDENT BROWSE & QUICK POWER HUBS -->
-    <section id="view-browse" class="hidden">
-      <!-- Subject Header Card -->
-      <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden shadow-2xl border border-sky-500/20 bg-gradient-to-br from-slate-900/90 via-[#0d1627]/80 to-[#09101d]">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
-          <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[11px] font-bold mb-3">
-              <span id="active-subject-badge" class="tracking-wide">ANATOMY</span>
-              <span>•</span>
-              <span class="text-slate-300">Live Serverless Exam Engine (+4 / −1 Scheme)</span>
-            </div>
-            <h2 id="active-subject-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Anatomy Question Banks</h2>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1.5 font-medium max-w-xl">
-              Competitive medical examinations with sub-10ms cloud question streaming and confidence tags.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <button onclick="launchExamSession()" class="px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/30 flex items-center gap-2">
-              <i class="fa-solid fa-play"></i> Start 20-Q CBT Test
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Action Power Hub Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-        <div class="glass-panel p-4 rounded-2xl border border-amber-500/25 bg-amber-950/20 flex flex-col justify-between">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-fire"></i></div>
-            <div>
-              <h4 class="text-xs font-bold text-white">Daily 10 Challenge</h4>
-              <p id="daily-status-label" class="text-[10px] text-amber-300/80 font-medium">10 Fresh MCQs Today</p>
-            </div>
-          </div>
-          <button onclick="launchDaily10()" class="w-full mt-2 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition">Launch Daily 10</button>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl border border-rose-500/25 bg-rose-950/20 flex flex-col justify-between">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg"><i class="fa-solid fa-bolt-lightning"></i></div>
-            <div>
-              <h4 class="text-xs font-bold text-white">Wrong-Answers Quiz</h4>
-              <p id="quick-mistakes-count" class="text-[10px] text-slate-400 font-medium">0 Errors Recorded</p>
-            </div>
-          </div>
-          <button onclick="launchWrongAnswersQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">1-Tap Mistake Drill</button>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl border border-teal-500/25 bg-teal-950/20 flex flex-col justify-between">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg"><i class="fa-solid fa-brain"></i></div>
-            <div>
-              <h4 class="text-xs font-bold text-white">Spaced Repetition</h4>
-              <p id="sr-due-count" class="text-[10px] text-teal-300/80 font-medium">0 Due (1, 3, 7 Days)</p>
-            </div>
-          </div>
-          <button onclick="launchSpacedRepetitionQuiz()" class="w-full mt-2 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition">Review Due Items</button>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl border border-sky-500/25 bg-sky-950/20 flex flex-col justify-between">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg"><i class="fa-solid fa-sliders"></i></div>
-            <div>
-              <h4 class="text-xs font-bold text-white">Custom Mixed Test</h4>
-              <p class="text-[10px] text-slate-400 font-medium">Pick topics & length</p>
-            </div>
-          </div>
-          <button onclick="openCustomTestModal()" class="w-full mt-2 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Build Custom Test</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 2: CBT EXAM SIMULATOR -->
-    <section id="view-exam" class="hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div id="exam-main-panel" class="lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8 shadow-2xl relative">
-          <div class="flex items-center justify-between pb-5 border-b border-white/[0.08] gap-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <span id="exam-module-tag" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase tracking-wider">ANATOMY</span>
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">+4 / −1 Scheme</span>
-              </div>
-              <h2 id="exam-module-title" class="text-base sm:text-lg font-bold text-white mt-1.5 truncate max-w-xs sm:max-w-md">Exam Simulation</h2>
-            </div>
-            
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-1 bg-slate-900 border border-white/[0.08] px-2 py-1 rounded-xl">
-                <button onclick="changeFontSize(-0.1)" title="Smaller Font" class="px-2 py-0.5 text-xs text-slate-400 hover:text-white font-bold">A-</button>
-                <button onclick="changeFontSize(0.1)" title="Larger Font" class="px-2 py-0.5 text-xs text-slate-400 hover:text-white font-bold">A+</button>
-                <button onclick="toggleFocusMode()" title="Distraction-Free Focus Mode" class="px-2 py-0.5 text-xs text-slate-400 hover:text-sky-400"><i class="fa-solid fa-expand"></i></button>
-              </div>
-
-              <div class="text-right">
-                <div id="exam-timer-label" class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Elapsed Time</div>
-                <div id="exam-timer-display" class="text-base font-mono font-bold text-amber-400">00:00</div>
-              </div>
-              <button onclick="terminateExamPrompt()" class="text-xs px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition font-bold">Quit</button>
-            </div>
-          </div>
-
-          <div class="my-4 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3 text-xs font-semibold text-slate-400">
-              <span>Question <span id="exam-index-curr" class="text-white font-bold">1</span> of <span id="exam-index-total">10</span></span>
-              <span class="text-slate-600">•</span>
-              <span class="flex items-center gap-1.5 text-slate-300">
-                <i class="fa-regular fa-clock text-sky-400"></i>
-                <span>This item: <span id="q-timer-display" class="font-mono text-sky-300">0s</span></span>
-              </span>
-            </div>
-            
-            <div class="flex items-center gap-2 bg-slate-900/90 border border-white/[0.08] px-3 py-1.5 rounded-xl text-xs">
-              <span class="text-slate-400 font-semibold">Mode:</span>
-              <button onclick="toggleExamMode(false)" id="mode-btn-practice" class="px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300">Practice</button>
-              <button onclick="toggleExamMode(true)" id="mode-btn-exam" class="px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300">Exam (+4/−1)</button>
-            </div>
-          </div>
-
-          <div class="w-full bg-slate-900/90 h-2 rounded-full overflow-hidden border border-white/[0.06] mb-5">
-            <div id="exam-progress-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
-          </div>
-
-          <div class="glass-input rounded-2xl p-5 sm:p-6 mb-4 border border-white/[0.06] shadow-inner">
-            <div class="flex items-center justify-between mb-3">
-              <span id="exam-q-topic-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">General</span>
-              <button onclick="toggleFlagCurrentQuestion()" id="exam-flag-btn" class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-800 text-slate-400 border border-white/[0.06] hover:text-amber-400 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-bookmark"></i>
-                <span id="exam-flag-label">Flag</span>
-              </button>
-            </div>
-            <p id="exam-q-statement" class="q-text-dyn font-semibold text-slate-100 leading-relaxed">Loading question...</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 mb-4">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Confidence Tag:</span>
-            <button onclick="setConfidence('sure')" id="conf-btn-sure" class="px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition">
-              <i class="fa-solid fa-circle-check mr-1 text-[10px]"></i> 100% Sure
-            </button>
-            <button onclick="setConfidence('guess')" id="conf-btn-guess" class="px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition">
-              <i class="fa-solid fa-dice mr-1 text-[10px]"></i> Guess / 50-50
-            </button>
-          </div>
-
-          <div id="exam-options-list" class="space-y-3 mb-5"></div>
-
-          <div class="mb-5 p-3.5 bg-slate-950/80 border border-white/[0.06] rounded-2xl">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] font-bold text-sky-400 flex items-center gap-1.5"><i class="fa-solid fa-pen-nib text-xs"></i> Personal Question Note</span>
-              <button onclick="saveCurrentQuestionNote()" class="text-[10px] text-slate-400 hover:text-white font-bold">Save Note</button>
-            </div>
-            <textarea id="q-note-input" rows="2" placeholder="Write custom mnemonics or clinical pearls for this question..." class="glass-input w-full rounded-xl p-2.5 text-xs text-slate-300 focus:outline-none"></textarea>
-          </div>
-
-          <div id="exam-explanation-box" class="hidden glass-panel bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-5 mb-5 transition-all">
-            <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-2">
-              <i class="fa-solid fa-circle-check"></i>
-              <span>High-Yield Clinical Rationale</span>
-            </div>
-            <p id="exam-explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"></p>
-          </div>
-
-          <div class="flex items-center justify-between pt-4 border-t border-white/[0.08]">
-            <button id="exam-prev-btn" onclick="stepExam(-1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
-              <i class="fa-solid fa-arrow-left text-[10px]"></i> Previous
-            </button>
-            <button id="exam-next-btn" onclick="stepExam(1)" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-lg shadow-sky-600/20 flex items-center gap-2">
-              <span>Next</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Right Question Palette -->
-        <div id="exam-matrix-panel" class="glass-panel rounded-3xl p-5 shadow-2xl h-fit border border-white/[0.08]">
-          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-table-cells text-sky-400"></i>
-            <span>Question Matrix</span>
-          </h4>
-
-          <div class="flex flex-col gap-1.5 text-[10px] text-slate-400 font-semibold mb-4 pb-3 border-b border-white/[0.06]">
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Answered:</span>
-              <span id="matrix-answered-count" class="font-mono text-emerald-400 font-bold">0</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Flagged:</span>
-              <span id="matrix-flagged-count" class="font-mono text-amber-400 font-bold">0</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> Unanswered:</span>
-              <span id="matrix-unanswered-count" class="font-mono text-slate-400 font-bold">0</span>
-            </div>
-          </div>
-
-          <div id="exam-palette-grid" class="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto custom-scroll pr-1"></div>
-
-          <button onclick="promptSubmitExam()" class="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20">
-            Submit Complete Exam
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 3: SCORECARD SUMMARY -->
-    <section id="view-result" class="hidden">
-      <div class="glass-panel rounded-3xl p-8 sm:p-10 max-w-xl mx-auto shadow-2xl relative overflow-hidden print-break">
-        <div class="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg">🩺</div>
-            <div class="text-left">
-              <h2 class="text-base font-extrabold text-white print-black">MBBS CBT Candidate Report</h2>
-              <p id="print-candidate-meta" class="text-xs text-slate-400 font-medium">Candidate Report Card</p>
-            </div>
-          </div>
-          <button onclick="window.print()" class="no-print px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/[0.08] transition flex items-center gap-1.5">
-            <i class="fa-solid fa-print"></i> Print PDF
-          </button>
-        </div>
-
-        <div class="glass-input rounded-2xl p-5 mb-6 text-center border border-amber-500/30 bg-amber-950/15">
-          <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Net Score (+4 / −1 Scheme)</div>
-          <div id="result-stat-net-score" class="text-3xl sm:text-4xl font-black text-white mt-1 print-black">0 <span class="text-xs text-slate-400 font-normal">/ 0 Marks</span></div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-emerald-400">Correct (+4)</div>
-            <div id="result-stat-correct" class="text-base font-black text-white mt-0.5 print-black">0</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-rose-400">Wrong (−1)</div>
-            <div id="result-stat-wrong" class="text-base font-black text-white mt-0.5 print-black">0</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-slate-400">Accuracy</div>
-            <div id="result-stat-accuracy" class="text-base font-black text-emerald-400 mt-0.5 print-black">0%</div>
-          </div>
-          <div class="glass-input rounded-2xl p-3 text-center">
-            <div class="text-[10px] uppercase font-bold text-sky-400">Lucky Guesses</div>
-            <div id="result-stat-lucky" class="text-base font-black text-amber-300 mt-0.5 print-black">0</div>
-          </div>
-        </div>
-
-        <div class="space-y-2.5 no-print">
-          <button onclick="openFullAnswerReview()" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Full Answer Key & Rationales Review</span>
-          </button>
-          <button onclick="retakeCurrentExam()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Retake Exam (Fresh Shuffle)</button>
-          <button onclick="returnToBrowseView()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">Back to Curriculum</button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ================= CUSTOM TEST BUILDER MODAL ================= -->
-  <div id="custom-test-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white/[0.08]">
-      <div class="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
-        <h3 class="text-sm font-extrabold text-white">Custom Test Builder</h3>
-        <button onclick="closeCustomTestModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Select Subjects:</label>
-          <div class="grid grid-cols-2 gap-2 bg-slate-950/70 p-3 rounded-xl border border-white/[0.06]">
-            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Anatomy" checked> Anatomy</label>
-            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Physiology"> Physiology</label>
-            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Biochemistry"> Biochemistry</label>
-            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Pharmacology"> Pharmacology</label>
-            <label class="flex items-center gap-2"><input type="checkbox" name="custom_topic" value="Pathology"> Pathology</label>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1.5">Question Count:</label>
-          <div class="grid grid-cols-4 gap-2">
-            <button onclick="selectCustomCount(10)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="10">10 Qs</button>
-            <button onclick="selectCustomCount(20)" class="count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold" data-val="20">20 Qs</button>
-            <button onclick="selectCustomCount(30)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="30">30 Qs</button>
-            <button onclick="selectCustomCount(50)" class="count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold hover:border-sky-500" data-val="50">50 Qs</button>
-          </div>
-        </div>
-
-        <button onclick="generateAndLaunchCustomTest()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition shadow-lg shadow-sky-600/25">
-          Generate & Start Mixed Test
-        </button>
-      </div>
-    </div>
+<header id="hdr" class="sticky top-0 z-40 bg-[#050811]/90 backdrop-blur-xl border-b border-white/5 px-3 sm:px-4 py-3" style="padding-top:max(.75rem,env(safe-area-inset-top))">
+ <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+  <div class="flex items-center gap-2.5 min-w-0">
+   <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-sky-500 to-teal-400 flex items-center justify-center text-white"><i class="fa-solid fa-stethoscope"></i></div>
+   <div class="min-w-0">
+    <div class="flex items-center gap-1.5"><h1 class="text-sm font-extrabold">MBBS Pro CBT</h1><span id="role" class="chip text-slate-400 bg-slate-800 border-slate-700">Locked</span><span id="streak" class="hidden chip text-amber-300 bg-amber-500/20 border-amber-500/30"><i class="fa-solid fa-fire"></i> <span id="streakn">0</span>d</span></div>
+    <p id="ulabel" class="text-[11px] text-slate-400 truncate">Candidate access required</p>
+   </div>
   </div>
-
-  <!-- ================= SUBMIT CONFIRMATION MODAL ================= -->
-  <div id="submit-confirm-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/[0.08] text-center">
-      <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl mx-auto mb-3">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-      </div>
-      <h3 class="text-base font-extrabold text-white">Confirm Exam Submission</h3>
-      <p class="text-xs text-slate-400 mt-1 mb-5">Your test will be scored with the +4 / −1 competitive standard.</p>
-
-      <div class="grid grid-cols-3 gap-2.5 mb-6 text-left">
-        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Answered</div><div id="confirm-answered" class="text-base font-bold text-emerald-400 mt-0.5">0</div></div>
-        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Flagged</div><div id="confirm-flagged" class="text-base font-bold text-amber-400 mt-0.5">0</div></div>
-        <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase font-bold">Blank</div><div id="confirm-blank" class="text-base font-bold text-rose-400 mt-0.5">0</div></div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button onclick="closeSubmitConfirmModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">Return</button>
-        <button onclick="executeFinalSubmission()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Submit & Finish</button>
-      </div>
-    </div>
+  <div class="flex items-center gap-1.5 shrink-0">
+   <button id="b-custom" onclick="openCustom()" class="hidden btn b2 !px-3"><i class="fa-solid fa-sliders text-sky-400"></i></button>
+   <button id="b-nb" onclick="openNotebook()" class="hidden btn b2 !px-3"><i class="fa-solid fa-book-bookmark text-indigo-400"></i></button>
+   <button id="b-stats" onclick="openStats()" class="hidden btn b2 !px-3"><i class="fa-solid fa-chart-pie text-sky-400"></i></button>
+   <button id="b-auth" onclick="authClick()" class="btn b1 !px-3.5">Login</button>
   </div>
+ </div>
+ <div id="subnav" class="hidden max-w-7xl mx-auto mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+  <label class="text-[11px] font-extrabold text-slate-400 uppercase"><i class="fa-solid fa-book-medical text-sky-400"></i> Subject</label>
+  <select id="subject" onchange="switchSubject(this.value)" class="text-xs px-3 py-2 font-bold flex-1 max-w-[240px]"></select>
+ </div>
+</header>
 
-  <!-- ================= POST-EXAM REVIEW MODAL ================= -->
-  <div id="full-review-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <h3 class="text-sm font-extrabold text-white">Full Exam Solution & Rationales Review</h3>
-        <button onclick="closeFullAnswerReview()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-sm"></i></button>
-      </div>
-      <div id="review-questions-container" class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6"></div>
-    </div>
+<main class="max-w-7xl mx-auto px-3 sm:px-4 mt-5 flex-1 w-full">
+
+<!-- LOGIN -->
+<section id="v-lock" class="gp rounded-3xl p-7 sm:p-10 text-center max-w-md mx-auto mt-6">
+ <div class="w-14 h-14 rounded-2xl bg-sky-500/15 border border-sky-500/30 text-sky-400 flex items-center justify-center text-xl mx-auto mb-4"><i class="fa-solid fa-lock"></i></div>
+ <h2 class="text-xl font-black">Candidate Authentication</h2>
+ <p class="text-xs text-slate-400 mt-2 mb-6">Enter your Student ID and passkey, or launch from the MBBS Telegram Study Bot.</p>
+ <form onsubmit="manualLogin(event)" class="space-y-4 text-left">
+  <div><label class="lbl">Student ID</label><input id="g-uid" type="text" required autocomplete="username" autocapitalize="characters" placeholder="e.g. STU-101" class="w-full px-4 py-3 text-sm mono"></div>
+  <div><label class="lbl">Passkey</label><input id="g-key" type="password" required autocomplete="current-password" placeholder="••••••••" class="w-full px-4 py-3 text-sm"></div>
+  <p id="g-err" class="hidden text-xs text-rose-400 text-center"></p>
+  <button class="btn b1 w-full !py-3.5">Enter Examination Portal</button>
+ </form>
+ <a href="https://t.me/Nothing_0786" target="_blank" class="block text-xs font-bold text-sky-400 mt-6 pt-5 border-t border-white/5">Need verification? Contact @Nothing_0786</a>
+</section>
+
+<!-- BROWSE -->
+<section id="v-browse" class="hidden">
+ <div class="gp rounded-3xl p-5 sm:p-7 mb-5 border-sky-500/20">
+  <span class="chip text-sky-400 bg-sky-500/10 border-sky-500/30" id="sub-badge">ANATOMY</span>
+  <h2 id="sub-title" class="text-xl font-black mt-2">Anatomy Question Bank</h2>
+  <p class="text-xs text-slate-400 mt-1">Choose a topic and difficulty, then start. Every question shows its topic and level.</p>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+   <div class="col-span-2"><label class="lbl">Topic</label><select id="f-topic" class="w-full px-3 py-2.5 text-xs"></select></div>
+   <div><label class="lbl">Difficulty</label><select id="f-diff" class="w-full px-3 py-2.5 text-xs"><option value="">All levels</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+   <div><label class="lbl">Questions</label><select id="f-n" class="w-full px-3 py-2.5 text-xs"><option>10</option><option selected>20</option><option>30</option><option>50</option></select></div>
   </div>
+  <button onclick="startSubject()" class="btn b1 w-full sm:w-auto mt-4 !px-6"><i class="fa-solid fa-play mr-1.5"></i>Start CBT Test</button>
+ </div>
+ <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+  <div class="gp p-4 rounded-2xl border-amber-500/25"><h4 class="text-xs font-bold"><i class="fa-solid fa-fire text-amber-400"></i> Daily 10 Challenge</h4><p id="daily-lbl" class="text-[11px] text-amber-300/80 mb-2">10 mixed MCQs, new every day</p><button onclick="startDaily()" class="btn w-full bg-amber-600 hover:bg-amber-500 text-white !py-2">Launch Daily 10</button></div>
+  <div class="gp p-4 rounded-2xl border-rose-500/25"><h4 class="text-xs font-bold"><i class="fa-solid fa-bolt-lightning text-rose-400"></i> Wrong-Answers Quiz</h4><p id="mist-lbl" class="text-[11px] text-slate-400 mb-2">0 errors recorded</p><button onclick="startMistakes()" class="btn w-full bg-rose-600 hover:bg-rose-500 text-white !py-2">1-Tap Mistake Drill</button></div>
+  <div class="gp p-4 rounded-2xl border-teal-500/25"><h4 class="text-xs font-bold"><i class="fa-solid fa-brain text-teal-400"></i> Spaced Repetition</h4><p id="sr-lbl" class="text-[11px] text-teal-300/80 mb-2">0 due (1, 3, 7 days)</p><button onclick="startSR()" class="btn w-full bg-teal-600 hover:bg-teal-500 text-white !py-2">Review Due Items</button></div>
+  <div class="gp p-4 rounded-2xl border-sky-500/25"><h4 class="text-xs font-bold"><i class="fa-solid fa-sliders text-sky-400"></i> Custom Mixed Test</h4><p class="text-[11px] text-slate-400 mb-2">Pick subjects, level and length</p><button onclick="openCustom()" class="btn b1 w-full !py-2">Build Custom Test</button></div>
+ </div>
+</section>
 
-  <!-- ================= NOTEBOOK MODAL ================= -->
-  <div id="notebook-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-white/[0.08]">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <h3 class="text-sm font-extrabold text-white">Clinical Notebook</h3>
-        <button onclick="closeNotebookModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-sm"></i></button>
-      </div>
-      <div class="flex border-b border-white/[0.08] bg-slate-900/60 px-6 text-xs font-bold">
-        <button onclick="switchNotebookTab('bookmarks')" id="nb-tab-bookmarks" class="py-3 px-4 text-sky-400 border-b-2 border-sky-500 transition">Saved Bookmarks</button>
-        <button onclick="switchNotebookTab('mistakes')" id="nb-tab-mistakes" class="py-3 px-4 text-slate-400 hover:text-slate-200 transition">Mistakes Vault</button>
-      </div>
-      <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-          <span id="notebook-count-label" class="text-xs text-slate-400 font-semibold">0 items</span>
-          <button onclick="launchCurrentNotebookAsExam()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">Practise This Set</button>
-        </div>
-        <div id="notebook-items-container" class="space-y-3"></div>
-      </div>
+<!-- EXAM -->
+<section id="v-exam" class="hidden pb-24">
+ <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+  <div id="exam-main" class="lg:col-span-3 gp rounded-3xl p-4 sm:p-7">
+   <div class="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
+    <div class="min-w-0"><h2 id="ex-title" class="text-sm sm:text-base font-bold truncate">Exam</h2><span class="mono text-[10px] text-amber-300">+4 / −1</span></div>
+    <div class="flex items-center gap-2 shrink-0">
+     <div class="hidden sm:flex gi px-1 py-0.5"><button onclick="fsz(-.1)" class="px-2 text-xs text-slate-400">A-</button><button onclick="fsz(.1)" class="px-2 text-xs text-slate-400">A+</button><button onclick="toggleFocus()" class="px-2 text-xs text-slate-400"><i class="fa-solid fa-expand"></i></button></div>
+     <div class="text-right"><div id="ex-tl" class="text-[9px] uppercase font-bold text-slate-400">Elapsed</div><div id="ex-t" class="mono font-bold text-amber-400">00:00</div></div>
+     <button onclick="quitExam()" class="btn bg-rose-500/10 border border-rose-500/20 text-rose-400 !py-2 !px-3">Quit</button>
     </div>
+   </div>
+   <div class="my-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 font-semibold">
+    <span>Q <b id="ex-i" class="text-white">1</b>/<span id="ex-n">10</span> · <i class="fa-regular fa-clock text-sky-400"></i> <span id="qt" class="mono text-sky-300">0s</span></span>
+    <div class="gi px-2 py-1 flex items-center gap-1"><button id="m-p" onclick="setMode(false)" class="px-2.5 py-1 rounded-lg font-bold">Practice</button><button id="m-e" onclick="setMode(true)" class="px-2.5 py-1 rounded-lg font-bold">Exam</button></div>
+   </div>
+   <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-4"><div id="ex-bar" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-0 transition-all"></div></div>
+   <div class="gi rounded-2xl p-4 sm:p-5 mb-3">
+    <div class="flex items-start justify-between gap-2 mb-3"><div id="ex-badges" class="flex flex-wrap gap-1.5"></div><button onclick="toggleFlag()" id="ex-flag" class="btn b2 !py-1.5 !px-3 shrink-0"><i class="fa-solid fa-bookmark"></i> <span id="ex-flag-l">Flag</span></button></div>
+    <p id="ex-q" class="qdyn font-semibold leading-relaxed"></p>
+   </div>
+   <div class="flex items-center justify-end gap-2 mb-3"><span class="text-[10px] font-bold uppercase text-slate-400">Confidence</span>
+    <button id="c-sure" onclick="setConf('sure')" class="btn !py-1.5 !px-3 border">100% Sure</button><button id="c-guess" onclick="setConf('guess')" class="btn !py-1.5 !px-3 border">Guess</button></div>
+   <div id="ex-opts" class="space-y-2.5 mb-4"></div>
+   <div id="ex-exp" class="hidden bg-emerald-950/30 border border-emerald-500/25 rounded-2xl p-4 mb-4"><div class="text-xs font-bold text-emerald-400 mb-1"><i class="fa-solid fa-circle-check"></i> Rationale</div><p id="ex-exp-t" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p></div>
+   <details class="gi rounded-2xl p-3"><summary class="text-xs font-bold text-sky-400 cursor-pointer"><i class="fa-solid fa-pen-nib"></i> Personal note</summary>
+    <textarea id="note" rows="2" placeholder="Mnemonic or clinical pearl…" class="w-full p-2.5 text-xs mt-2"></textarea><button onclick="saveNote()" class="text-[11px] text-slate-400 font-bold mt-1">Save note</button></details>
   </div>
-
-  <!-- ================= STUDENT ANALYTICS & BADGES MODAL ================= -->
-  <div id="student-stats-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel bg-[#090d18] rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-white/[0.08] overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c1322]">
-        <h3 class="text-sm font-extrabold text-white">Candidate Progress & Badges</h3>
-        <button onclick="closeStudentStatsModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
-        <div class="grid grid-cols-4 gap-2.5">
-          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Tests Taken</div><div id="self-tests-taken" class="text-lg font-black text-white mt-0.5">0</div></div>
-          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Avg Accuracy</div><div id="self-avg-accuracy" class="text-lg font-black text-emerald-400 mt-0.5">0%</div></div>
-          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Net Marks</div><div id="self-net-marks" class="text-lg font-black text-amber-400 mt-0.5">0</div></div>
-          <div class="glass-input rounded-2xl p-3 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">Lucky Guesses</div><div id="self-lucky-guesses" class="text-lg font-black text-sky-400 mt-0.5">0</div></div>
-        </div>
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Achievements & Badges</h4>
-          <div id="badges-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
-        </div>
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Weakest Topics First</h4>
-          <div id="weak-topics-container" class="space-y-2.5 max-h-44 overflow-y-auto custom-scroll pr-1"></div>
-        </div>
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Recent Test History</h4>
-          <div id="recent-attempts-container" class="space-y-2 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
-        </div>
-      </div>
-    </div>
+  <div id="exam-matrix" class="hidden lg:block gp rounded-3xl p-5 h-fit">
+   <div class="flex justify-between items-center mb-3"><h4 class="text-xs font-extrabold uppercase text-slate-300"><i class="fa-solid fa-table-cells text-sky-400"></i> Question Matrix</h4><button class="lg:hidden text-slate-400" onclick="toggleMatrix()"><i class="fa-solid fa-xmark"></i></button></div>
+   <div class="text-[11px] text-slate-400 font-semibold mb-3 pb-3 border-b border-white/5 space-y-1">
+    <div class="flex justify-between"><span>Answered</span><b id="mx-a" class="text-emerald-400">0</b></div><div class="flex justify-between"><span>Flagged</span><b id="mx-f" class="text-amber-400">0</b></div><div class="flex justify-between"><span>Unanswered</span><b id="mx-u">0</b></div></div>
+   <div id="palette" class="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-5 gap-2 max-h-72 overflow-y-auto cs"></div>
+   <button onclick="promptSubmit()" class="btn b3 w-full mt-4">Submit Complete Exam</button>
   </div>
-
-  <!-- ================= JAVASCRIPT ENGINE ================= -->
-  <script>
-    const API_BASE_URL = "https://mbbsapi.ahteshamneet.workers.dev";
-    const SUPABASE_REST = "https://iafqcssktvejitssqawi.supabase.co/rest/v1";
-    const SUPABASE_ANON = "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
-
-    let currentSubjectKey = "Anatomy";
-    let activeUser = null;
-    let currentFontScale = 1.0;
-    let isFocusModeActive = false;
-    let isFormalExamMode = false;
-    
-    let activeExam = {
-      test: null, questions: [], cursor: 0, answers: {}, confidences: {}, flagged: new Set(),
-      questionTimes: {}, currentQStartTime: Date.now(), qInterval: null, seconds: 0, totalSecondsAllocated: 0, timer: null
-    };
-
-    window.addEventListener("DOMContentLoaded", () => {
-      processAuthenticationPipeline();
-      updateNotebookCounters();
-      updateDailyStreakUI();
-    });
-
-    async function executeRemoteAuth(uid, key) {
-      const cleanUid = uid.trim().toUpperCase();
-      const cleanKey = key.trim();
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/auth`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: cleanUid, key: cleanKey })
-        });
-        const data = await res.json();
-        if (res.ok && !data.error) {
-          return { uid: data.student_id || data.role, name: data.student_name || "Candidate", role: "student" };
-        }
-      } catch (e) {}
-
-      try {
-        const queryUrl = `${SUPABASE_REST}/students?student_id=eq.${encodeURIComponent(cleanUid)}&passkey=eq.${encodeURIComponent(cleanKey)}&select=*`;
-        const supaRes = await fetch(queryUrl, { headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` } });
-        const rows = await supaRes.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          return { uid: rows[0].student_id, name: rows[0].student_name || `Dr. ${rows[0].student_id}`, role: "student" };
-        }
-      } catch (e) {}
-
-      return null;
-    }
-
-    async function processAuthenticationPipeline() {
-      const p = new URLSearchParams(window.location.search);
-      const uid = p.get("uid"), key = p.get("key");
-      if (uid && key) {
-        const user = await executeRemoteAuth(uid, key);
-        if (user) return completeLogin(user);
-      }
-      try {
-        const saved = localStorage.getItem("mbbs_student_session");
-        if (saved) {
-          const user = JSON.parse(saved);
-          if (user && user.uid) return completeLogin(user, false);
-        }
-      } catch (e) {}
-      lockPortalDisplay();
-    }
-
-    async function handleManualLogin(e) {
-      e.preventDefault();
-      const uid = document.getElementById("gate-uid").value;
-      const key = document.getElementById("gate-key").value;
-      const errBox = document.getElementById("gate-error-message");
-      const btn = e.target.querySelector("button[type='submit']");
-
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-
-      const user = await executeRemoteAuth(uid, key);
-      if (user) {
-        errBox.classList.add("hidden");
-        completeLogin(user);
-      } else {
-        errBox.textContent = "Invalid credentials. Verify your Student ID and Passkey.";
-        errBox.classList.remove("hidden");
-        btn.disabled = false;
-        btn.innerHTML = "Enter Examination Portal";
-      }
-    }
-
-    function completeLogin(userObj, save = true) {
-      activeUser = userObj;
-      if (save) localStorage.setItem("mbbs_student_session", JSON.stringify(activeUser));
-
-      document.getElementById("view-locked").classList.add("hidden");
-      document.getElementById("sub-nav-bar").classList.remove("hidden");
-      document.getElementById("view-browse").classList.remove("hidden");
-
-      const roleBadge = document.getElementById("header-role-badge");
-      roleBadge.textContent = "VERIFIED SEAT";
-      roleBadge.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-      document.getElementById("header-user-label").textContent = `${activeUser.name} • ${activeUser.uid}`;
-
-      const authBtn = document.getElementById("auth-action-btn");
-      authBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span>Logout</span>';
-      authBtn.className = "px-3.5 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1.5";
-
-      document.getElementById("student-stats-btn").classList.remove("hidden");
-      document.getElementById("notebook-hub-btn").classList.remove("hidden");
-      document.getElementById("custom-test-btn").classList.remove("hidden");
-
-      updateNotebookCounters();
-      updateDailyStreakUI();
-    }
-
-    function handleAuthButtonClick() {
-      if (activeUser) {
-        activeUser = null;
-        localStorage.removeItem("mbbs_student_session");
-      }
-      lockPortalDisplay();
-    }
-
-    function lockPortalDisplay() {
-      document.getElementById("view-browse").classList.add("hidden");
-      document.getElementById("view-exam").classList.add("hidden");
-      document.getElementById("view-result").classList.add("hidden");
-      document.getElementById("sub-nav-bar").classList.add("hidden");
-      document.getElementById("student-stats-btn").classList.add("hidden");
-      document.getElementById("notebook-hub-btn").classList.add("hidden");
-      document.getElementById("custom-test-btn").classList.add("hidden");
-      document.getElementById("view-locked").classList.remove("hidden");
-
-      const roleBadge = document.getElementById("header-role-badge");
-      roleBadge.textContent = "LOCKED";
-      roleBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
-      document.getElementById("header-user-label").textContent = "Candidate Access Required";
-
-      const authBtn = document.getElementById("auth-action-btn");
-      authBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Login</span>';
-      authBtn.className = "px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5";
-    }
-
-    function switchSubject(sub) {
-      currentSubjectKey = sub;
-      document.getElementById("active-subject-badge").textContent = sub.toUpperCase();
-      document.getElementById("active-subject-title").textContent = `${sub} Question Bank`;
-    }
-
-    async function launchExamSession() {
-      if (!activeUser) return lockPortalDisplay();
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(currentSubjectKey)}&limit=20`);
-        const qList = await res.json();
-        if (Array.isArray(qList) && qList.length > 0) {
-          setupAndRunTest({ title: `${currentSubjectKey} Standard CBT`, topic: currentSubjectKey }, qList);
-          return;
-        }
-      } catch (e) {}
-
-      try {
-        const sRes = await fetch(`${SUPABASE_REST}/questions?subject=eq.${encodeURIComponent(currentSubjectKey)}&limit=20`, {
-          headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
-        });
-        const rows = await sRes.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          setupAndRunTest({ title: `${currentSubjectKey} Standard CBT`, topic: currentSubjectKey }, rows);
-          return;
-        }
-      } catch (e) {}
-
-      alert(`No questions found in database for ${currentSubjectKey}. Ask Admin to add questions.`);
-    }
-
-    function setupAndRunTest(testMeta, questionList) {
-      const preparedQuestions = questionList.map((q, idx) => {
-        const shuffled = [...q.options].sort(() => 0.5 - Math.random());
-        return {
-          id: q.id || `Q-${idx + 1}`,
-          topic: q.sub_topic || q.topic || testMeta.topic || "Core",
-          question: q.question,
-          options: shuffled,
-          correctText: q.answer,
-          explanation: q.explanation || "Clinical rationale per standard medical textbooks."
-        };
-      });
-
-      activeExam = {
-        test: testMeta, questions: preparedQuestions, cursor: 0, answers: {}, confidences: {}, flagged: new Set(),
-        questionTimes: {}, currentQStartTime: Date.now(), qInterval: null, seconds: 0, totalSecondsAllocated: preparedQuestions.length * 90, timer: null
-      };
-
-      startTimerClock();
-      startQuestionTiming();
-
-      document.getElementById("exam-module-tag").textContent = (testMeta.topic || currentSubjectKey).toUpperCase();
-      document.getElementById("exam-module-title").textContent = testMeta.title;
-      document.getElementById("exam-index-total").textContent = preparedQuestions.length;
-
-      document.getElementById("view-browse").classList.add("hidden");
-      document.getElementById("view-result").classList.add("hidden");
-      document.getElementById("view-exam").classList.remove("hidden");
-
-      renderActiveExamCard();
-      renderPaletteGrid();
-    }
-
-    function startTimerClock() {
-      if (activeExam.timer) clearInterval(activeExam.timer);
-      const display = document.getElementById("exam-timer-display");
-      const label = document.getElementById("exam-timer-label");
-
-      activeExam.timer = setInterval(() => {
-        activeExam.seconds++;
-        if (isFormalExamMode) {
-          label.textContent = "Countdown";
-          const rem = Math.max(0, activeExam.totalSecondsAllocated - activeExam.seconds);
-          display.textContent = `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`;
-          if (rem <= 0) { clearInterval(activeExam.timer); finalizeExam(); }
-        } else {
-          label.textContent = "Elapsed Time";
-          display.textContent = `${String(Math.floor(activeExam.seconds / 60)).padStart(2, '0')}:${String(activeExam.seconds % 60).padStart(2, '0')}`;
-        }
-      }, 1000);
-    }
-
-    function startQuestionTiming() {
-      if (activeExam.qInterval) clearInterval(activeExam.qInterval);
-      activeExam.currentQStartTime = Date.now();
-      const qDisplay = document.getElementById("q-timer-display");
-
-      activeExam.qInterval = setInterval(() => {
-        const cur = activeExam.cursor;
-        const past = activeExam.questionTimes[cur] || 0;
-        const elapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000) + past;
-        qDisplay.textContent = `${elapsed}s`;
-        qDisplay.className = elapsed > 90 ? "font-mono text-rose-400 font-bold" : "font-mono text-sky-300";
-      }, 1000);
-    }
-
-    function recordCurrentQuestionElapsed() {
-      const cur = activeExam.cursor;
-      const elapsed = Math.floor((Date.now() - activeExam.currentQStartTime) / 1000);
-      activeExam.questionTimes[cur] = (activeExam.questionTimes[cur] || 0) + elapsed;
-    }
-
-    function toggleExamMode(formal) {
-      isFormalExamMode = formal;
-      document.getElementById("mode-btn-practice").className = !formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-sky-500/20 text-sky-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
-      document.getElementById("mode-btn-exam").className = formal ? "px-2.5 py-0.5 rounded-lg font-bold bg-indigo-500/20 text-indigo-300" : "px-2.5 py-0.5 rounded-lg font-bold text-slate-500 hover:text-slate-300";
-      startTimerClock();
-      renderActiveExamCard();
-    }
-
-    function setConfidence(type) {
-      activeExam.confidences[activeExam.cursor] = type;
-      updateConfidenceUI(type);
-    }
-
-    function updateConfidenceUI(type) {
-      document.getElementById("conf-btn-sure").className = type === 'sure' ? "px-3 py-1 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300 transition" : "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-emerald-400 transition";
-      document.getElementById("conf-btn-guess").className = type === 'guess' ? "px-3 py-1 rounded-lg text-xs font-bold border border-amber-500 bg-amber-500/20 text-amber-300 transition" : "px-3 py-1 rounded-lg text-xs font-bold border border-white/[0.08] text-slate-400 hover:text-amber-400 transition";
-    }
-
-    function toggleFlagCurrentQuestion() {
-      const cur = activeExam.cursor;
-      const q = activeExam.questions[cur];
-      if (activeExam.flagged.has(cur)) {
-        activeExam.flagged.delete(cur);
-      } else {
-        activeExam.flagged.add(cur);
-        saveQuestionToNotebook('bookmarks', q);
-      }
-      renderActiveExamCard();
-      renderPaletteGrid();
-      updateNotebookCounters();
-    }
-
-    function renderPaletteGrid() {
-      const palette = document.getElementById("exam-palette-grid");
-      palette.innerHTML = "";
-      let answered = 0, flagged = 0;
-
-      activeExam.questions.forEach((_, idx) => {
-        const btn = document.createElement("button");
-        const isCurrent = idx === activeExam.cursor;
-        const isAnswered = activeExam.answers.hasOwnProperty(idx);
-        const isFlagged = activeExam.flagged.has(idx);
-
-        if (isAnswered) answered++;
-        if (isFlagged) flagged++;
-
-        let bg = "bg-slate-800 text-slate-400 border-white/[0.04]";
-        if (isAnswered) bg = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
-        if (isFlagged) bg = "bg-amber-500/20 text-amber-300 border-amber-500/40";
-        if (isCurrent) bg += " ring-2 ring-sky-400";
-
-        btn.className = `h-8 rounded-lg text-xs font-mono font-bold border transition ${bg}`;
-        btn.textContent = idx + 1;
-        btn.onclick = () => {
-          recordCurrentQuestionElapsed();
-          activeExam.cursor = idx;
-          startQuestionTiming();
-          renderActiveExamCard();
-          renderPaletteGrid();
-        };
-        palette.appendChild(btn);
-      });
-
-      document.getElementById("matrix-answered-count").textContent = answered;
-      document.getElementById("matrix-flagged-count").textContent = flagged;
-      document.getElementById("matrix-unanswered-count").textContent = activeExam.questions.length - answered;
-    }
-
-    function renderActiveExamCard() {
-      const q = activeExam.questions[activeExam.cursor];
-      const cur = activeExam.cursor;
-
-      document.getElementById("exam-index-curr").textContent = cur + 1;
-      document.getElementById("exam-progress-bar").style.width = `${((cur + 1) / activeExam.questions.length) * 100}%`;
-      document.getElementById("exam-q-topic-badge").textContent = q.topic;
-      document.getElementById("exam-q-statement").textContent = q.question;
-
-      document.getElementById("exam-flag-label").textContent = activeExam.flagged.has(cur) ? "Flagged" : "Flag";
-      updateConfidenceUI(activeExam.confidences[cur] || null);
-
-      document.getElementById("q-note-input").value = localStorage.getItem(`note_${activeUser.uid}_${btoa(encodeURIComponent(q.question)).slice(0, 32)}`) || "";
-
-      const optsContainer = document.getElementById("exam-options-list");
-      optsContainer.innerHTML = "";
-      const isAnswered = activeExam.answers.hasOwnProperty(cur);
-      const chosen = activeExam.answers[cur];
-      const labels = ["A", "B", "C", "D"];
-
-      q.options.forEach((optText, i) => {
-        const btn = document.createElement("button");
-        btn.className = "option-card w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-center justify-between gap-3 ";
-
-        if (!isAnswered) {
-          btn.className += "border-white/[0.08] bg-slate-900/80 hover:border-sky-500/50 hover:bg-slate-800 text-slate-200";
-          btn.onclick = () => recordExamAnswer(cur, optText);
-        } else {
-          if (isFormalExamMode) {
-            btn.className += optText === chosen ? "border-sky-500 bg-sky-500/15 text-sky-200 font-bold" : "border-white/[0.04] bg-slate-950/40 text-slate-400";
-            btn.onclick = () => recordExamAnswer(cur, optText);
-          } else {
-            if (optText === q.correctText) btn.className += "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold";
-            else if (optText === chosen) btn.className += "border-rose-500 bg-rose-500/15 text-rose-300 font-semibold";
-            else btn.className += "border-white/[0.04] bg-slate-950/40 text-slate-500 opacity-40";
-          }
-        }
-
-        btn.innerHTML = `
-          <div class="flex items-center gap-3.5">
-            <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold">${labels[i]}</span>
-            <span>${optText}</span>
-          </div>
-          ${!isFormalExamMode && isAnswered && optText === q.correctText ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
-        `;
-        optsContainer.appendChild(btn);
-      });
-
-      const expBox = document.getElementById("exam-explanation-box");
-      if (!isFormalExamMode && isAnswered) {
-        document.getElementById("exam-explanation-text").textContent = q.explanation;
-        expBox.classList.remove("hidden");
-      } else {
-        expBox.classList.add("hidden");
-      }
-
-      document.getElementById("exam-prev-btn").disabled = (cur === 0);
-      document.getElementById("exam-next-btn").innerHTML = (cur === activeExam.questions.length - 1) ? 'Review & Submit <i class="fa-solid fa-flag-checkered ml-1"></i>' : 'Next <i class="fa-solid fa-chevron-right ml-1"></i>';
-    }
-
-    function recordExamAnswer(qIdx, opt) {
-      activeExam.answers[qIdx] = opt;
-      const q = activeExam.questions[qIdx];
-      if (!activeExam.confidences[qIdx]) activeExam.confidences[qIdx] = 'sure';
-
-      if (opt !== q.correctText) {
-        saveQuestionToNotebook('mistakes', q);
-        queueSpacedRepetition(q);
-        updateNotebookCounters();
-      }
-      renderActiveExamCard();
-      renderPaletteGrid();
-    }
-
-    function stepExam(dir) {
-      recordCurrentQuestionElapsed();
-      const next = activeExam.cursor + dir;
-      if (next >= 0 && next < activeExam.questions.length) {
-        activeExam.cursor = next;
-        startQuestionTiming();
-        renderActiveExamCard();
-        renderPaletteGrid();
-      } else if (next >= activeExam.questions.length) {
-        promptSubmitExam();
-      }
-    }
-
-    function saveCurrentQuestionNote() {
-      const q = activeExam.questions[activeExam.cursor];
-      const val = document.getElementById("q-note-input").value.trim();
-      const k = `note_${activeUser.uid}_${btoa(encodeURIComponent(q.question)).slice(0, 32)}`;
-      if (val) localStorage.setItem(k, val); else localStorage.removeItem(k);
-      alert("Note saved!");
-    }
-
-    function promptSubmitExam() {
-      recordCurrentQuestionElapsed();
-      document.getElementById("confirm-answered").textContent = Object.keys(activeExam.answers).length;
-      document.getElementById("confirm-flagged").textContent = activeExam.flagged.size;
-      document.getElementById("confirm-blank").textContent = activeExam.questions.length - Object.keys(activeExam.answers).length;
-      document.getElementById("submit-confirm-modal").classList.remove("hidden");
-    }
-
-    function closeSubmitConfirmModal() { document.getElementById("submit-confirm-modal").classList.add("hidden"); }
-    function executeFinalSubmission() { closeSubmitConfirmModal(); finalizeExam(); }
-
-    function finalizeExam() {
-      if (activeExam.timer) clearInterval(activeExam.timer);
-      if (activeExam.qInterval) clearInterval(activeExam.qInterval);
-      recordCurrentQuestionElapsed();
-
-      let correct = 0, wrong = 0, lucky = 0;
-      activeExam.questions.forEach((q, i) => {
-        if (activeExam.answers[i] === q.correctText) {
-          correct++;
-          if (activeExam.confidences[i] === 'guess') lucky++;
-        } else if (activeExam.answers.hasOwnProperty(i)) {
-          wrong++;
-        }
-      });
-
-      const total = activeExam.questions.length;
-      const netMarks = (correct * 4) - wrong;
-      const accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
-
-      document.getElementById("print-candidate-meta").textContent = `${activeUser.name} • ID: ${activeUser.uid} • ${new Date().toLocaleDateString()}`;
-      document.getElementById("result-stat-net-score").innerHTML = `${netMarks} <span class="text-xs text-slate-400 font-normal">/ ${total * 4} Max Marks</span>`;
-      document.getElementById("result-stat-correct").textContent = `${correct} (+${correct * 4})`;
-      document.getElementById("result-stat-wrong").textContent = `${wrong} (−${wrong})`;
-      document.getElementById("result-stat-accuracy").textContent = `${accuracy}%`;
-      document.getElementById("result-stat-lucky").textContent = `${lucky} Lucky`;
-
-      // Log score to Supabase via Worker
-      fetch(`${API_BASE_URL}/api/submit`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ student_id: activeUser.uid, student_name: activeUser.name, test_title: activeExam.test.title, net_score: netMarks, max_score: total * 4, accuracy })
-      }).catch(() => {});
-
-      // Local storage history
-      const hist = JSON.parse(localStorage.getItem(`cbt_hist_${activeUser.uid}`) || "[]");
-      hist.push({ test: activeExam.test.title, netMarks, accuracy, timestamp: new Date().toLocaleDateString() });
-      localStorage.setItem(`cbt_hist_${activeUser.uid}`, JSON.stringify(hist));
-
-      advanceDailyStreak();
-      document.getElementById("view-exam").classList.add("hidden");
-      document.getElementById("view-result").classList.remove("hidden");
-    }
-
-    function retakeCurrentExam() { launchExamSession(); }
-    function terminateExamPrompt() { if (confirm("Quit this session?")) returnToBrowseView(); }
-    function returnToBrowseView() {
-      document.getElementById("view-exam").classList.add("hidden");
-      document.getElementById("view-result").classList.add("hidden");
-      document.getElementById("view-browse").classList.remove("hidden");
-    }
-
-    // ================= REVIEW & HELPERS =================
-    function openFullAnswerReview() {
-      const c = document.getElementById("review-questions-container");
-      c.innerHTML = "";
-      activeExam.questions.forEach((q, i) => {
-        const chosen = activeExam.answers[i];
-        const isCorrect = chosen === q.correctText;
-        const card = document.createElement("div");
-        card.className = "glass-panel p-5 rounded-2xl border border-white/[0.08] space-y-3";
-        card.innerHTML = `
-          <div class="flex justify-between border-b border-white/[0.06] pb-2">
-            <span class="text-xs font-mono font-bold text-slate-400">Q${i + 1}. (${q.topic})</span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${isCorrect ? 'Correct (+4)' : 'Wrong (-1)'}</span>
-          </div>
-          <p class="text-sm font-semibold">${q.question}</p>
-          <div class="space-y-1.5 text-xs">
-            ${q.options.map(opt => `
-              <div class="p-2.5 rounded-xl border ${opt === q.correctText ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-bold' : (opt === chosen ? 'border-rose-500/50 bg-rose-500/10 text-rose-300' : 'border-white/[0.04] bg-slate-900/50 text-slate-400')}">
-                ${opt}
-              </div>
-            `).join("")}
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950 text-xs text-slate-300"><span class="text-emerald-400 font-bold">Rationale:</span> ${q.explanation}</div>
-        `;
-        c.appendChild(card);
-      });
-      document.getElementById("full-review-modal").classList.remove("hidden");
-    }
-    function closeFullAnswerReview() { document.getElementById("full-review-modal").classList.add("hidden"); }
-
-    function changeFontSize(d) {
-      currentFontScale = Math.max(0.85, Math.min(1.35, currentFontScale + d));
-      document.documentElement.style.setProperty('--font-scale', `${currentFontScale}rem`);
-    }
-
-    function toggleFocusMode() {
-      isFocusModeActive = !isFocusModeActive;
-      document.getElementById("main-header").classList.toggle("hidden", isFocusModeActive);
-      document.getElementById("exam-matrix-panel").classList.toggle("hidden", isFocusModeActive);
-      document.getElementById("exam-main-panel").className = isFocusModeActive ? "lg:col-span-4 glass-panel rounded-3xl p-5 sm:p-8" : "lg:col-span-3 glass-panel rounded-3xl p-5 sm:p-8";
-    }
-
-    // Daily 10 & Spaced Repetition
-    function getDailyStreakData() { return JSON.parse(localStorage.getItem(`streak_${activeUser?.uid}`) || '{"streak":0,"lastDate":""}'); }
-    function advanceDailyStreak() {
-      const d = getDailyStreakData();
-      const today = new Date().toDateString();
-      if (d.lastDate === today) return;
-      d.streak = (d.lastDate === new Date(Date.now() - 86400000).toDateString()) ? d.streak + 1 : 1;
-      d.lastDate = today;
-      localStorage.setItem(`streak_${activeUser?.uid}`, JSON.stringify(d));
-      updateDailyStreakUI();
-    }
-    function updateDailyStreakUI() {
-      const d = getDailyStreakData();
-      if (document.getElementById("streak-counter")) document.getElementById("streak-counter").textContent = d.streak;
-      if (d.streak > 0) document.getElementById("header-streak-badge").classList.remove("hidden");
-    }
-    async function launchDaily10() {
-      const res = await fetch(`${API_BASE_URL}/api/questions?subject=Anatomy&limit=10`);
-      const qs = await res.json();
-      if (Array.isArray(qs) && qs.length > 0) setupAndRunTest({ title: "Daily 10 Challenge", topic: "DAILY 10" }, qs);
-    }
-
-    // Notebook & Mistakes
-    function getNotebookKey(t) { return `nb_${t}_${activeUser?.uid}`; }
-    function saveQuestionToNotebook(t, q) {
-      const k = getNotebookKey(t);
-      const list = JSON.parse(localStorage.getItem(k) || "[]");
-      if (!list.some(x => x.question === q.question)) { list.push(q); localStorage.setItem(k, JSON.stringify(list)); }
-    }
-    function updateNotebookCounters() {
-      const ms = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
-      if (document.getElementById("quick-mistakes-count")) document.getElementById("quick-mistakes-count").textContent = `${ms.length} Errors Recorded`;
-    }
-    function launchWrongAnswersQuiz() {
-      const list = JSON.parse(localStorage.getItem(getNotebookKey('mistakes')) || "[]");
-      if (list.length === 0) return alert("No wrong answers recorded yet!");
-      setupAndRunTest({ title: "1-Tap Mistake Drill", topic: "MISTAKES" }, list);
-    }
-    function queueSpacedRepetition(q) {
-      const k = `sr_${activeUser?.uid}`;
-      const queue = JSON.parse(localStorage.getItem(k) || "[]");
-      queue.push({ q, nextDate: Date.now() + 86400000 });
-      localStorage.setItem(k, JSON.stringify(queue));
-    }
-    function launchSpacedRepetitionQuiz() {
-      const queue = JSON.parse(localStorage.getItem(`sr_${activeUser?.uid}`) || "[]");
-      const due = queue.filter(x => x.nextDate <= Date.now()).map(x => x.q);
-      if (due.length === 0) return alert("No spaced repetition items due today!");
-      setupAndRunTest({ title: "Spaced Repetition Drill", topic: "MEMORY" }, due);
-    }
-
-    // Modals
-    let activeNotebookTab = 'bookmarks';
-    function openNotebookModal() { switchNotebookTab('bookmarks'); document.getElementById("notebook-modal").classList.remove("hidden"); }
-    function closeNotebookModal() { document.getElementById("notebook-modal").classList.add("hidden"); }
-    function switchNotebookTab(t) {
-      activeNotebookTab = t;
-      const list = JSON.parse(localStorage.getItem(getNotebookKey(t)) || "[]");
-      const c = document.getElementById("notebook-items-container");
-      c.innerHTML = list.length === 0 ? '<div class="p-6 text-center text-slate-500">No questions saved.</div>' : list.map((q, i) => `
-        <div class="p-3 bg-slate-900 rounded-xl border border-white/[0.04] flex justify-between gap-3 text-xs">
-          <div><p class="font-bold text-white">${q.question}</p><p class="text-emerald-400 mt-1">Ans: ${q.correctText || q.answer}</p></div>
-        </div>
-      `).join("");
-      document.getElementById("notebook-count-label").textContent = `${list.length} Items`;
-    }
-    function launchCurrentNotebookAsExam() {
-      const list = JSON.parse(localStorage.getItem(getNotebookKey(activeNotebookTab)) || "[]");
-      if (list.length === 0) return alert("List is empty!");
-      closeNotebookModal();
-      setupAndRunTest({ title: `Practice: ${activeNotebookTab}`, topic: activeNotebookTab.toUpperCase() }, list);
-    }
-
-    let selectedCount = 20;
-    function openCustomTestModal() { document.getElementById("custom-test-modal").classList.remove("hidden"); }
-    function closeCustomTestModal() { document.getElementById("custom-test-modal").classList.add("hidden"); }
-    function selectCustomCount(c) {
-      selectedCount = c;
-      document.querySelectorAll(".count-btn").forEach(b => b.className = (parseInt(b.dataset.val) === c) ? "count-btn py-2 rounded-xl border border-sky-500 bg-sky-500/20 text-sky-300 font-bold" : "count-btn py-2 rounded-xl border border-white/[0.08] bg-slate-900 font-bold text-slate-400");
-    }
-    async function generateAndLaunchCustomTest() {
-      const subs = Array.from(document.querySelectorAll("input[name='custom_topic']:checked")).map(cb => cb.value);
-      if (subs.length === 0) return alert("Select at least 1 subject");
-      closeCustomTestModal();
-      const res = await fetch(`${API_BASE_URL}/api/questions?subject=${encodeURIComponent(subs[0])}&limit=${selectedCount}`);
-      const qs = await res.json();
-      setupAndRunTest({ title: `Custom Mix (${qs.length} Qs)`, topic: "MIXED" }, qs);
-    }
-
-    function openStudentStatsModal() {
-      const hist = JSON.parse(localStorage.getItem(`cbt_hist_${activeUser.uid}`) || "[]");
-      document.getElementById("self-tests-taken").textContent = hist.length;
-      document.getElementById("self-avg-accuracy").textContent = hist.length > 0 ? `${Math.round(hist.reduce((a, b) => a + b.accuracy, 0) / hist.length)}%` : "0%";
-      document.getElementById("recent-attempts-container").innerHTML = hist.slice().reverse().slice(0, 5).map(h => `
-        <div class="p-2.5 bg-slate-900 rounded-xl flex justify-between text-xs">
-          <span>${h.test}</span>
-          <span class="font-mono text-emerald-400 font-bold">${h.accuracy}%</span>
-        </div>
-      `).join("");
-      document.getElementById("student-stats-modal").classList.remove("hidden");
-    }
-    function closeStudentStatsModal() { document.getElementById("student-stats-modal").classList.add("hidden"); }
-  </script>
-</body>
-</html>
+ </div>
+ <div id="bar" class="hidden fixed bottom-0 inset-x-0 z-40 bg-[#050811]/95 backdrop-blur-xl border-t border-white/10 px-3 pt-2.5 flex gap-2" style="padding-bottom:max(.6rem,env(safe-area-inset-bottom))">
+  <button id="b-prev" onclick="step(-1)" class="btn b2 flex-1"><i class="fa-solid fa-arrow-left"></i> Prev</button>
+  <button onclick="toggleMatrix()" class="btn b2 lg:hidden"><i class="fa-solid fa-table-cells text-sky-400"></i> <span id="mx-badge">0/0</span></button>
+  <button id="b-next" onclick="step(1)" class="btn b1 flex-1">Next <i class="fa-solid fa-arrow-right"></i></button>
+ </div>
+</section>
+
+<!-- RESULT -->
+<section id="v-result" class="hidden">
+ <div class="gp rounded-3xl p-6 sm:p-9 max-w-xl mx-auto">
+  <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5"><div><h2 class="text-base font-extrabold">MBBS CBT Candidate Report</h2><p id="r-meta" class="text-[11px] text-slate-400"></p></div><button onclick="window.print()" class="no-print btn b2 !py-2"><i class="fa-solid fa-print"></i></button></div>
+  <div class="gi rounded-2xl p-4 mb-4 text-center border-amber-500/30"><div class="text-[10px] uppercase font-bold text-amber-400">Net Score (+4 / −1)</div><div id="r-net" class="text-3xl font-black mt-1"></div></div>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+   <div class="gi rounded-2xl p-3 text-center"><div class="text-[10px] uppercase font-bold text-emerald-400">Correct</div><div id="r-c" class="font-black"></div></div>
+   <div class="gi rounded-2xl p-3 text-center"><div class="text-[10px] uppercase font-bold text-rose-400">Wrong</div><div id="r-w" class="font-black"></div></div>
+   <div class="gi rounded-2xl p-3 text-center"><div class="text-[10px] uppercase font-bold text-slate-400">Accuracy</div><div id="r-a" class="font-black text-emerald-400"></div></div>
+   <div class="gi rounded-2xl p-3 text-center"><div class="text-[10px] uppercase font-bold text-sky-400">Lucky</div><div id="r-l" class="font-black text-amber-300"></div></div>
+  </div>
+  <h4 class="text-xs font-bold uppercase text-slate-300 mb-2">Topic &amp; level breakdown</h4>
+  <div id="r-break" class="space-y-2 mb-5 text-xs"></div>
+  <div class="space-y-2 no-print"><button onclick="openReview()" class="btn w-full bg-indigo-600 hover:bg-indigo-500 text-white"><i class="fa-solid fa-list-check"></i> Full Answer Key &amp; Rationales</button><button onclick="retake()" class="btn b1 w-full">Retake (fresh shuffle)</button><button onclick="goBrowse()" class="btn b2 w-full">Back to Curriculum</button></div>
+ </div>
+</section>
+</main>
+
+<!-- MODALS -->
+<div id="m-custom" class="hidden fixed inset-0 z-50 bg-black/85 flex items-end sm:items-center justify-center sm:p-4">
+ <div class="gp bg-[#090d18] rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 max-h-[90vh] overflow-y-auto cs">
+  <div class="flex justify-between pb-3 border-b border-white/10 mb-4"><h3 class="text-sm font-extrabold">Custom Test Builder</h3><button onclick="$('m-custom').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div>
+  <label class="lbl">Subjects</label><div id="c-subs" class="grid grid-cols-2 gap-2 gi p-3 text-xs mb-4"></div>
+  <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="lbl">Difficulty</label><select id="c-diff" class="w-full px-3 py-2.5 text-xs"><option value="">All levels</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+  <div><label class="lbl">Questions</label><select id="c-n" class="w-full px-3 py-2.5 text-xs"><option>10</option><option selected>20</option><option>30</option><option>50</option></select></div></div>
+  <button onclick="startCustom()" class="btn b1 w-full !py-3.5">Generate &amp; Start Mixed Test</button>
+ </div></div>
+<div id="m-submit" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+ <div class="gp bg-[#090d18] rounded-3xl max-w-md w-full p-6 text-center"><h3 class="text-base font-extrabold">Confirm Submission</h3><p class="text-xs text-slate-400 mt-1 mb-4">Scored with +4 / −1.</p>
+  <div class="grid grid-cols-3 gap-2 mb-5 text-left"><div class="gi p-3"><div class="text-[10px] text-slate-400 uppercase font-bold">Answered</div><div id="s-a" class="font-bold text-emerald-400"></div></div><div class="gi p-3"><div class="text-[10px] text-slate-400 uppercase font-bold">Flagged</div><div id="s-f" class="font-bold text-amber-400"></div></div><div class="gi p-3"><div class="text-[10px] text-slate-400 uppercase font-bold">Blank</div><div id="s-b" class="font-bold text-rose-400"></div></div></div>
+  <div class="flex gap-3"><button onclick="$('m-submit').classList.add('hidden')" class="btn b2 w-1/2">Return</button><button onclick="$('m-submit').classList.add('hidden');finalize()" class="btn b3 w-1/2">Submit</button></div></div></div>
+<div id="sheet" class="hidden fixed inset-0 z-50 bg-black/90 flex items-end sm:items-center justify-center sm:p-4">
+ <div class="gp bg-[#090d18] rounded-t-3xl sm:rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+  <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-[#0c1322]"><h3 id="sheet-t" class="text-sm font-extrabold"></h3><button onclick="$('sheet').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400"><i class="fa-solid fa-xmark"></i></button></div>
+  <div id="sheet-b" class="p-4 sm:p-5 overflow-y-auto cs flex-1 space-y-3"></div></div></div>
+
+<script>
+const API="https://mbbsapi.ahteshamneet.workers.dev",REST="https://iafqcssktvejitssqawi.supabase.co/rest/v1",KEY="sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C";
+const H={apikey:KEY,Authorization:"Bearer "+KEY},$=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const shuf=(a,r=Math.random)=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const DC={Easy:"text-emerald-300 bg-emerald-500/15 border-emerald-500/30",Medium:"text-amber-300 bg-amber-500/15 border-amber-500/30",Hard:"text-rose-300 bg-rose-500/15 border-rose-500/30"};
+const dchip=d=>d?`<span class="chip ${DC[d]||DC.Medium}">${esc(d)}</span>`:"",tchip=t=>`<span class="chip text-indigo-300 bg-indigo-500/15 border-indigo-500/30">${esc(t||"General")}</span>`;
+let subject="Anatomy",user=null,formal=false,focus=false,fs=1,SUBS=["Anatomy","Physiology","Biochemistry","Pharmacology","Pathology"],ex={},tabNB="bookmarks";
+try{Telegram.WebApp.ready();Telegram.WebApp.expand()}catch{}
+window.addEventListener("DOMContentLoaded",()=>{fillSubjects();boot();loadSubjects()});
+
+/* ---------- AUTH ---------- */
+async function remoteAuth(uid,key){uid=uid.trim().toUpperCase();key=key.trim();
+ try{const r=await fetch(API+"/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,key})});const d=await r.json();if(r.ok&&!d.error)return{uid:d.student_id||uid,name:d.student_name||"Candidate"}}catch{}
+ try{const r=await fetch(`${REST}/students?student_id=eq.${encodeURIComponent(uid)}&passkey=eq.${encodeURIComponent(key)}&select=*`,{headers:H}),d=await r.json();if(Array.isArray(d)&&d[0])return{uid:d[0].student_id,name:d[0].student_name||"Dr. "+d[0].student_id}}catch{}
+ return null}
+async function boot(){const p=new URLSearchParams(location.search),u=p.get("uid"),k=p.get("key");
+ if(u&&k){const x=await remoteAuth(u,k);history.replaceState(null,"",location.pathname);if(x)return login(x)}
+ const s=LS("mbbs_student_session",null);if(s&&s.uid)return login(s,false);lock()}
+async function manualLogin(e){e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;b.textContent="Verifying…";
+ const x=await remoteAuth($("g-uid").value,$("g-key").value);
+ if(x){$("g-err").classList.add("hidden");login(x)}else{$("g-err").textContent="Invalid credentials. Check Student ID and Passkey.";$("g-err").classList.remove("hidden")}
+ b.disabled=false;b.textContent="Enter Examination Portal"}
+function login(u,save=true){user=u;if(save)SV("mbbs_student_session",u);
+ ["v-lock"].forEach(i=>$(i).classList.add("hidden"));["subnav","v-browse"].forEach(i=>$(i).classList.remove("hidden"));["b-custom","b-nb","b-stats"].forEach(i=>$(i).classList.remove("hidden"));
+ $("role").textContent="Verified";$("role").className="chip text-emerald-400 bg-emerald-500/20 border-emerald-500/30";$("ulabel").textContent=`${u.name} • ${u.uid}`;
+ $("b-auth").innerHTML='<i class="fa-solid fa-power-off"></i>';$("b-auth").className="btn !px-3.5 bg-rose-600/80 text-white";
+ counters();streakUI();switchSubject(subject)}
+function lock(){["v-browse","v-exam","v-result","subnav","b-custom","b-nb","b-stats","bar"].forEach(i=>$(i).classList.add("hidden"));$("v-lock").classList.remove("hidden");
+ $("role").textContent="Locked";$("role").className="chip text-slate-400 bg-slate-800 border-slate-700";$("ulabel").textContent="Candidate access required";$("b-auth").textContent="Login";$("b-auth").className="btn b1 !px-3.5"}
+function authClick(){if(user){stopTimers();user=null;localStorage.removeItem("mbbs_student_session")}lock()}
+
+/* ---------- SUBJECTS / TOPICS ---------- */
+function fillSubjects(){$("subject").innerHTML=SUBS.map(s=>`<option ${s===subject?"selected":""}>${esc(s)}</option>`).join("");
+ $("c-subs").innerHTML=SUBS.map((s,i)=>`<label class="flex items-center gap-2"><input type="checkbox" name="cs" value="${esc(s)}" ${i==0?"checked":""}> ${esc(s)}</label>`).join("")}
+async function loadSubjects(){try{const r=await fetch(`${REST}/questions?select=subject&limit=2000`,{headers:H}),d=await r.json();if(Array.isArray(d)&&d.length){const u=[...new Set(d.map(x=>x.subject).filter(Boolean))].sort();if(u.length){SUBS=u;if(!SUBS.includes(subject))subject=SUBS[0];fillSubjects();if(user)switchSubject(subject)}}}catch{}}
+async function switchSubject(s){subject=s;$("sub-badge").textContent=s.toUpperCase();$("sub-title").textContent=s+" Question Bank";
+ $("f-topic").innerHTML='<option value="">All topics</option>';
+ try{const r=await fetch(`${REST}/questions?select=sub_topic&subject=eq.${encodeURIComponent(s)}&limit=2000`,{headers:H}),d=await r.json(),c={};
+  (Array.isArray(d)?d:[]).forEach(x=>{const t=x.sub_topic||"General";c[t]=(c[t]||0)+1});
+  $("f-topic").innerHTML=`<option value="">All topics (${Object.values(c).reduce((a,b)=>a+b,0)})</option>`+Object.keys(c).sort().map(t=>`<option value="${esc(t)}">${esc(t)} (${c[t]})</option>`).join("")}catch{}}
+
+/* ---------- QUESTION FETCH ---------- */
+async function fetchQs({subs,topic,diff,n}){let rows=[];
+ try{let u=`${REST}/questions?select=*&limit=500&subject=in.(${subs.map(s=>encodeURIComponent('"'+s+'"')).join(",")})`;
+  if(topic)u+="&sub_topic=eq."+encodeURIComponent(topic);if(diff)u+="&difficulty=eq."+diff;
+  const d=await(await fetch(u,{headers:H})).json();if(Array.isArray(d))rows=d}catch{}
+ if(!rows.length){try{for(const s of subs){const d=await(await fetch(`${API}/api/questions?subject=${encodeURIComponent(s)}&limit=200`)).json();if(Array.isArray(d))rows.push(...d)}
+  rows=rows.filter(q=>(!topic||q.sub_topic===topic)&&(!diff||q.difficulty===diff))}catch{}}
+ return shuf(rows).slice(0,n)}
+function prep(q,i,meta){const opts=(Array.isArray(q.options)?q.options:[]).map(String);let ct=q.correctText;
+ if(ct==null){const a=String(q.answer??q.correct_answer??q.correct??"").trim();
+  if(/^[A-Da-d]$/.test(a))ct=opts["ABCD".indexOf(a.toUpperCase())];else if(/^[0-3]$/.test(a)&&q.answer==null&&q.correct_answer==null)ct=opts[+a];
+  if(!opts.includes(ct))ct=opts.find(o=>o.trim().toLowerCase()===a.toLowerCase());if(ct==null)ct=opts[0]}
+ return{id:q.id||"Q"+i,topic:q.sub_topic||q.subtopic||q.topic||meta.topic||"General",diff:q.difficulty||"",subject:q.subject||"",question:q.question,options:shuf(opts),correctText:ct,explanation:q.explanation||"See standard medical textbooks."}}
+
+/* ---------- START TESTS ---------- */
+function run(meta,list){if(!list||!list.length)return alert("No questions found for this selection. Try other filters or ask the admin to add questions.");
+ stopTimers();const qs=list.map((q,i)=>prep(q,i+1,meta));
+ ex={meta,qs,cur:0,ans:{},conf:{},flag:new Set(),times:{},qs0:Date.now(),sec:0,alloc:qs.length*90,t:null,qi:null};
+ $("ex-title").textContent=meta.title;$("ex-n").textContent=qs.length;
+ ["v-browse","v-result"].forEach(i=>$(i).classList.add("hidden"));$("v-exam").classList.remove("hidden");$("bar").classList.remove("hidden");
+ setMode(formal);timers();render();palette();scrollTo(0,0)}
+async function startSubject(){run({title:subject+" CBT"+($("f-topic").value?" · "+$("f-topic").value:""),topic:subject,retry:()=>startSubject()},await fetchQs({subs:[subject],topic:$("f-topic").value,diff:$("f-diff").value,n:+$("f-n").value}))}
+function seeded(){let h=0;for(const c of new Date().toDateString())h=Math.imul(31,h)+c.charCodeAt(0)|0;return()=>{h|=0;h=h+0x6D2B79F5|0;let t=Math.imul(h^h>>>15,1|h);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+async function startDaily(){const all=await fetchQs({subs:SUBS,n:500});const key="daily_"+(user?.uid);let ids=LS(key,null);
+ let pick;if(ids&&ids.d===new Date().toDateString())pick=all.filter(q=>ids.ids.includes(q.id));
+ if(!pick||!pick.length){pick=shuf(all.sort((a,b)=>a.id-b.id),seeded()).slice(0,10);SV(key,{d:new Date().toDateString(),ids:pick.map(q=>q.id)})}
+ run({title:"Daily 10 Challenge",topic:"DAILY 10",retry:startDaily},pick)}
+function openCustom(){$("m-custom").classList.remove("hidden")}
+async function startCustom(){const subs=[...document.querySelectorAll("input[name=cs]:checked")].map(x=>x.value);if(!subs.length)return alert("Select at least one subject");
+ $("m-custom").classList.add("hidden");const n=+$("c-n").value,diff=$("c-diff").value;run({title:`Custom Mix (${n} Qs${diff?" · "+diff:""})`,topic:"MIXED",retry:startCustom},await fetchQs({subs,diff,n}))}
+const nbk=t=>`nb_${t}_${user?.uid}`;
+function startMistakes(){run({title:"1-Tap Mistake Drill",topic:"MISTAKES"},LS(nbk("mistakes"),[]))}
+function startSR(){run({title:"Spaced Repetition Drill",topic:"MEMORY"},LS("sr_"+user?.uid,[]).filter(x=>x.next<=Date.now()).map(x=>x.q))}
+function retake(){ex.meta.retry?ex.meta.retry():goBrowse()}
+
+/* ---------- TIMERS ---------- */
+function stopTimers(){clearInterval(ex.t);clearInterval(ex.qi)}
+function timers(){stopTimers();ex.t=setInterval(()=>{ex.sec++;let s=ex.sec;if(formal){$("ex-tl").textContent="Countdown";s=Math.max(0,ex.alloc-ex.sec);if(s<=0){stopTimers();finalize()}}else $("ex-tl").textContent="Elapsed";$("ex-t").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000);qTimer()}
+function qTimer(){clearInterval(ex.qi);ex.qs0=Date.now();ex.qi=setInterval(()=>{const e=Math.floor((Date.now()-ex.qs0)/1000)+(ex.times[ex.cur]||0);$("qt").textContent=e+"s";$("qt").className="mono "+(e>90?"text-rose-400 font-bold":"text-sky-300")},1000)}
+function recT(){ex.times[ex.cur]=(ex.times[ex.cur]||0)+Math.floor((Date.now()-ex.qs0)/1000)}
+function setMode(f){formal=f;$("m-p").className="px-2.5 py-1 rounded-lg font-bold "+(!f?"bg-sky-500/20 text-sky-300":"text-slate-500");$("m-e").className="px-2.5 py-1 rounded-lg font-bold "+(f?"bg-indigo-500/20 text-indigo-300":"text-slate-500");if(ex.qs){timers();render()}}
+
+/* ---------- RENDER ---------- */
+function render(){const q=ex.qs[ex.cur],c=ex.cur,done=c in ex.ans,ch=ex.ans[c];
+ $("ex-i").textContent=c+1;$("ex-bar").style.width=(c+1)/ex.qs.length*100+"%";
+ $("ex-badges").innerHTML=(q.subject?`<span class="chip text-sky-300 bg-sky-500/15 border-sky-500/30">${esc(q.subject)}</span>`:"")+tchip(q.topic)+dchip(q.diff);
+ $("ex-q").textContent=q.question;$("ex-flag-l").textContent=ex.flag.has(c)?"Flagged":"Flag";conf(ex.conf[c]);
+ $("note").value=localStorage.getItem(nk(q))||"";
+ const box=$("ex-opts");box.innerHTML="";
+ q.options.forEach((o,i)=>{const b=document.createElement("button");let cls="w-full text-left p-3.5 sm:p-4 rounded-2xl border text-sm flex items-center gap-3 transition ";
+  if(!done||formal){cls+=(formal&&o===ch)?"border-sky-500 bg-sky-500/15 text-sky-200 font-bold":"border-white/10 bg-slate-900/80 hover:border-sky-500/50 text-slate-200";b.onclick=()=>answer(c,o)}
+  else cls+=o===q.correctText?"border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold":o===ch?"border-rose-500 bg-rose-500/15 text-rose-300":"border-white/5 bg-slate-950/40 text-slate-500 opacity-50";
+  b.className=cls;const l=document.createElement("span");l.className="w-7 h-7 shrink-0 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold";l.textContent="ABCD"[i];
+  const t=document.createElement("span");t.className="flex-1";t.textContent=o;b.append(l,t);if(!formal&&done&&o===q.correctText)b.insertAdjacentHTML("beforeend",'<i class="fa-solid fa-circle-check text-emerald-400"></i>');box.appendChild(b)});
+ if(!formal&&done){$("ex-exp-t").textContent=q.explanation;$("ex-exp").classList.remove("hidden")}else $("ex-exp").classList.add("hidden");
+ $("b-prev").disabled=c===0;$("b-next").innerHTML=c===ex.qs.length-1?'Submit <i class="fa-solid fa-flag-checkered"></i>':'Next <i class="fa-solid fa-arrow-right"></i>'}
+const nk=q=>`note_${user.uid}_${btoa(unescape(encodeURIComponent(q.question))).slice(0,40)}`;
+function conf(t){$("c-sure").className="btn !py-1.5 !px-3 border "+(t==="sure"?"border-emerald-500 bg-emerald-500/20 text-emerald-300":"border-white/10 text-slate-400");$("c-guess").className="btn !py-1.5 !px-3 border "+(t==="guess"?"border-amber-500 bg-amber-500/20 text-amber-300":"border-white/10 text-slate-400")}
+function setConf(t){ex.conf[ex.cur]=t;conf(t)}
+function palette(){const p=$("palette");p.innerHTML="";let a=0,f=0;
+ ex.qs.forEach((_,i)=>{const b=document.createElement("button"),an=i in ex.ans,fl=ex.flag.has(i);if(an)a++;if(fl)f++;
+  b.className="h-9 rounded-lg text-xs mono font-bold border "+(fl?"bg-amber-500/20 text-amber-300 border-amber-500/40":an?"bg-emerald-500/20 text-emerald-300 border-emerald-500/40":"bg-slate-800 text-slate-400 border-white/5")+(i===ex.cur?" ring-2 ring-sky-400":"");
+  b.textContent=i+1;b.onclick=()=>{recT();ex.cur=i;qTimer();render();palette();$("exam-matrix").classList.remove("mob-open")};p.appendChild(b)});
+ $("mx-a").textContent=a;$("mx-f").textContent=f;$("mx-u").textContent=ex.qs.length-a;$("mx-badge").textContent=a+"/"+ex.qs.length}
+function toggleMatrix(){$("exam-matrix").classList.toggle("mob-open")}
+function answer(i,o){ex.ans[i]=o;const q=ex.qs[i],ok=o===q.correctText;if(!ex.conf[i])ex.conf[i]="sure";
+ if(!ok){addNB("mistakes",q);srSet(q,false)}else{if(ex.meta.topic==="MISTAKES")LS(nbk("mistakes"),[]),SV(nbk("mistakes"),LS(nbk("mistakes"),[]).filter(x=>x.question!==q.question));srSet(q,true,true)}
+ counters();render();palette()}
+function step(d){recT();const n=ex.cur+d;if(n>=0&&n<ex.qs.length){ex.cur=n;qTimer();render();palette();scrollTo(0,0)}else if(n>=ex.qs.length)promptSubmit()}
+function toggleFlag(){const c=ex.cur;if(ex.flag.has(c)){ex.flag.delete(c);rmNB("bookmarks",ex.qs[c])}else{ex.flag.add(c);addNB("bookmarks",ex.qs[c])}render();palette()}
+function saveNote(){const q=ex.qs[ex.cur],v=$("note").value.trim();v?localStorage.setItem(nk(q),v):localStorage.removeItem(nk(q))}
+function fsz(d){fs=Math.max(.85,Math.min(1.4,fs+d));document.documentElement.style.setProperty("--fs",fs+"rem")}
+function toggleFocus(){focus=!focus;$("hdr").classList.toggle("hidden",focus);$("exam-matrix").classList.toggle("lg:block",!focus);$("exam-main").className=(focus?"lg:col-span-4":"lg:col-span-3")+" gp rounded-3xl p-4 sm:p-7"}
+function quitExam(){if(confirm("Quit this session? Progress will be lost.")){stopTimers();goBrowse()}}
+function goBrowse(){["v-exam","v-result","bar"].forEach(i=>$(i).classList.add("hidden"));$("v-browse").classList.remove("hidden");$("exam-matrix").classList.remove("mob-open");counters()}
+document.addEventListener("keydown",e=>{if(!ex.qs||$("v-exam").classList.contains("hidden")||/TEXTAREA|INPUT|SELECT/.test(e.target.tagName))return;
+ const i="abcd".indexOf(e.key.toLowerCase());if(i>=0||/^[1-4]$/.test(e.key)){const o=ex.qs[ex.cur].options[i>=0?i:+e.key-1];if(o&&(!(ex.cur in ex.ans)||formal))answer(ex.cur,o)}
+ if(e.key==="ArrowRight")step(1);if(e.key==="ArrowLeft")step(-1)});
+
+/* ---------- SUBMIT / RESULT ---------- */
+function promptSubmit(){recT();const a=Object.keys(ex.ans).length;$("s-a").textContent=a;$("s-f").textContent=ex.flag.size;$("s-b").textContent=ex.qs.length-a;$("m-submit").classList.remove("hidden")}
+function finalize(){stopTimers();recT();let c=0,w=0,l=0;const tp={},df={};
+ ex.qs.forEach((q,i)=>{const t=tp[q.topic]??=[0,0],d=df[q.diff||"Unrated"]??=[0,0],ok=ex.ans[i]===q.correctText,at=i in ex.ans;t[1]++;d[1]++;if(ok){c++;t[0]++;d[0]++;if(ex.conf[i]==="guess")l++}else if(at)w++});
+ const total=ex.qs.length,net=c*4-w,acc=c+w?Math.round(c/(c+w)*100):0;
+ $("r-meta").textContent=`${user.name} • ${user.uid} • ${new Date().toLocaleDateString()}`;
+ $("r-net").innerHTML=`${net} <span class="text-xs text-slate-400 font-normal">/ ${total*4}</span>`;$("r-c").textContent=`${c} (+${c*4})`;$("r-w").textContent=`${w} (−${w})`;$("r-a").textContent=acc+"%";$("r-l").textContent=l;
+ const row=(n,[a,b],chip)=>`<div class="gi p-2.5 rounded-xl"><div class="flex justify-between gap-2 mb-1"><span>${chip}</span><b class="mono">${a}/${b}</b></div><div class="h-1.5 bg-slate-800 rounded-full"><div class="h-full rounded-full ${a/b>=.7?"bg-emerald-500":a/b>=.4?"bg-amber-500":"bg-rose-500"}" style="width:${a/b*100}%"></div></div></div>`;
+ $("r-break").innerHTML=Object.entries(df).map(([k,v])=>row(k,v,dchip(k)||esc(k))).join("")+Object.entries(tp).map(([k,v])=>row(k,v,tchip(k))).join("");
+ fetch(API+"/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({student_id:user.uid,student_name:user.name,test_title:ex.meta.title,net_score:net,max_score:total*4,accuracy:acc,correct:c,wrong:w})}).catch(()=>{});
+ const h=LS("cbt_hist_"+user.uid,[]);h.push({test:ex.meta.title,net,acc,accuracy:acc,lucky:l,topics:tp,diffs:df,ts:new Date().toLocaleDateString()});SV("cbt_hist_"+user.uid,h);
+ streakAdvance();["v-exam","bar"].forEach(i=>$(i).classList.add("hidden"));$("exam-matrix").classList.remove("mob-open");$("v-result").classList.remove("hidden");scrollTo(0,0)}
+function sheet(t,h){$("sheet-t").textContent=t;$("sheet-b").innerHTML=h;$("sheet").classList.remove("hidden")}
+function openReview(){sheet("Answer Key & Rationales",ex.qs.map((q,i)=>{const ch=ex.ans[i],ok=ch===q.correctText;return`<div class="gi rounded-2xl p-4 space-y-2.5"><div class="flex flex-wrap justify-between gap-2"><span class="flex flex-wrap gap-1.5 items-center"><b class="mono text-xs text-slate-400">Q${i+1}</b>${tchip(q.topic)}${dchip(q.diff)}</span><span class="chip ${ok?"text-emerald-300 bg-emerald-500/20 border-emerald-500/30":i in ex.ans?"text-rose-300 bg-rose-500/20 border-rose-500/30":"text-slate-400 bg-slate-800 border-slate-700"}">${ok?"Correct +4":i in ex.ans?"Wrong −1":"Skipped"} · ${ex.times[i]||0}s</span></div><p class="text-sm font-semibold">${esc(q.question)}</p>${q.options.map(o=>`<div class="p-2.5 rounded-xl border text-xs ${o===q.correctText?"border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-bold":o===ch?"border-rose-500/50 bg-rose-500/10 text-rose-300":"border-white/5 text-slate-400"}">${esc(o)}</div>`).join("")}<div class="p-3 rounded-xl bg-slate-950 text-xs text-slate-300"><b class="text-emerald-400">Rationale:</b> ${esc(q.explanation)}</div></div>`}).join(""))}
+
+/* ---------- NOTEBOOK / SR ---------- */
+function addNB(t,q){const k=nbk(t),l=LS(k,[]);if(!l.some(x=>x.question===q.question)){l.push(q);SV(k,l)}}
+function rmNB(t,q){SV(nbk(t),LS(nbk(t),[]).filter(x=>x.question!==q.question))}
+function srSet(q,ok,only){const k="sr_"+user.uid;let l=LS(k,[]);const x=l.find(y=>y.q.question===q.question),D=[1,3,7];
+ if(x){if(ok){x.stage++;if(x.stage>=D.length)l=l.filter(y=>y!==x);else x.next=Date.now()+D[x.stage]*864e5}else{x.stage=0;x.next=Date.now()+864e5}}else if(!ok&&!only)l.push({q,stage:0,next:Date.now()+864e5});SV(k,l)}
+function counters(){if(!user)return;$("mist-lbl").textContent=LS(nbk("mistakes"),[]).length+" errors recorded";$("sr-lbl").textContent=LS("sr_"+user.uid,[]).filter(x=>x.next<=Date.now()).length+" due (1, 3, 7 days)"}
+function openNotebook(t){tabNB=typeof t==="string"?t:"bookmarks";const l=LS(nbk(tabNB),[]);
+ sheet("Clinical Notebook",`<div class="flex gap-2"><button onclick="openNotebook('bookmarks')" class="btn flex-1 ${tabNB==="bookmarks"?"b1":"b2"}">Bookmarks</button><button onclick="openNotebook('mistakes')" class="btn flex-1 ${tabNB==="mistakes"?"b1":"b2"}">Mistakes Vault</button></div><div class="flex justify-between items-center"><span class="text-xs text-slate-400">${l.length} items</span><button onclick="practiceNB()" class="btn b1 !py-2">Practise this set</button></div>`+(l.length?l.map((q,i)=>`<div class="gi p-3 rounded-xl text-xs flex justify-between gap-3"><div><div class="flex flex-wrap gap-1.5 mb-1.5">${tchip(q.topic)}${dchip(q.diff)}</div><p class="font-bold">${esc(q.question)}</p><p class="text-emerald-400 mt-1">Ans: ${esc(q.correctText)}</p></div><button onclick="delNB(${i})" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></div>`).join(""):'<div class="p-6 text-center text-slate-500 text-xs">Nothing saved yet.</div>'))}
+function delNB(i){const l=LS(nbk(tabNB),[]);l.splice(i,1);SV(nbk(tabNB),l);counters();openNotebook(tabNB)}
+function practiceNB(){const l=LS(nbk(tabNB),[]);if(!l.length)return alert("List is empty!");$("sheet").classList.add("hidden");run({title:"Practice: "+tabNB,topic:tabNB.toUpperCase()},l)}
+
+/* ---------- STREAK / STATS ---------- */
+const stk=()=>LS("streak_"+user?.uid,{streak:0,last:""});
+function streakAdvance(){const d=stk(),t=new Date().toDateString();if(d.last===t)return;d.streak=d.last===new Date(Date.now()-864e5).toDateString()?d.streak+1:1;d.last=t;SV("streak_"+user.uid,d);streakUI()}
+function streakUI(){const d=stk();$("streakn").textContent=d.streak;$("streak").classList.toggle("hidden",!d.streak)}
+function openStats(){const h=LS("cbt_hist_"+user.uid,[]),n=h.length,acc=n?Math.round(h.reduce((a,b)=>a+(b.acc??b.accuracy??0),0)/n):0,net=h.reduce((a,b)=>a+(b.net||0),0),lucky=h.reduce((a,b)=>a+(b.lucky||0),0),st=stk().streak;
+ const tp={};h.forEach(x=>Object.entries(x.topics||{}).forEach(([k,[a,b]])=>{const t=tp[k]??=[0,0];t[0]+=a;t[1]+=b}));
+ const weak=Object.entries(tp).filter(([,v])=>v[1]>=3).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]).slice(0,8);
+ const B=[["First test",n>=1,"fa-flag"],["10 tests",n>=10,"fa-medal"],["3-day streak",st>=3,"fa-fire"],["Sharpshooter 90%+",h.some(x=>(x.acc??0)>=90),"fa-bullseye"]];
+ sheet("Progress & Badges",`<div class="grid grid-cols-4 gap-2 text-center">${[["Tests",n,""],["Avg acc",acc+"%","text-emerald-400"],["Net",net,"text-amber-400"],["Lucky",lucky,"text-sky-400"]].map(x=>`<div class="gi rounded-2xl p-2.5"><div class="text-[9px] font-bold text-slate-400 uppercase">${x[0]}</div><div class="font-black ${x[2]}">${x[1]}</div></div>`).join("")}</div>
+ <h4 class="text-xs font-bold uppercase text-slate-300">Badges</h4><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${B.map(b=>`<div class="gi rounded-xl p-3 text-center text-[11px] font-bold ${b[1]?"text-amber-300 border-amber-500/40":"text-slate-600"}"><i class="fa-solid ${b[2]} text-lg block mb-1"></i>${b[0]}</div>`).join("")}</div>
+ <h4 class="text-xs font-bold uppercase text-slate-300">Weakest topics first</h4>${weak.length?weak.map(([k,v])=>{const p=Math.round(v[0]/v[1]*100);return`<div class="gi p-2.5 rounded-xl text-xs"><div class="flex justify-between mb-1"><span>${esc(k)}</span><b class="mono">${p}% (${v[0]}/${v[1]})</b></div><div class="h-1.5 bg-slate-800 rounded-full"><div class="h-full rounded-full ${p>=70?"bg-emerald-500":p>=40?"bg-amber-500":"bg-rose-500"}" style="width:${p}%"></div></div></div>`}).join(""):'<p class="text-xs text-slate-500">Take a few tests to see your weak topics.</p>'}
+ <h4 class="text-xs font-bold uppercase text-slate-300">Recent tests</h4>${h.slice(-6).reverse().map(x=>`<div class="gi p-2.5 rounded-xl flex justify-between text-xs"><span class="truncate mr-2">${esc(x.test)} <span class="text-slate-500">${esc(x.ts||x.timestamp||"")}</span></span><b class="mono text-emerald-400">${x.acc??x.accuracy}%</b></div>`).join("")||'<p class="text-xs text-slate-500">No tests yet.</p>'}`)}
+</script>
+</body></html>
