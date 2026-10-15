@@ -1,4 +1,4 @@
-```python
+
 import asyncio
 import json
 import logging
@@ -2117,4 +2117,4 @@ if __name__ == "__main__":
         logging.info("System shutting down gracefully.")
     except Exception:
         logging.exception("Fatal system crash")
-```
+
