@@ -1,368 +1,164 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MBBS Admin Command Center</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{background:#090d16;color:#f1f5f9;padding:16px 10px;min-height:100vh}
-.wrap{max-width:980px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:20px}
-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:10px}
-h1{font-size:1.2rem;color:#38bdf8}h2{font-size:.95rem;color:#38bdf8}
-.sub{font-size:.72rem;color:#64748b;margin-top:2px}
-.nav{display:flex;gap:6px;flex-wrap:wrap}
-.nb{background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.78rem}
-.nb:hover{background:#334155;color:#fff}.nb.on{background:#0284c7;border-color:#0284c7;color:#fff}
-.sec{display:none;flex-direction:column;gap:14px}.sec.on{display:flex}
-label{font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:5px;display:block}
-input[type=text],input[type=password],input[type=number],select,textarea{width:100%;background:#050811;border:1px solid #334155;color:#fff;padding:9px 11px;border-radius:8px;font-size:.85rem;outline:none}
-input:focus,textarea:focus,select:focus{border-color:#38bdf8}
-.btn{background:#0284c7;color:#fff;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem}
-.btn:hover{opacity:.9}.btn:disabled{opacity:.5;cursor:not-allowed}
-.g{background:#10b981}.gr{background:#334155}.d{background:#e11d48}.sm{padding:5px 10px;font-size:.72rem}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1;min-width:150px}.row>.btn{flex:0 0 auto}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.file{border:2px dashed #334155;padding:18px;text-align:center;border-radius:10px;background:#050811;font-size:.75rem;color:#64748b}
-#log{padding:12px;border-radius:8px;font-family:monospace;font-size:.78rem;display:none;line-height:1.5;background:#050811;white-space:pre-wrap}
-.card{background:#050811;border:1px solid #1e293b;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
-.card.dup{border-color:#f59e0b}
-.opt{display:flex;gap:8px;align-items:center}.opt input[type=text]{flex:1}
-.stat{background:#050811;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}
-.stat b{display:block;font-size:1.5rem;color:#38bdf8}.stat span{font-size:.7rem;color:#94a3b8;text-transform:uppercase}
-table{width:100%;border-collapse:collapse;font-size:.78rem}
-th,td{padding:9px 10px;border-bottom:1px solid #1e293b;text-align:left;vertical-align:top}
-th{background:#050811;color:#94a3b8;font-size:.68rem;text-transform:uppercase}
-.tw{overflow-x:auto;border:1px solid #1e293b;border-radius:8px;max-height:520px;overflow-y:auto}
-.tag{display:inline-block;background:#1e293b;color:#7dd3fc;border-radius:6px;padding:1px 7px;font-size:.68rem}
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #38bdf8;color:#fff;padding:10px 16px;border-radius:8px;font-size:.8rem;display:none;z-index:9}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}body{background:#090d16;color:#f1f5f9;padding:16px 10px}.wrap{max-width:1100px;margin:auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:20px}header,.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}header{border-bottom:1px solid #1e293b;padding-bottom:14px;margin-bottom:18px}h1,h2{color:#38bdf8}h1{font-size:1.2rem}h2{font-size:1rem}.sub{font-size:.75rem;color:#94a3b8;margin-top:4px}.nav{display:flex;gap:6px;flex-wrap:wrap}.nb,button{border:0;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer}.nb{background:#1e293b;color:#cbd5e1}.nb.on,.btn{background:#0284c7;color:white}.sec{display:none;flex-direction:column;gap:14px}.sec.on{display:flex}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:block;color:#94a3b8;font-size:.72rem;font-weight:700;text-transform:uppercase;margin-bottom:5px}input[type=text],input[type=password],select,textarea{width:100%;background:#050811;border:1px solid #334155;color:white;padding:10px;border-radius:8px}textarea{resize:vertical}.btn{background:#0284c7}.gr{background:#334155;color:white}.green{background:#059669;color:white}.red{background:#e11d48;color:white}.sm{padding:6px 9px;font-size:.75rem}.stat,.card{background:#050811;border:1px solid #1e293b;border-radius:10px;padding:14px}.stat{text-align:center}.stat b{display:block;font-size:1.5rem;color:#38bdf8}.stat span{font-size:.72rem;color:#94a3b8}.drop{border:2px dashed #334155;border-radius:10px;padding:22px;text-align:center;color:#94a3b8;cursor:pointer}.opt{display:flex;align-items:center;gap:8px;margin:6px 0}.opt input[type=text]{flex:1}.tag{background:#1e293b;color:#7dd3fc;border-radius:5px;padding:2px 6px;font-size:.72rem}.tw{overflow:auto;max-height:520px;border:1px solid #1e293b;border-radius:8px}table{width:100%;border-collapse:collapse;font-size:.8rem}td,th{padding:9px;border-bottom:1px solid #1e293b;text-align:left;vertical-align:top}th{color:#94a3b8;background:#050811;text-transform:uppercase;font-size:.7rem}#log,#status{display:none;padding:12px;background:#050811;border:1px solid #1e293b;border-radius:8px;white-space:pre-wrap;font-size:.8rem;line-height:1.5}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #38bdf8;padding:10px 16px;border-radius:8px;display:none;z-index:9;max-width:95vw}.dup{border-color:#f59e0b!important}.modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;align-items:center;justify-content:center;padding:15px}.modal>div{background:#0f172a;padding:20px;border:1px solid #334155;border-radius:12px;width:min(420px,100%)}@media(max-width:600px){.wrap{padding:13px}.row>*{min-width:120px}}
 </style>
 </head>
-<body>
-<div class="wrap">
-<header>
-  <div><h1>MBBS Command Center</h1><p class="sub">AI import · Question bank · Audits · Supabase</p></div>
-  <div class="nav" id="nav">
-    <button class="nb on" data-tab="dash">Dashboard</button>
-    <button class="nb" data-tab="importer">AI Importer</button>
-    <button class="nb" data-tab="bank">Question Bank</button>
-    <button class="nb" data-tab="curriculum">Subjects</button>
-    <button class="nb" data-tab="audits">Audits</button>
-    <button class="nb" data-tab="settings">Settings</button>
-  </div>
-</header>
-
-<!-- DASHBOARD -->
-<div id="tab-dash" class="sec on">
-  <div class="grid">
-    <div class="stat"><b id="st-q">–</b><span>Questions</span></div>
-    <div class="stat"><b id="st-s">–</b><span>Submissions</span></div>
-    <div class="stat"><b id="st-a">–</b><span>Avg accuracy</span></div>
-    <div class="stat"><b id="st-c" style="font-size:1rem">–</b><span>Connection</span></div>
-  </div>
-  <div><h2>Questions per subject</h2><div id="st-sub" class="grid" style="margin-top:8px"></div></div>
-  <button class="btn gr" style="align-self:flex-start" data-act="refreshDash">Refresh</button>
+<body><main class="wrap">
+<header><div><h1>MBBS Command Center</h1><p class="sub">AI question import · Question bank · Supabase REST</p></div><nav class="nav" id="nav">
+<button class="nb on" data-tab="dash">Dashboard</button><button class="nb" data-tab="importer">AI Importer</button><button class="nb" data-tab="bank">Question Bank</button><button class="nb" data-tab="curriculum">Subjects</button><button class="nb" data-tab="audits">Audits</button><button class="nb" data-tab="settings">Settings</button>
+</nav></header>
+<section id="tab-dash" class="sec on"><div class="grid"><div class="stat"><b id="st-q">–</b><span>Questions</span></div><div class="stat"><b id="st-s">–</b><span>Submissions</span></div><div class="stat"><b id="st-a">–</b><span>Average accuracy</span></div><div class="stat"><b id="st-c">–</b><span>Connection</span></div></div><h2>Questions per subject</h2><div class="grid" id="st-sub"></div><button class="btn gr" data-act="refreshDash">Refresh dashboard</button></section>
+<section id="tab-importer" class="sec"><div class="grid"><div><label>Target subject</label><select id="sel-subject"></select></div><div><label>Default sub-topic (editable per question)</label><input id="txt-subtopic" type="text" placeholder="e.g. Lower Limb"></div><div><label>Default difficulty (editable per question)</label><select id="sel-diff"><option>Medium</option><option>Easy</option><option>Hard</option></select></div></div>
+<div class="card" style="display:flex;flex-direction:column;gap:10px">
+<h2>Generate MCQs from a topic</h2>
+<p class="sub">Enter a topic and choose a difficulty. Gemini will create new MCQs matching those settings, then add them to the review preview. Verify answers before saving.</p>
+<div class="grid">
+  <div><label>Topic for generated MCQs</label><input id="gen-topic" type="text" placeholder="e.g. Brachial plexus, cardiac cycle, anemia"></div>
+  <div><label>Number of MCQs</label><input id="gen-count" type="number" min="1" max="25" value="5"></div>
+  <div><label>Difficulty</label><select id="gen-diff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
 </div>
-
-<!-- IMPORTER -->
-<div id="tab-importer" class="sec">
-  <div class="grid">
-    <div><label>Target Subject</label><select id="sel-subject"></select></div>
-    <div><label>Sub-Topic Tag</label><input type="text" id="txt-subtopic" placeholder="e.g. Lower Limb"></div>
-    <div><label>Difficulty</label><select id="sel-diff"><option>Medium</option><option>Easy</option><option>Hard</option></select></div>
-  </div>
-  <div class="file"><input type="file" id="pdf-input" accept="application/pdf"><p style="margin-top:8px">Upload a question PDF (text-based; scanned images need OCR first)</p></div>
-  <div><label>Or paste question text</label><textarea id="raw-text" rows="4" placeholder="Paste questions here..."></textarea></div>
-  <div class="row">
-    <button class="btn" id="btn-parse" data-act="extract">Run AI Extraction</button>
-    <button class="btn gr" data-act="addBlank">+ Add question manually</button>
-  </div>
-  <div id="log"></div>
-  <div id="stage" style="display:none;flex-direction:column;gap:12px;border-top:1px solid #1e293b;padding-top:14px">
-    <div class="row">
-      <div><h2>Preview (<span id="q-count">0</span>)</h2><p class="sub">Edit anything, then save. Amber = looks like a duplicate.</p></div>
-      <button class="btn gr sm" data-act="clearStage">Clear all</button>
-      <button class="btn gr sm" data-act="dlJson">Download JSON</button>
-      <button class="btn g" id="btn-save" data-act="save">Save to Supabase</button>
-    </div>
-    <div id="q-list" style="display:flex;flex-direction:column;gap:10px;max-height:600px;overflow-y:auto"></div>
-  </div>
+<div><label>Extra instructions (optional)</label><input id="gen-notes" type="text" placeholder="e.g. NEET-PG style, clinical vignettes, focus on diagnosis"></div>
+<button class="btn" id="generate" data-act="generateMcqs" style="align-self:flex-start">Generate MCQs for this topic</button>
 </div>
-
-<!-- BANK -->
-<div id="tab-bank" class="sec">
-  <div class="row">
-    <div><label>Subject</label><select id="bk-subject"></select></div>
-    <div><label>Search</label><input type="text" id="bk-search" placeholder="Search question text..."></div>
-    <button class="btn" data-act="loadBank">Load</button>
-    <button class="btn gr" data-act="dlBankCsv">CSV</button>
-  </div>
-  <p class="sub" id="bk-info">Click Load to fetch questions.</p>
-  <div class="tw"><table><thead><tr><th>#</th><th>Question</th><th>Subject</th><th>Ans</th><th></th></tr></thead><tbody id="bk-rows"></tbody></table></div>
-</div>
-
-<!-- SUBJECTS -->
-<div id="tab-curriculum" class="sec">
-  <div class="row"><div><h2>Manage Subjects</h2><p class="sub">Used in dropdowns. Saved in this browser.</p></div><button class="btn sm" data-act="addSubject">+ Add Subject</button></div>
-  <div id="subject-list" style="display:flex;flex-direction:column;gap:8px"></div>
-</div>
-
-<!-- AUDITS -->
-<div id="tab-audits" class="sec">
-  <div class="row">
-    <div><label>Filter student / test</label><input type="text" id="au-search" placeholder="Type to filter..."></div>
-    <button class="btn" data-act="loadAudits">Refresh</button>
-    <button class="btn gr" data-act="dlAuditCsv">CSV</button>
-  </div>
-  <div class="tw"><table><thead><tr><th>Student</th><th>ID</th><th>Test</th><th>Score</th><th>Accuracy</th><th>Time</th></tr></thead>
-  <tbody id="audit-rows"><tr><td colspan="6" style="color:#64748b;text-align:center">Click refresh to load.</td></tr></tbody></table></div>
-</div>
-
-<!-- SETTINGS -->
-<div id="tab-settings" class="sec">
-  <div><label>Google Gemini API Key</label><input type="password" id="set-key" placeholder="AIza... or AQ..."></div>
-  <div class="grid">
-    <div><label>Gemini model</label><input type="text" id="set-model" placeholder="gemini-3.8-flash"></div>
-    <div><label>Questions table</label><input type="text" id="set-tq" placeholder="questions"></div>
-    <div><label>Submissions table</label><input type="text" id="set-ts" placeholder="submissions"></div>
-  </div>
-  <div class="grid">
-    <div><label>Supabase REST URL</label><input type="text" id="set-url"></div>
-    <div><label>Supabase anon / publishable key</label><input type="password" id="set-anon"></div>
-  </div>
-  <div class="row">
-    <button class="btn" data-act="saveSettings">Save settings</button>
-    <button class="btn gr" data-act="testConn">Test connections</button>
-  </div>
-  <p class="sub" id="set-status"></p>
-</div>
-</div>
-<div class="toast" id="toast"></div>
-
+<div class="drop" id="drop"><input id="pdf" type="file" accept="application/pdf" hidden><b id="pdf-label">Click or drag a searchable PDF here</b><p class="sub">PDF text is extracted locally in your browser. Scanned PDFs need OCR first.</p><button class="gr sm" id="remove-pdf" data-act="clearPdf" style="display:none;margin-top:8px">Remove PDF</button></div>
+<div><label>Or paste questions / text</label><textarea id="raw" rows="5" placeholder="Paste MCQs, answer keys, or syllabus text..."></textarea></div><div class="row" style="justify-content:flex-start"><button class="btn" id="extract" data-act="extract">Run AI extraction</button><button class="gr" data-act="addBlank">+ Add question manually</button></div><div id="log"></div>
+<div id="stage" style="display:none;flex-direction:column;gap:12px"><div class="row"><h2>Preview (<span id="q-count">0</span>)</h2><button class="gr sm" data-act="clearStage">Clear all</button><button class="gr sm" data-act="dlJson">Download JSON</button><button class="green" id="save" data-act="save">Save to Supabase</button></div><div id="q-list" style="display:flex;flex-direction:column;gap:10px;max-height:650px;overflow:auto"></div></div></section>
+<section id="tab-bank" class="sec"><div class="row"><div><label>Subject</label><select id="bk-subject"></select></div><div><label>Search</label><input id="bk-search" type="text" placeholder="Search question text"></div><button class="btn" data-act="loadBank">Load</button><button class="gr" data-act="dlBankCsv">Export CSV</button></div><p id="bk-info" class="sub">Click Load to fetch questions.</p><div class="tw"><table><thead><tr><th>#</th><th>Question</th><th>Subject</th><th>Topic</th><th>Level</th><th>Answer</th><th>Action</th></tr></thead><tbody id="bk-rows"></tbody></table></div></section>
+<section id="tab-curriculum" class="sec"><div class="row"><div><h2>Manage subjects</h2><p class="sub">Stored in this browser.</p></div><button class="btn" data-act="addSubject">+ Add subject</button></div><div id="subject-list" style="display:flex;flex-direction:column;gap:8px"></div></section>
+<section id="tab-audits" class="sec"><div class="row"><div><label>Filter student / test</label><input id="au-search" type="text" placeholder="Filter submissions"></div><button class="btn" data-act="loadAudits">Refresh</button><button class="gr" data-act="dlAuditCsv">Export CSV</button></div><div class="tw"><table><thead><tr><th>Student</th><th>ID</th><th>Test</th><th>Score</th><th>Accuracy</th><th>Time</th></tr></thead><tbody id="audit-rows"></tbody></table></div></section>
+<section id="tab-settings" class="sec"><div><label>Gemini API key(s) (one per line or comma-separated)</label><textarea id="set-key" rows="3" placeholder="Paste Gemini API keys"></textarea><p class="sub">For production, do not expose keys in browser code. Use a server-side proxy.</p></div><div class="grid"><div><label>Primary model</label><select id="set-model"><option value="gemini-3.8-flash">gemini-3.8-flash (recommended)</option><option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option><option value="gemini-2.5-flash">gemini-2.5-flash</option><option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option></select></div><div><label>Questions table</label><input id="set-tq" type="text"></div><div><label>Submissions table</label><input id="set-ts" type="text"></div><div><label>Supabase REST URL</label><input id="set-url" type="text"></div><div><label>Supabase publishable / anon key</label><input id="set-anon" type="password"></div></div><div class="row" style="justify-content:flex-start"><button class="btn" data-act="saveSettings">Save settings</button><button class="gr" data-act="testConn">Test connections</button></div><div id="status"></div></section>
+</main><div class="toast" id="toast"></div><div class="modal" id="modal"><div><h2 id="mt">Confirm</h2><p id="mm" style="margin:12px 0"></p><input id="mi" type="text" style="display:none"><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="gr" id="mc">Cancel</button><button class="btn" id="mok">Confirm</button></div></div></div>
 <script>
-(function(){
-"use strict";
-const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+(()=>{"use strict";
+const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const DEF={url:"https://iafqcssktvejitssqawi.supabase.co/rest/v1",anon:"sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C",model:"gemini-3.8-flash",tq:"questions",ts:"submissions"};
-const cfg=()=>({key:LS.get("gemini_key",""),url:LS.get("sb_url",DEF.url).replace(/\/$/,""),anon:LS.get("sb_anon",DEF.anon),model:(m=>/^gemini-(1|2)\./.test(m)?DEF.model:m)(LS.get("g_model",DEF.model)),tq:LS.get("t_q",DEF.tq),ts:LS.get("t_s",DEF.ts)});
-let subjects=["Anatomy","Physiology","Biochemistry","Pharmacology","Pathology"];
-try{const s=JSON.parse(LS.get("sub_list","null"));if(Array.isArray(s)&&s.length)subjects=s}catch(e){}
-let staged=[],bankRows=[],auditRows=[];
-
-function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",2800)}
-function log(m,color){const l=$("log");l.style.display="block";l.style.color=color||"#38bdf8";l.textContent=m}
-
-async function sb(path,opt){
-  const c=cfg();opt=opt||{};
-  const r=await fetch(c.url+"/"+path,{method:opt.method||"GET",headers:Object.assign({apikey:c.anon,Authorization:"Bearer "+c.anon,"Content-Type":"application/json"},opt.headers||{}),body:opt.body});
-  if(!r.ok){let t="";try{t=await r.text()}catch(e){}throw new Error("Supabase "+r.status+": "+t.slice(0,250))}
-  return r;
-}
-const countOf=async t=>{const r=await sb(t+"?select=*&limit=1",{headers:{Prefer:"count=exact"}});const m=(r.headers.get("content-range")||"").split("/")[1];return m?+m:0};
-
-/* ---------- Tabs ---------- */
-function setTab(name){
-  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
-  document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="tab-"+name));
-  if(name==="dash")refreshDash();if(name==="curriculum")renderSubjects();if(name==="settings")fillSettings();
-}
-
-/* ---------- Subjects ---------- */
-function saveSubs(){LS.set("sub_list",JSON.stringify(subjects));fillSubjectDropdowns();renderSubjects()}
-function fillSubjectDropdowns(){
-  $("sel-subject").innerHTML=subjects.map(s=>`<option>${esc(s)}</option>`).join("");
-  $("bk-subject").innerHTML='<option value="">All subjects</option>'+subjects.map(s=>`<option>${esc(s)}</option>`).join("");
-}
-function renderSubjects(){
-  $("subject-list").innerHTML=subjects.map((s,i)=>`<div class="card" style="flex-direction:row;justify-content:space-between;align-items:center"><b>${esc(s)}</b><button class="btn d sm" data-act="delSubject" data-i="${i}">Delete</button></div>`).join("");
-}
-
-/* ---------- Settings ---------- */
-function fillSettings(){
-  const c=cfg();$("set-key").value=c.key;$("set-model").value=c.model;$("set-tq").value=c.tq;$("set-ts").value=c.ts;$("set-url").value=c.url;$("set-anon").value=c.anon;
-  $("set-status").textContent=c.key?"✅ Gemini key saved in this browser":"⚠️ No Gemini key yet — paste it above and save.";
-}
-function saveSettings(){
-  LS.set("gemini_key",$("set-key").value.trim());LS.set("g_model",$("set-model").value.trim()||DEF.model);
-  LS.set("t_q",$("set-tq").value.trim()||DEF.tq);LS.set("t_s",$("set-ts").value.trim()||DEF.ts);
-  LS.set("sb_url",$("set-url").value.trim()||DEF.url);LS.set("sb_anon",$("set-anon").value.trim()||DEF.anon);
-  fillSettings();toast("Settings saved");
-}
-async function testConn(){
-  const st=$("set-status");st.textContent="Testing...";let out=[];
-  try{await countOf(cfg().tq);out.push("✅ Supabase OK")}catch(e){out.push("❌ "+e.message)}
-  const c=cfg();
-  if(!c.key)out.push("⚠️ No Gemini key");
-  else{try{const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+c.model+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.key},body:JSON.stringify({contents:[{parts:[{text:"Say OK"}]}]})});out.push(r.ok?"✅ Gemini OK":"❌ Gemini "+r.status)}catch(e){out.push("❌ Gemini: "+e.message)}}
-  st.textContent=out.join("   ");
-}
-
-/* ---------- Dashboard ---------- */
-async function refreshDash(){
-  const c=cfg();
-  try{
-    $("st-q").textContent=await countOf(c.tq);$("st-c").textContent="Online";$("st-c").style.color="#4ade80";
-    try{$("st-s").textContent=await countOf(c.ts)}catch(e){$("st-s").textContent="n/a"}
-    const r=await(await sb(c.tq+"?select=subject&limit=5000")).json();const m={};r.forEach(x=>{const k=x.subject||"Unknown";m[k]=(m[k]||0)+1});
-    $("st-sub").innerHTML=Object.keys(m).sort().map(k=>`<div class="stat"><b style="font-size:1.1rem">${m[k]}</b><span>${esc(k)}</span></div>`).join("")||'<p class="sub">No questions yet.</p>';
-    try{const a=await(await sb(c.ts+"?select=*&limit=200")).json();const v=a.map(x=>parseFloat(x.accuracy)).filter(n=>!isNaN(n));$("st-a").textContent=v.length?Math.round(v.reduce((s,n)=>s+n,0)/v.length)+"%":"–"}catch(e){}
-  }catch(e){$("st-c").textContent="Error";$("st-c").style.color="#f43f5e";toast(e.message)}
-}
-
-/* ---------- Extraction ---------- */
-async function readPdf(file){
-  if(!window.pdfjsLib)throw new Error("PDF library failed to load (check internet).");
-  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let t="";
-  for(let i=1;i<=doc.numPages;i++){log("⏳ Reading PDF page "+i+"/"+doc.numPages);const p=await doc.getPage(i);const c=await p.getTextContent();t+=c.items.map(x=>x.str).join(" ")+"\n"}
-  return t;
-}
-function chunk(t,n){const out=[];let i=0;while(i<t.length){let e=Math.min(i+n,t.length);if(e<t.length){const b=t.lastIndexOf("\n",e);if(b>i+n/2)e=b}out.push(t.slice(i,e));i=e}return out}
-function parseJson(s){
-  s=s.replace(/```json|```/g,"").trim();
-  try{return JSON.parse(s)}catch(e){const a=s.indexOf("["),b=s.lastIndexOf("]");if(a>=0&&b>a)return JSON.parse(s.slice(a,b+1));throw e}
-}
-async function gemini(text){
-  const c=cfg();
-  const prompt='Extract every multiple-choice question from the text below. Return ONLY a JSON array. Each item: {"question":string,"options":[exactly 4 strings without A/B/C/D prefixes],"correct":integer 0-3 index of the right option,"explanation":string}. If the answer key is not given, choose the most likely correct answer using medical knowledge. If no explanation is given, write a concise 1-2 sentence rationale. Skip anything that is not an MCQ.\n\nTEXT:\n'+text;
-  const models=[c.model,"gemini-3.8-flash","gemini-3.5-flash","gemini-3.1-flash-lite","gemini-flash-latest"].filter((m,i,a)=>m&&a.indexOf(m)===i);
-  const body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:"application/json"}});
-  let r=null,lastErr="";
-  outer:for(const m of models){
-    for(let a=0;a<4;a++){
-      try{r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.key},body:body})}
-      catch(e){lastErr="Network: "+e.message;r=null;await new Promise(z=>setTimeout(z,2000*(a+1)));continue}
-      if(r.ok)break outer;
-      let t="";try{t=(await r.clone().json()).error.message}catch(e){}
-      lastErr="Gemini "+r.status+" ("+m+"): "+t;
-      if([429,500,502,503,504].includes(r.status)){log("⏳ "+m+" busy ("+r.status+"), retrying "+(a+1)+"/4...","#f59e0b");await new Promise(z=>setTimeout(z,2500*(a+1)));continue}
-      if(r.status===404)break;
-      throw new Error(lastErr);
-    }
-    r=null;
-  }
-  if(!r||!r.ok)throw new Error(lastErr||"Gemini unavailable. Try again in a minute.");
-  const j=await r.json();const out=j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts.map(p=>p.text).join("");
-  if(!out)throw new Error("Gemini returned no content (possibly blocked).");
-  return parseJson(out);
-}
-function normQ(q){
-  const o=Array.isArray(q.options)?q.options.slice(0,4).map(x=>String(x).replace(/^\s*[A-Da-d][\).:]\s*/,"")):[];while(o.length<4)o.push("");
-  let c=parseInt(q.correct);if(isNaN(c)&&typeof q.correct==="string"){c="ABCD".indexOf(q.correct.trim().toUpperCase()[0])}
-  if(isNaN(c)||c<0||c>3)c=0;
-  return{question:String(q.question||"").trim(),options:o,correct:c,explanation:String(q.explanation||"").trim()};
-}
-async function extract(){
-  const btn=$("btn-parse");const c=cfg();
-  if(!c.key){log("Add your Gemini API key in Settings first.","#f43f5e");return setTab("settings")}
-  btn.disabled=true;
-  try{
-    let text=$("raw-text").value.trim();const f=$("pdf-input").files[0];
-    if(f)text=(await readPdf(f))+"\n"+text;
-    if(text.length<30)throw new Error("Upload a readable PDF or paste at least 30 characters.");
-    const parts=chunk(text,12000);let all=[];
-    for(let i=0;i<parts.length;i++){
-      log("🧠 Gemini parsing part "+(i+1)+"/"+parts.length+" ("+all.length+" found so far)...");
-      try{const r=await gemini(parts[i]);if(Array.isArray(r))all=all.concat(r.map(normQ))}
-      catch(e){log("⚠️ Part "+(i+1)+" failed: "+e.message+"\nContinuing...","#f59e0b");await new Promise(r=>setTimeout(r,1500))}
-    }
-    all=all.filter(q=>q.question.length>5);
-    if(!all.length)throw new Error("No questions could be extracted.");
-    staged=staged.concat(all);renderStage();log("✅ Extracted "+all.length+" questions. Review below, then save.","#4ade80");
-  }catch(e){log("❌ "+e.message,"#f43f5e")}
-  btn.disabled=false;
-}
-
-/* ---------- Staging ---------- */
-const keyOf=q=>q.question.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,120);
-function renderStage(){
-  $("stage").style.display=staged.length?"flex":"none";$("q-count").textContent=staged.length;
-  const seen={};
-  $("q-list").innerHTML=staged.map((q,i)=>{
-    const k=keyOf(q);const dup=seen[k];seen[k]=1;
-    return `<div class="card ${dup?"dup":""}" data-i="${i}">
-    <div class="row" style="align-items:center"><b style="flex:0 0 auto">Q${i+1}</b>${dup?'<span class="tag" style="background:#78350f;color:#fcd34d">duplicate</span>':""}<span style="flex:1"></span><button class="btn d sm" data-act="delStage" data-i="${i}" style="flex:0 0 auto">Remove</button></div>
-    <textarea rows="2" data-f="question" data-i="${i}">${esc(q.question)}</textarea>
-    ${q.options.map((o,j)=>`<div class="opt"><input type="radio" name="c${i}" data-f="correct" data-i="${i}" data-j="${j}" ${q.correct===j?"checked":""}><b>${"ABCD"[j]}</b><input type="text" data-f="opt" data-i="${i}" data-j="${j}" value="${esc(o)}"></div>`).join("")}
-    <textarea rows="2" data-f="explanation" data-i="${i}" placeholder="Explanation">${esc(q.explanation)}</textarea></div>`}).join("");
-}
-function onStageEdit(e){
-  const t=e.target,f=t.dataset.f;if(!f)return;const i=+t.dataset.i,j=+t.dataset.j;if(!staged[i])return;
-  if(f==="opt")staged[i].options[j]=t.value;else if(f==="correct")staged[i].correct=j;else staged[i][f]=t.value;
-}
-function addBlank(){staged.push({question:"",options:["","","",""],correct:0,explanation:""});renderStage();$("stage").scrollIntoView({behavior:"smooth"})}
-function toRow(q){ // adjust column names here if your table differs
-  return{subject:$("sel-subject").value,subtopic:$("txt-subtopic").value.trim(),difficulty:$("sel-diff").value,question:q.question,options:q.options,correct:q.correct,explanation:q.explanation};
+const store={get(k,d=""){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+const cleanKey=k=>String(k||"").replace(/["'`]/g,"").trim();
+const keys=()=>store.get("gemini_key").split(/[\n,;]+/).map(cleanKey).filter(k=>k.length>10);
+const cfg=()=>({keys:keys(),model:store.get("g_model",DEF.model),url:store.get("sb_url",DEF.url).replace(/\/+$/,""),anon:store.get("sb_anon",DEF.anon),tq:store.get("t_q",DEF.tq),ts:store.get("t_s",DEF.ts)});
+let subjects=["Anatomy","Physiology","Biochemistry","Pharmacology","Pathology"],staged=[],bankRows=[],auditRows=[],pdfFile=null;
+try{const s=JSON.parse(store.get("sub_list","null"));if(Array.isArray(s)&&s.length)subjects=s}catch{}
+function toast(s){$("toast").textContent=s;$("toast").style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>$("toast").style.display="none",3500)}
+function log(s,color="#38bdf8"){$("log").style.display="block";$("log").style.color=color;$("log").textContent=s}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function dialog(title,msg,prompt=false,def=""){return new Promise(resolve=>{const m=$("modal"),i=$("mi");$("mt").textContent=title;$("mm").textContent=msg;i.style.display=prompt?"block":"none";i.value=def;m.style.display="flex";const done=v=>{m.style.display="none";$("mc").onclick=$("mok").onclick=null;i.onkeydown=null;resolve(v)};$("mc").onclick=()=>done(null);$("mok").onclick=()=>done(prompt?i.value:true);i.onkeydown=e=>{if(e.key==="Enter")done(i.value);if(e.key==="Escape")done(null)}})}
+async function sb(path,opt={}){const c=cfg();const r=await fetch(c.url+"/"+path,{method:opt.method||"GET",headers:{apikey:c.anon,Authorization:"Bearer "+c.anon,"Content-Type":"application/json",...(opt.headers||{})},body:opt.body});if(!r.ok)throw Error("Supabase "+r.status+": "+(await r.text()).slice(0,250));return r}
+async function countOf(t){const r=await sb(t+"?select=*&limit=1",{headers:{Prefer:"count=exact"}});return +(r.headers.get("content-range")||"").split("/")[1]||0}
+function setTab(n){document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===n));document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="tab-"+n));if(n==="dash")refreshDash();if(n==="bank")loadBank();if(n==="audits")loadAudits();if(n==="curriculum")renderSubjects();if(n==="settings")fillSettings()}
+function fillSubjects(){$("sel-subject").innerHTML=subjects.map(s=>`<option>${esc(s)}</option>`).join("");$("bk-subject").innerHTML='<option value="">All subjects</option>'+subjects.map(s=>`<option>${esc(s)}</option>`).join("")}
+function renderSubjects(){$("subject-list").innerHTML=subjects.map((s,i)=>`<div class="card row"><b>${esc(s)}</b><button class="red sm" data-act="delSubject" data-i="${i}">Delete</button></div>`).join("")}
+function saveSubs(){store.set("sub_list",JSON.stringify(subjects));fillSubjects();renderSubjects()}
+function fillSettings(){const c=cfg();$("set-key").value=store.get("gemini_key");$("set-model").value=c.model;$("set-tq").value=c.tq;$("set-ts").value=c.ts;$("set-url").value=c.url;$("set-anon").value=c.anon}
+function saveSettings(){store.set("gemini_key",$("set-key").value.trim());store.set("g_model",$("set-model").value);store.set("t_q",$("set-tq").value.trim()||DEF.tq);store.set("t_s",$("set-ts").value.trim()||DEF.ts);store.set("sb_url",$("set-url").value.trim()||DEF.url);store.set("sb_anon",$("set-anon").value.trim()||DEF.anon);fillSettings();toast("Settings saved")}
+async function sendGemini(key,model,payload){const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;return fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:payload})}
+const MODELS=["gemini-3.8-flash","gemini-3.5-flash-lite","gemini-2.5-flash","gemini-2.5-flash-lite"];
+async function gemini(text){const c=cfg();if(!c.keys.length)throw Error("Add a Gemini API key in Settings first.");const prompt=`Extract multiple-choice questions from the source into ONLY a valid JSON array. Each item must be {"question":"...","options":["A text","B text","C text","D text"],"correct":0,"explanation":"brief rationale","subtopic":"specific topic this question tests","difficulty":"Easy or Medium or Hard"}. Exactly four options. Judge difficulty yourself: Easy = recall, Medium = understanding/application, Hard = clinical reasoning. correct is integer 0-3. If answer is not supplied, infer it only when confident; otherwise use 0 and state uncertainty in explanation. Do not invent questions.\nSOURCE:\n${text}`;
+const payload=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:.1,responseMimeType:"application/json"}});
+let last="No request completed.";const models=[c.model,...MODELS].filter((m,i,a)=>a.indexOf(m)===i);
+for(let ki=0;ki<c.keys.length;ki++){const key=c.keys[ki];for(const model of models){let retryable=true;for(let attempt=0;attempt<3;attempt++){try{log(`Requesting ${model} (key ${ki+1}/${c.keys.length}, attempt ${attempt+1}/3)…`);const res=await sendGemini(key,model,payload);if(res.ok){const data=await res.json();const txt=data.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("")||"";if(!txt)throw Error("Gemini returned empty content.");return parseJson(txt)}let body={};try{body=await res.json()}catch{}const msg=body.error?.message||`HTTP ${res.status}`;last=`${model} / key ${ki+1}: HTTP ${res.status} — ${msg}`;if(res.status===429||res.status===503||res.status===500||res.status===502){if(attempt<2){const delay=Math.min(1000*2**attempt,5000)+Math.random()*400;log(`${res.status} from ${model}. Retrying in ${(delay/1000).toFixed(1)}s…`,"#f59e0b");await wait(delay);continue}break}if(res.status===404||res.status===400||res.status===401||res.status===403){retryable=false;break}break}catch(e){last=e.message;if(attempt<2){await wait(800*2**attempt);continue}break}}log(`Trying next supported model after: ${last}`,"#f59e0b");if(!retryable)continue}}
+throw Error("All Gemini model/key attempts failed. Last error: "+last+"\nA 503 is a temporary capacity/service error; retries and fallback can help but cannot guarantee availability. Check model access and quota in AI Studio.") }
+function parseJson(s){s=s.replace(/```(?:json)?/gi,"").replace(/```/g,"").trim();try{return JSON.parse(s)}catch{const a=s.indexOf("[");const b=s.lastIndexOf("]");if(a>=0&&b>a)return JSON.parse(s.slice(a,b+1));throw Error("Could not parse the AI response as JSON.")}}
+function normalize(q){let opts=Array.isArray(q.options)?q.options.slice(0,4).map(x=>String(x??"").replace(/^\s*[A-Da-d1-4][).:]\s*/,"").trim()):[];while(opts.length<4)opts.push("");let c=q.correct;if(typeof c==="string"&&!/^\d+$/.test(c.trim()))c="ABCD".indexOf(c.trim().toUpperCase()[0]);c=Number(c);if(!Number.isInteger(c)||c<0||c>3)c=0;return{question:String(q.question||"").trim(),options:opts,correct:c,explanation:String(q.explanation||"").trim(),subject:$("sel-subject").value,subtopic:String(q.subtopic||q.topic||$("txt-subtopic").value||"").trim(),difficulty:fixDiff(q.difficulty)||$("sel-diff").value}}
+function fixDiff(d){d=String(d||"").toLowerCase();return d.includes("easy")?"Easy":d.includes("hard")?"Hard":d.includes("med")?"Medium":""}
+function keyQ(q){return q.question.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,120)}
+function renderStage(){ $("stage").style.display=staged.length?"flex":"none";$("q-count").textContent=staged.length;const seen=new Set();$("q-list").innerHTML=staged.map((q,i)=>{const k=keyQ(q),dup=seen.has(k);seen.add(k);return `<div class="card ${dup?"dup":""}"><div class="row"><b>Q${i+1}</b>${dup?'<span class="tag">Potential duplicate</span>':""}<span style="flex:1"></span><button class="red sm" data-act="delStage" data-i="${i}">Remove</button></div><div class="row" style="gap:8px"><select data-f="subject" data-i="${i}">${(subjects.includes(q.subject)?subjects:[...subjects,q.subject].filter(Boolean)).map(x=>`<option ${x===q.subject?"selected":""}>${esc(x)}</option>`).join("")}</select><input type="text" data-f="subtopic" data-i="${i}" value="${esc(q.subtopic||"")}" placeholder="Topic / sub-topic" style="flex:1;min-width:140px"><select data-f="difficulty" data-i="${i}">${["Easy","Medium","Hard"].map(x=>`<option ${x===q.difficulty?"selected":""}>${x}</option>`).join("")}</select></div><textarea rows="2" data-f="question" data-i="${i}">${esc(q.question)}</textarea>${q.options.map((o,j)=>`<div class="opt"><input type="radio" name="correct${i}" data-f="correct" data-i="${i}" data-j="${j}" ${q.correct===j?"checked":""}><b>${"ABCD"[j]}</b><input type="text" data-f="opt" data-i="${i}" data-j="${j}" value="${esc(o)}" placeholder="Option ${"ABCD"[j]}"></div>`).join("")}<textarea rows="2" data-f="explanation" data-i="${i}" placeholder="Explanation">${esc(q.explanation)}</textarea></div>`}).join("")}
+$("q-list").addEventListener("input",e=>{const t=e.target;if(!t.dataset.f)return;const q=staged[+t.dataset.i];if(!q)return;if(t.dataset.f==="opt")q.options[+t.dataset.j]=t.value;else q[t.dataset.f]=t.value});
+$("q-list").addEventListener("change",e=>{const t=e.target;if(t.dataset.f==="correct"){staged[+t.dataset.i].correct=+t.dataset.j;renderStage()}});
+async function extract(){const btn=$("extract");btn.disabled=true;try{let text=$("raw").value.trim();if(pdfFile){if(!window.pdfjsLib)throw Error("PDF.js failed to load. Check your internet connection.");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";const doc=await pdfjsLib.getDocument({data:await pdfFile.arrayBuffer()}).promise;let parts=[];for(let i=1;i<=doc.numPages;i++){log(`Reading PDF page ${i}/${doc.numPages}…`);const p=await doc.getPage(i);parts.push((await p.getTextContent()).items.map(x=>x.str).join(" "))}text=parts.join("\n")+"\n"+text}if(text.length<20)throw Error("Upload a searchable PDF or paste at least 20 characters.");const chunks=[];for(let i=0;i<text.length;i+=12000)chunks.push(text.slice(i,i+12000));let got=[];for(let i=0;i<chunks.length;i++){log(`Extracting batch ${i+1}/${chunks.length}…`);try{const r=await gemini(chunks[i]);if(Array.isArray(r))got.push(...r.map(normalize));else throw Error("AI response was not a JSON array.")}catch(e){log(`Batch ${i+1} failed: ${e.message}`,"#f43f5e");if(i===chunks.length-1&&!got.length)throw e}if(i<chunks.length-1)await wait(1000)}got=got.filter(q=>q.question.length>5);if(!got.length)throw Error("No questions extracted. Try a smaller batch or text-based PDF.");staged.push(...got);renderStage();log(`Extracted ${got.length} questions. Review answers before saving.`,"#4ade80")}catch(e){log("Extraction failed: "+e.message,"#f43f5e")}finally{btn.disabled=false}}
+async function generateMcqs(){
+ const topic=$("gen-topic").value.trim();
+ if(topic.length<2){toast("Enter a topic for the MCQs first.");$("gen-topic").focus();return}
+ const count=Math.max(1,Math.min(25,parseInt($("gen-count").value,10)||5));
+ const difficulty=$("gen-diff").value;
+ const subject=$("sel-subject").value;
+ const notes=$("gen-notes").value.trim();
+ const btn=$("generate");btn.disabled=true;
+ try{
+  const prompt=`Create exactly ${count} original medical exam MCQs for MBBS students.
+Subject: ${subject}
+Topic: ${topic}
+Difficulty: ${difficulty}
+Additional instructions: ${notes||"None"}.
+Return ONLY a valid JSON array. Every item must be:
+{"question":"Clear single-best-answer question","options":["Option A","Option B","Option C","Option D"],"correct":0,"explanation":"Concise educational rationale explaining why the correct answer is best.","subtopic":"specific topic tested","difficulty":"${difficulty}"}
+Rules:
+- Exactly four plausible options, no option prefixes.
+- correct must be integer 0=A, 1=B, 2=C, 3=D.
+- Match the requested difficulty. Easy = core recall; Medium = application/understanding; Hard = advanced reasoning or clinical vignette appropriate to MBBS.
+- Stay tightly within the given topic and subject.
+- Avoid duplicate questions and ambiguous questions.
+- Do not claim a guideline-specific fact unless broadly established; keep medical details accurate.
+- Do not include markdown or text outside the JSON array.`;
+  const result=await gemini(prompt);
+  if(!Array.isArray(result)||!result.length)throw Error("The AI did not return an MCQ array.");
+  const qs=result.map(normalize).filter(q=>q.question.length>5);
+  if(!qs.length)throw Error("No usable MCQs were returned.");
+  qs.forEach(q=>{q.subtopic=topic;q.difficulty=difficulty});staged.push(...qs);renderStage();
+  log(`Generated ${qs.length} MCQ(s) for "${topic}" at ${difficulty} difficulty. Review the questions and answers before saving.`,"#4ade80");
+  $("stage").scrollIntoView({behavior:"smooth",block:"start"});
+ }catch(e){log("MCQ generation failed: "+e.message,"#f43f5e")}
+ finally{btn.disabled=false}
 }
 async function save(){
-  const bad=staged.findIndex(q=>q.question.trim().length<5||q.options.some(o=>!o.trim()));
-  if(bad>=0){toast("Q"+(bad+1)+" is incomplete — fill all fields");return}
-  const seen={},rows=[];let skipped=0;
-  staged.forEach(q=>{const k=keyOf(q);if(seen[k]){skipped++;return}seen[k]=1;rows.push(toRow(q))});
-  const btn=$("btn-save");btn.disabled=true;btn.textContent="Saving...";
-  try{
-    for(let i=0;i<rows.length;i+=50)await sb(cfg().tq,{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(rows.slice(i,i+50))});
-    toast("✅ Saved "+rows.length+" questions"+(skipped?" ("+skipped+" duplicates skipped)":""));staged=[];renderStage();$("raw-text").value="";
-  }catch(e){log("❌ Save failed: "+e.message+"\nTip: check table name in Settings, column names in toRow(), and that Row Level Security allows inserts.","#f43f5e")}
-  btn.disabled=false;btn.textContent="Save to Supabase";
+ const bad=staged.findIndex(q=>q.question.trim().length<5||q.options.some(o=>!o.trim()));
+ if(bad>=0)return toast(`Q${bad+1} needs question text and all four options.`);
+ const seen=new Set(),rows=[];
+ for(const q of staged){const k=keyQ(q);if(seen.has(k))continue;seen.add(k);rows.push({...q,subject:q.subject||$("sel-subject").value,subtopic:(q.subtopic||$("txt-subtopic").value||"").trim()||"General",difficulty:q.difficulty||$("sel-diff").value})}
+ const b=$("save");b.disabled=true;
+ // Try common Supabase question-table layouts (correct_answer vs correct,
+ // JSON options vs option_a/option_b/option_c/option_d).
+ const layouts=[
+  r=>({subject:r.subject,sub_topic:r.subtopic||"General",subtopic:r.subtopic||"General",difficulty:r.difficulty,question:r.question,options:r.options,answer:"ABCD"[r.correct]||"A",correct_answer:"ABCD"[r.correct]||"A",explanation:r.explanation||""})
+ ];
+ try{
+  let savedLayout=-1,lastError=null;
+  for(let li=0;li<layouts.length;li++){
+   try{
+    const payload=rows.map(layouts[li]);
+    for(let i=0;i<payload.length;i+=30)await sb(cfg().tq,{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(payload.slice(i,i+30))});
+    savedLayout=li;break;
+   }catch(e){
+    lastError=e;
+    if(!/PGRST204|Could not find the .* column|schema cache/i.test(e.message))throw e;
+   }
+  }
+  if(savedLayout<0)throw lastError||Error("No compatible questions-table layout found.");
+  toast(`Saved ${rows.length} questions.`);
+  staged=[];renderStage();$("raw").value="";clearPdf();
+ }catch(e){log("Save failed: "+e.message+"\\nThe app tried common question-table layouts. If this persists, check the actual questions columns and Supabase RLS INSERT policy.","#f43f5e")}
+ finally{b.disabled=false}
 }
-
-/* ---------- Bank ---------- */
-async function loadBank(){
-  const sub=$("bk-subject").value;let p=cfg().tq+"?select=*&order=id.desc&limit=500";
-  if(sub)p+="&subject=eq."+encodeURIComponent(sub);
-  try{bankRows=await(await sb(p)).json();renderBank()}catch(e){try{bankRows=await(await sb(cfg().tq+"?select=*&limit=500"+(sub?"&subject=eq."+encodeURIComponent(sub):""))).json();renderBank()}catch(e2){toast(e2.message)}}
-}
-function renderBank(){
-  const s=$("bk-search").value.toLowerCase();const rows=bankRows.filter(r=>!s||String(r.question).toLowerCase().includes(s));
-  $("bk-info").textContent=rows.length+" of "+bankRows.length+" shown";
-  $("bk-rows").innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(String(r.question).slice(0,180))}</td><td><span class="tag">${esc(r.subject||"")}</span></td><td>${"ABCD"[r.correct]||""}</td><td><button class="btn d sm" data-act="delBank" data-id="${esc(r.id)}">Delete</button></td></tr>`).join("")||'<tr><td colspan="5" style="text-align:center;color:#64748b">No questions.</td></tr>';
-}
-async function delBank(id){
-  if(!confirm("Delete this question permanently?"))return;
-  try{await sb(cfg().tq+"?id=eq."+encodeURIComponent(id),{method:"DELETE"});bankRows=bankRows.filter(r=>String(r.id)!==String(id));renderBank();toast("Deleted")}catch(e){toast(e.message)}
-}
-
-/* ---------- Audits ---------- */
-async function loadAudits(){
-  $("audit-rows").innerHTML='<tr><td colspan="6" style="text-align:center">Loading...</td></tr>';
-  try{auditRows=await(await sb(cfg().ts+"?select=*&order=created_at.desc&limit=200")).json()}
-  catch(e){try{auditRows=await(await sb(cfg().ts+"?select=*&limit=200")).json()}catch(e2){$("audit-rows").innerHTML='<tr><td colspan="6" style="color:#f43f5e">'+esc(e2.message)+"</td></tr>";return}}
-  renderAudits();
-}
-const A=r=>[r.student_name||r.student||r.name||"",r.student_id||r.user_id||r.id||"",r.test_name||r.test||"",r.score==null?"":r.score,r.accuracy==null?"":r.accuracy,r.time_taken||r.time||r.created_at||""];
-function renderAudits(){
-  const s=$("au-search").value.toLowerCase();const rows=auditRows.filter(r=>!s||A(r).join(" ").toLowerCase().includes(s));
-  $("audit-rows").innerHTML=rows.map(r=>"<tr>"+A(r).map(x=>"<td>"+esc(x)+"</td>").join("")+"</tr>").join("")||'<tr><td colspan="6" style="text-align:center;color:#64748b">No submissions.</td></tr>';
-}
-
-/* ---------- Downloads ---------- */
-function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-const csv=rows=>rows.map(r=>r.map(x=>'"'+String(x==null?"":x).replace(/"/g,'""')+'"').join(",")).join("\n");
-
-/* ---------- Event wiring ---------- */
-const ACT={
-  refreshDash,extract,addBlank,save,loadBank,loadAudits,saveSettings,testConn,
-  clearStage:()=>{if(confirm("Clear all staged questions?")){staged=[];renderStage()}},
-  dlJson:()=>dl("questions.json",JSON.stringify(staged,null,2),"application/json"),
-  dlBankCsv:()=>dl("bank.csv",csv([["subject","question","A","B","C","D","correct","explanation"]].concat(bankRows.map(r=>{const o=r.options||[];return[r.subject,r.question,o[0],o[1],o[2],o[3],"ABCD"[r.correct],r.explanation]}))),"text/csv"),
-  dlAuditCsv:()=>dl("audits.csv",csv([["student","id","test","score","accuracy","time"]].concat(auditRows.map(A))),"text/csv"),
-  addSubject:()=>{const n=(prompt("New subject name:")||"").trim();if(n&&!subjects.includes(n)){subjects.push(n);saveSubs()}},
-  delSubject:t=>{const i=+t.dataset.i;if(confirm("Delete '"+subjects[i]+"'?")){subjects.splice(i,1);saveSubs()}},
-  delStage:t=>{staged.splice(+t.dataset.i,1);renderStage()},
-  delBank:t=>delBank(t.dataset.id)
+async function refreshDash(){try{$("st-q").textContent=await countOf(cfg().tq);try{$("st-s").textContent=await countOf(cfg().ts)}catch{$("st-s").textContent="0"}$("st-c").textContent="Online";$("st-c").style.color="#4ade80";const rows=await(await sb(cfg().tq+"?select=subject&limit=5000")).json(),m={};rows.forEach(r=>m[r.subject||"Unknown"]=(m[r.subject||"Unknown"]||0)+1);$("st-sub").innerHTML=Object.entries(m).sort().map(([s,n])=>`<div class="stat"><b>${n}</b><span>${esc(s)}</span></div>`).join("")||'<p class="sub">No questions found.</p>';try{const a=await(await sb(cfg().ts+"?select=accuracy&limit=200")).json(),v=a.map(x=>parseFloat(x.accuracy)).filter(Number.isFinite);$("st-a").textContent=v.length?Math.round(v.reduce((x,y)=>x+y,0)/v.length)+"%":"–"}catch{$("st-a").textContent="–"}}catch(e){$("st-c").textContent="Error";$("st-c").style.color="#f43f5e";toast("Dashboard: "+e.message)}}
+async function testConn(){const s=$("status");s.style.display="block";s.textContent="Testing…";const lines=[];try{await countOf(cfg().tq);lines.push("✅ Supabase REST connected")}catch(e){lines.push("❌ Supabase: "+e.message)}const c=cfg();if(!c.keys.length)lines.push("⚠️ No Gemini API key saved.");else{const ping=JSON.stringify({contents:[{parts:[{text:"Reply with OK"}]}],generationConfig:{maxOutputTokens:8}});let ok=false;for(let i=0;i<c.keys.length;i++){let result="";for(const model of [c.model,...MODELS].filter((x,j,a)=>a.indexOf(x)===j)){try{const r=await sendGemini(c.keys[i],model,ping);if(r.ok){result=`✅ Gemini key ${i+1}: ${model} available`;ok=true;break}let d={};try{d=await r.json()}catch{}result=`${model}: HTTP ${r.status} ${d.error?.message||""}`;if(r.status===503||r.status===429){await wait(900);continue}if(r.status===404||r.status===400||r.status===401||r.status===403)continue}catch(e){result=e.message}}lines.push(result);if(ok)break}}s.textContent=lines.join("\n")}
+async function loadBank(){const sub=$("bk-subject").value;let path=cfg().tq+"?select=*&limit=1000";if(sub)path+="&subject=eq."+encodeURIComponent(sub);$("bk-info").textContent="Loading…";try{let r;try{r=await sb(path+"&order=id.desc")}catch(e){r=await sb(path)}const d=await r.json();bankRows=Array.isArray(d)?d:[]}catch(x){bankRows=[];$("bk-info").textContent="Could not load: "+x.message;$("bk-rows").innerHTML='<tr><td colspan="7">'+esc(x.message)+'</td></tr>';return}renderBank();if(!bankRows.length)$("bk-info").textContent="0 questions returned. If you know questions exist, Supabase RLS is blocking SELECT (add a read policy for anon)."}
+function renderBank(){const q=$("bk-search").value.toLowerCase(),rows=bankRows.filter(r=>String(r.question||"").toLowerCase().includes(q));$("bk-info").textContent=`Showing ${rows.length} of ${bankRows.length} loaded questions.`;$("bk-rows").innerHTML=rows.map((r,i)=>{let a=r.correct??r.correct_answer??r.answer??"";if(typeof a==="string"&&/^[A-D]$/i.test(a.trim()))a="ABCD".indexOf(a.trim().toUpperCase());return `<tr><td>${i+1}</td><td>${esc(String(r.question||"").slice(0,220))}</td><td>${esc(r.subject||"")}</td><td>${esc(r.sub_topic||r.subtopic||"")}</td><td>${esc(r.difficulty||"")}</td><td>${"ABCD"[Number(a)]||String(r.correct_answer||r.answer||"")}</td><td><button class="red sm" data-act="delBank" data-id="${esc(r.id)}">Delete</button></td></tr>`}).join("")||'<tr><td colspan="7">No questions found.</td></tr>'}
+async function delBank(id){if(!await dialog("Delete question","Delete this question permanently?"))return;try{await sb(cfg().tq+"?id=eq."+encodeURIComponent(id),{method:"DELETE"});bankRows=bankRows.filter(r=>String(r.id)!==String(id));renderBank();toast("Question deleted")}catch(e){toast(e.message)}}
+const auditMap=r=>[r.student_name||r.student||r.name||"Anonymous",r.student_id||r.user_id||r.id||"–",r.test_name||r.test||"–",r.score??"–",r.accuracy??"–",r.time_taken||r.time||r.created_at||"–"];
+async function loadAudits(){let d=null,err=null;for(const q of ["?select=*&limit=200&order=created_at.desc","?select=*&limit=200"]){try{d=await(await sb(cfg().ts+q)).json();err=null;break}catch(e){err=e}}if(err){auditRows=[];const miss=/PGRST205|404/.test(err.message);$("audit-rows").innerHTML='<tr><td colspan="6">'+(miss?"Submissions table '"+esc(cfg().ts)+"' does not exist yet. Create it in Supabase (or set the correct table name in Settings).":esc(err.message))+'</td></tr>';return}auditRows=Array.isArray(d)?d:[];renderAudits()}
+function renderAudits(){const s=$("au-search").value.toLowerCase(),rows=auditRows.filter(r=>auditMap(r).join(" ").toLowerCase().includes(s));$("audit-rows").innerHTML=rows.map(r=>`<tr>${auditMap(r).map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")||'<tr><td colspan="6">No submissions found.</td></tr>'}
+function clearPdf(){pdfFile=null;$("pdf").value="";$("pdf-label").textContent="Click or drag a searchable PDF here";$("remove-pdf").style.display="none"}
+function download(name,content,type){const u=URL.createObjectURL(new Blob([content],{type})),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+const csv=rows=>rows.map(r=>r.map(x=>'"'+String(x??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+const actions={
+refreshDash,extract,save,loadBank,loadAudits,saveSettings,testConn,clearPdf,generateMcqs,
+addBlank(){staged.push({question:"",options:["","","",""],correct:0,explanation:"",subject:$("sel-subject").value,subtopic:$("txt-subtopic").value.trim(),difficulty:$("sel-diff").value});renderStage()},
+clearStage:async()=>{if(await dialog("Clear staged questions","Discard all staged questions?")){staged=[];renderStage()}},
+dlJson:()=>download("mbbs_questions.json",JSON.stringify(staged,null,2),"application/json"),
+dlBankCsv:()=>download("mbbs_question_bank.csv",csv([["subject","question","option_a","option_b","option_c","option_d","correct","explanation"],...bankRows.map(r=>[r.subject,r.question,...(r.options||[]),(r.answer||r.correct_answer||"ABCD"[r.correct]||""),r.explanation])]),"text/csv;charset=utf-8"),
+dlAuditCsv:()=>download("submissions_audit.csv",csv([["student","id","test","score","accuracy","time"],...auditRows.map(auditMap)]),"text/csv;charset=utf-8"),
+addSubject:async()=>{const n=await dialog("New subject","Enter subject name",true);if(n?.trim()&&!subjects.includes(n.trim())){subjects.push(n.trim());saveSubs()}},
+delSubject:async t=>{const i=+t.dataset.i;if(await dialog("Delete subject",`Delete "${subjects[i]}"?`)){subjects.splice(i,1);saveSubs()}},
+delStage:t=>{staged.splice(+t.dataset.i,1);renderStage()},delBank:t=>delBank(t.dataset.id)
 };
-document.addEventListener("click",e=>{
-  const nb=e.target.closest(".nb");if(nb)return setTab(nb.dataset.tab);
-  const b=e.target.closest("[data-act]");if(!b)return;const f=ACT[b.dataset.act];if(f)f(b);
-});
-$("q-list").addEventListener("input",onStageEdit);$("q-list").addEventListener("change",onStageEdit);
+document.addEventListener("click",e=>{const n=e.target.closest("[data-tab]");if(n){setTab(n.dataset.tab);return}const b=e.target.closest("[data-act]");if(b&&actions[b.dataset.act])actions[b.dataset.act](b)});
 $("bk-search").addEventListener("input",renderBank);$("au-search").addEventListener("input",renderAudits);
-fillSubjectDropdowns();renderSubjects();fillSettings();refreshDash();
+const drop=$("drop");drop.addEventListener("click",e=>{if(e.target.closest("button"))return;$("pdf").click()});$("pdf").addEventListener("change",e=>{const f=e.target.files[0];if(f){if(f.type!=="application/pdf"&&!f.name.toLowerCase().endsWith(".pdf")){toast("Choose a PDF file");return}pdfFile=f;$("pdf-label").textContent="Selected: "+f.name;$("remove-pdf").style.display="inline-block"}});
+["dragenter","dragover"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="#38bdf8"}));["dragleave","drop"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="#334155"}));drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f){pdfFile=f;$("pdf-label").textContent="Selected: "+f.name;$("remove-pdf").style.display="inline-block"}});
+fillSubjects();renderSubjects();fillSettings();refreshDash();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
