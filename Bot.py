@@ -128,6 +128,8 @@ DEFAULT_SETTINGS = {
     "demo_max_downloads": 2,
     "demo_year_tier": "all",
     "demo_auto_start": True,
+    "default_content": "full",
+    "default_days": 0,
 }
 
 
@@ -135,6 +137,7 @@ def _empty_db():
     return {
         "users": {}, "banned": [], "approved": [], "approved_details": {},
         "settings": DEFAULT_SETTINGS.copy(), "daily_downloads": {}, "demo_sessions": {},
+        "pending": {},
     }
 
 
@@ -146,7 +149,7 @@ def normalize_db(data):
         base["settings"] = {}
     for k, v in DEFAULT_SETTINGS.items():
         base["settings"].setdefault(k, v)
-    for key in ("users", "approved_details", "daily_downloads", "demo_sessions"):
+    for key in ("users", "approved_details", "daily_downloads", "demo_sessions", "pending"):
         if not isinstance(base.get(key), dict):
             base[key] = {}
     for key in ("banned", "approved"):
@@ -299,6 +302,8 @@ def _merge_local_into(cloud):
         cloud["users"].setdefault(uid, u)
     for uid, s in local["demo_sessions"].items():
         cloud["demo_sessions"].setdefault(uid, s)
+    for uid, s in local.get("pending", {}).items():
+        cloud["pending"].setdefault(uid, s)
     return cloud
 
 
@@ -685,6 +690,7 @@ def approve_user(uid, tier="all", content_tier="full", days=0):
         db["approved"].append(uid)
     if uid in db["banned"]:
         db["banned"].remove(uid)
+    db["pending"].pop(str(uid), None)
     det = db["approved_details"].setdefault(str(uid), {})
     det["tier"] = tier
     det["content_tier"] = content_tier
@@ -784,8 +790,50 @@ def register_student_handlers(bot, bot_type):
             await reply(event, f"⚠️ Your plan is **{TIER_LABELS.get(tier, tier)}**. "
                                "Please use the bot for your own year.")
         else:
-            await reply(event, LOCKED_MESSAGE.format(user_id=uid))
+            await request_access(event)
         return False
+
+    async def request_access(event):
+        uid = event.sender_id
+        p = db["pending"].get(str(uid))
+        buttons = None
+        if p is None:
+            db["pending"][str(uid)] = {"requested_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                       "bot": bot_type, "last_ping": time.time()}
+            save_db(db)
+            await notify_admin_request(uid)
+            status = "✅ Your access request has been sent to the admin."
+        elif p.get("rejected"):
+            status = "❌ Your last request was not approved."
+        else:
+            status = "⏳ Your request is pending admin approval."
+            buttons = [[Button.inline("🔔 Remind Admin", b"req")]]
+        await reply(event, "🔒 **Access Required**\n\nThis library is exclusive to enrolled students.\n\n"
+                           f"{status}\nYou'll get a message here as soon as you're approved.\n\n"
+                           f"🆔 Your ID: `{uid}`\n📞 Support: {OWNER_CONTACT}", buttons)
+
+    async def handle_req(event):
+        uid = event.sender_id
+        if is_banned(uid):
+            return
+        try:
+            track_user(await event.get_sender(), bot_type)
+        except Exception:
+            pass
+        if uid in db["approved"]:
+            return await show_home(event)
+        p = db["pending"].get(str(uid))
+        if p and p.get("rejected"):
+            await bot.send_message(uid, f"❌ Your request was not approved. Please contact {OWNER_CONTACT}.")
+            return
+        if p and time.time() - p.get("last_ping", 0) < 1800:
+            await bot.send_message(uid, "⏳ Your request is already with the admin. Please wait a little.")
+            return
+        db["pending"][str(uid)] = {"requested_at": (p or {}).get("requested_at", datetime.now().strftime("%Y-%m-%d %H:%M")),
+                                   "bot": bot_type, "last_ping": time.time()}
+        save_db(db)
+        await notify_admin_request(uid)
+        await bot.send_message(uid, "📨 Request sent to the admin. You'll be notified here once approved.")
 
     def demo_header(uid):
         st, rem, used, mx = check_demo_status(uid)
@@ -802,13 +850,18 @@ def register_student_handlers(bot, bot_type):
                     "Try our lectures and CBT Q-Bank for a few minutes.")
             buttons.append([Button.url("🌐 Try CBT Q-Bank (Demo)",
                                        generate_demo_webapp_url(session["cbt_id"], session["cbt_pass"]))])
+            buttons.append([Button.inline("📩 Request Full Access", b"req")])
         else:
             det = db["approved_details"].get(str(uid), {})
             exp = det.get("expiry")
-            text = (f"👋 Welcome, **{name}**!\n📖 **{BOT_TITLES_MAP.get(bot_type, 'MBBS Library')}**\n\n"
-                    f"💎 Plan: **{TIER_LABELS.get(det.get('tier', 'all'), 'All Years')}** · "
-                    f"{CONTENT_LABELS.get(det.get('content_tier', 'full'), 'Lectures only')}\n"
-                    f"📅 Valid till: **{exp or 'Lifetime'}**")
+            text = (f"🎓 **{BOT_TITLES_MAP.get(bot_type, 'MBBS Library')}**\n\n"
+                    f"Welcome back, **{name}**\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    f"🎓 Year: **{TIER_LABELS.get(det.get('tier', 'all'), 'All Years')}**\n"
+                    f"📦 Plan: **{CONTENT_LABELS.get(det.get('content_tier', 'full'), 'Lectures only')}**\n"
+                    f"📅 Valid till: **{exp or 'Lifetime'}**\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "Choose an option below 👇")
             if uid == ADMIN_ID or has_qbank(uid):
                 buttons.append([Button.url("🌐 Open CBT Q-Bank", generate_webapp_launch_url(uid))])
         return text, buttons
@@ -825,8 +878,9 @@ def register_student_handlers(bot, bot_type):
                             [[Button.inline("▶️ Start Free Demo", b"demo:start")]])
                 return
             if st == "expired":
-                await reply(event, f"⏰ **Your demo has ended.**\n\nGet full access: {OWNER_CONTACT}\n"
-                                   f"Your ID: `{uid}`")
+                await reply(event, "⏰ **Your demo has ended.**\n\nLiked it? Request full access and the admin "
+                                   f"will activate your plan.\n📞 {OWNER_CONTACT}",
+                            [[Button.inline("📩 Request Full Access", b"req")]])
                 return
         text, buttons = await home_view(uid)
         await reply(event, text, buttons)
@@ -1002,6 +1056,8 @@ def register_student_handlers(bot, bot_type):
             pass
         if data == "noop":
             return
+        if data == "req":
+            return await handle_req(event)
         if not await gate(event):
             return
         if data == "demo:start" and is_demo:
@@ -1092,26 +1148,104 @@ async def do_broadcast(target, text, entities, media_bytes, media_name):
 
 
 # ============================================================
-# MANAGER (ADMIN) BOT
+# MANAGER (ADMIN) BOT  -  one-tap approvals
 # ============================================================
+
+TIER_SHORT = {"all": "All", "year_1": "1st", "year_2": "2nd", "year_3": "3rd", "final_year": "Final"}
+
+HELP_TEXT = ("ℹ️ **Help**\n\n"
+             "• New students who open a bot get an **access request card** here - tap **Approve** and you're done.\n"
+             "• **Students** → tap a name to extend, change plan, remove or ban.\n"
+             "• **Find Student** → search by name, @username or ID.\n\n"
+             "Shortcuts:\n`/approve <id> <tier> <full|lectures> <days>`\n"
+             "`/extend <id> <days>` · `/remove <id>` · `/ban <id>` · `/unban <id>` · `/user <id>`\n"
+             "tier = all, year_1, year_2, year_3, final_year (days 0 = lifetime)\n\n"
+             "Restore: send a backup .json with caption `/restore`")
+
+
+def dur_label(days):
+    days = int(days or 0)
+    if days == 0:
+        return "Lifetime"
+    if days == 365:
+        return "1 year"
+    return f"{days} days"
+
+
+def pending_ids():
+    return [int(u) for u, p in db["pending"].items()
+            if not p.get("rejected") and int(u) not in db["approved"]]
+
+
+def default_tier_for(bot):
+    return bot if bot in TIER_LABELS else "all"
+
+
+def default_plan_for(uid):
+    bot = db["users"].get(str(uid), {}).get("bot_used")
+    s = db["settings"]
+    return default_tier_for(bot), s.get("default_content", "full"), int(s.get("default_days", 0))
+
+
+def is_expired(uid):
+    exp = db["approved_details"].get(str(uid), {}).get("expiry")
+    if exp and db["settings"].get("expiry_enabled"):
+        try:
+            return datetime.now().date() > datetime.strptime(exp, "%Y-%m-%d").date()
+        except Exception:
+            return False
+    return False
+
+
+def request_card(uid, back=False):
+    u = db["users"].get(str(uid), {})
+    p = db["pending"].get(str(uid), {})
+    tier, content, days = default_plan_for(uid)
+    bot = p.get("bot") or u.get("bot_used")
+    uname = f"@{u['username']}" if u.get("username") else "-"
+    text = ("🔔 **New access request**\n\n"
+            f"👤 **{esc(display_name(uid))}**\n"
+            f"🔗 {esc(uname)}\n"
+            f"🆔 `{uid}`\n"
+            f"🤖 Via: {BOT_TITLES_MAP.get(bot, bot or '-')}\n"
+            f"🕐 {p.get('requested_at', '-')}")
+    plan = "Lectures+CBT" if content == "full" else "Lectures"
+    rows = [
+        [Button.inline(f"✅ Approve · {TIER_SHORT[tier]} · {plan} · {dur_label(days)}", f"qa:{uid}")],
+        [Button.inline("✏️ Custom plan", f"pc:{uid}"), Button.inline("❌ Reject", f"rj:{uid}")],
+        [Button.inline("🚫 Ban", f"bn:{uid}")],
+    ]
+    if back:
+        rows.append([Button.inline("⬅️ Back", b"m:pend")])
+    return text, rows
+
+
+async def notify_admin_request(uid):
+    if not manager_bot_client:
+        return
+    text, rows = request_card(uid)
+    try:
+        await manager_bot_client.send_message(ADMIN_ID, text, buttons=rows)
+    except Exception:
+        logging.exception("Could not notify admin of request")
+
+
+def panel_text():
+    return ("🛠 **Admin Panel**\n\n"
+            f"⏳ Pending requests: **{len(pending_ids())}**\n"
+            f"💎 Active students: **{max(0, len(db['approved']) - 1)}**\n"
+            f"👥 Total users: **{len(db['users'])}**\n"
+            f"☁️ Cloud DB: {'✅ connected' if _cloud_ok else '❌ not connected'}")
 
 
 def panel_buttons():
     return [
-        [Button.inline("➕ Approve", b"m:approve"), Button.inline("➖ Remove", b"m:remove")],
-        [Button.inline("🚫 Ban", b"m:ban"), Button.inline("✅ Unban", b"m:unban")],
-        [Button.inline("📋 Paid Users", b"m:paid"), Button.inline("📊 Stats", b"m:stats")],
-        [Button.inline("📢 Broadcast", b"m:bc"), Button.inline("⚙️ Settings", b"m:set")],
-        [Button.inline("🧪 Demo Settings", b"m:demo"), Button.inline("☁️ Backup Now", b"m:backup")],
+        [Button.inline(f"⏳ Pending ({len(pending_ids())})", b"m:pend"), Button.inline("💎 Students", b"m:paid")],
+        [Button.inline("🔍 Find Student", b"m:find"), Button.inline("📢 Broadcast", b"m:bc")],
+        [Button.inline("📊 Stats", b"m:stats"), Button.inline("⚙️ Settings", b"m:set")],
+        [Button.inline("🧪 Demo", b"m:demo"), Button.inline("☁️ Backup", b"m:backup")],
+        [Button.inline("ℹ️ Help", b"m:help")],
     ]
-
-
-PANEL_TEXT = ("🛠 **Admin Panel**\n\n"
-              "Shortcuts:\n`/approve <id> <tier> <full|lectures> <days>`\n"
-              "`/remove <id>` · `/ban <id>` · `/unban <id>`\n"
-              "`/extend <id> <days>` · `/user <id>`\n"
-              "tier = all, year_1, year_2, year_3, final_year (days 0 = lifetime)\n"
-              "To restore: send a backup .json with caption `/restore`")
 
 
 def settings_view():
@@ -1121,8 +1255,16 @@ def settings_view():
     rows = [[Button.inline(f"{lbl}: {'✅ ON' if s.get(k) else '❌ OFF'}", f"tg:{k}")] for k, lbl in toggles]
     cur = s.get("daily_limit_max", 30)
     rows.append([Button.inline(("• " if cur == n else "") + f"{n}/day", f"lim:{n}") for n in (10, 20, 30, 50)])
-    rows.append([Button.inline("⬅️ Panel", b"m:home")])
-    return "⚙️ **Settings**\n(Daily limit applies only when enabled)", rows
+    dc = s.get("default_content", "full")
+    dd = int(s.get("default_days", 0))
+    rows.append([Button.inline(("• " if dc == "full" else "") + "Lectures+CBT", b"dc:full"),
+                 Button.inline(("• " if dc == "lectures_only" else "") + "Lectures only", b"dc:lectures_only")])
+    rows.append([Button.inline(("• " if dd == d else "") + lbl, f"df:{d}")
+                 for d, lbl in ((30, "30d"), (90, "90d"), (365, "1 yr"), (0, "♾ Life"))])
+    rows.append([Button.inline("🏠 Panel", b"m:home")])
+    return ("⚙️ **Settings**\n\n"
+            "⚡ **Quick-approve defaults** (the two bottom rows): content and duration used by the one-tap "
+            "Approve button. The year comes from the bot the student used."), rows
 
 
 def demo_view():
@@ -1135,7 +1277,7 @@ def demo_view():
         [Button.inline(("• " if s["demo_year_tier"] == t else "") + TIER_LABELS[t], f"dy:{t}")
          for t in ("year_3", "final_year")],
         [Button.inline(f"Auto-start: {'✅ ON' if s.get('demo_auto_start') else '❌ OFF'}", b"tg:demo_auto_start")],
-        [Button.inline("⬅️ Panel", b"m:home")],
+        [Button.inline("🏠 Panel", b"m:home")],
     ]
     return ("🧪 **Demo Settings**\n"
             f"Duration: {s['demo_duration_mins']} min · Downloads: {s['demo_max_downloads']} · "
@@ -1145,45 +1287,104 @@ def demo_view():
 def user_info_text(uid):
     uid = int(uid)
     det = db["approved_details"].get(str(uid), {})
-    status = "💎 Approved" if uid in db["approved"] else "⛔ Not approved"
+    u = db["users"].get(str(uid), {})
     if uid in db["banned"]:
         status = "🚫 Banned"
-    t = (f"👤 **{esc(display_name(uid))}** (`{uid}`)\n{status}\n"
-         f"Year: {TIER_LABELS.get(det.get('tier', ''), '-')} · "
-         f"Content: {CONTENT_LABELS.get(det.get('content_tier', ''), '-')}\n"
-         f"Expiry: {det.get('expiry') or 'Lifetime'}\nAdded: {det.get('added_at', '-')}")
+    elif uid in db["approved"]:
+        status = "⏰ Expired" if is_expired(uid) else "💎 Active"
+    else:
+        status = "⛔ No access"
+    t = (f"👤 **{esc(display_name(uid))}**\n"
+         f"🔗 {('@' + esc(u['username'])) if u.get('username') else '-'}\n🆔 `{uid}`\n"
+         f"📌 {status}\n")
+    if uid in db["approved"]:
+        t += (f"🎓 Year: {TIER_LABELS.get(det.get('tier', ''), '-')}\n"
+              f"📦 Plan: {CONTENT_LABELS.get(det.get('content_tier', ''), '-')}\n"
+              f"📅 Valid till: {det.get('expiry') or 'Lifetime'}\n")
     if det.get("qbank_id"):
-        t += f"\nQ-Bank: `{det['qbank_id']}` / `{det.get('qbank_pass')}` ({det.get('qb_state')})"
+        t += f"🔑 Q-Bank: `{det['qbank_id']}` / `{det.get('qbank_pass')}`"
     return t
 
 
+def user_card(uid):
+    uid = int(uid)
+    rows = []
+    if uid != ADMIN_ID:
+        if uid in db["approved"]:
+            rows.append([Button.inline("➕ 30 days", f"ex:{uid}:30"), Button.inline("➕ 90 days", f"ex:{uid}:90"),
+                         Button.inline("➕ 1 year", f"ex:{uid}:365")])
+            rows.append([Button.inline("✏️ Change plan", f"pc:{uid}"), Button.inline("➖ Remove", f"rm:{uid}")])
+        else:
+            rows.append([Button.inline("✅ Quick Approve", f"qa:{uid}"), Button.inline("✏️ Custom plan", f"pc:{uid}")])
+        rows.append([Button.inline("✅ Unban" if uid in db["banned"] else "🚫 Ban",
+                                   f"{'ub' if uid in db['banned'] else 'bn'}:{uid}")])
+    rows.append([Button.inline("⬅️ Students", b"m:paid"), Button.inline("🏠 Panel", b"m:home")])
+    return user_info_text(uid), rows
+
+
+def students_view(page):
+    ids = [u for u in db["approved"] if u != ADMIN_ID]
+    ids.sort(key=lambda u: db["approved_details"].get(str(u), {}).get("added_at", ""), reverse=True)
+    if not ids:
+        return "💎 **Students**\n\nNo students yet.", [[Button.inline("🏠 Panel", b"m:home")]]
+    per = 8
+    pages = (len(ids) + per - 1) // per
+    page = max(0, min(page, pages - 1))
+    rows = []
+    for u in ids[page * per:(page + 1) * per]:
+        tier = db["approved_details"].get(str(u), {}).get("tier", "all")
+        mark = " ⏰" if is_expired(u) else ""
+        rows.append([Button.inline(f"{display_name(u)[:22]} · {TIER_SHORT.get(tier, tier)}{mark}", f"u:{u}")])
+    nav = []
+    if page > 0:
+        nav.append(Button.inline("⬅️ Prev", f"pp:{page - 1}"))
+    nav.append(Button.inline(f"{page + 1}/{pages}", b"noop"))
+    if page < pages - 1:
+        nav.append(Button.inline("Next ➡️", f"pp:{page + 1}"))
+    rows.append(nav)
+    rows.append([Button.inline("🏠 Panel", b"m:home")])
+    return f"💎 **Students ({len(ids)})**\nTap a name to manage.", rows
+
+
+def search_users(q):
+    q = q.strip().lstrip("@").lower()
+    res = []
+    if q.isdigit() and len(q) >= 5:
+        res.append(int(q))
+    for uid, u in db["users"].items():
+        hay = f"{u.get('first_name', '')} {u.get('last_name', '')} {u.get('username', '')} {uid}".lower()
+        if q and q in hay and int(uid) not in res:
+            res.append(int(uid))
+    return res[:10]
+
+
+async def finish_approve(uid, tier, content, days):
+    approve_user(uid, tier, content, days)
+    note = ("🎉 **Access activated!**\n\n"
+            f"🎓 Year: **{TIER_LABELS.get(tier)}**\n"
+            f"📦 Plan: **{CONTENT_LABELS.get(content)}**\n"
+            f"📅 Valid: **{dur_label(days)}**\n\n"
+            "Send /start to open your library.")
+    delivered = await send_via_any(uid, note)
+    out = (f"✅ **Approved** {esc(display_name(uid))} (`{uid}`)\n"
+           f"🎓 {TIER_LABELS.get(tier)} · 📦 {CONTENT_LABELS.get(content)} · 📅 {dur_label(days)}")
+    if content == "full":
+        out += "\n🔑 Q-Bank login is sent to the student automatically."
+    if not delivered:
+        out += "\n⚠️ Couldn't message the student (they must open a bot and press /start first)."
+    return out
+
+
 def register_manager_handlers(bot):
-    def tier_buttons():
-        rows = [[Button.inline(TIER_LABELS[t], f"ap_t:{t}")] for t in TIER_LABELS]
-        return rows
-
-    async def finish_approve(uid, tier, content, days):
-        approve_user(uid, tier, content, days)
-        note = (f"✅ **Subscription activated!**\nYear: **{TIER_LABELS.get(tier)}** · "
-                f"**{CONTENT_LABELS.get(content)}**\nValid: **{'Lifetime' if not days else f'{days} days'}**\n"
-                "Send /start to begin.")
-        delivered = await send_via_any(uid, note)
-        extra = "" if delivered else "\n⚠️ Could not DM the user (they must /start a bot first)."
-        if content == "full":
-            extra += "\n🔑 Q-Bank login will be sent automatically."
-        return (f"✅ Approved `{uid}` — {TIER_LABELS.get(tier)} · {CONTENT_LABELS.get(content)} · "
-                f"{'Lifetime' if not days else f'{days} days'}{extra}")
-
     @bot.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
     async def on_msg(event):
         uid = event.sender_id
         if uid != ADMIN_ID:
-            await event.respond("🔒 This is the private manager bot.")
+            await event.respond("🔒 This is a private management bot.")
             return
         text = (event.raw_text or "").strip()
 
-        # ----- restore from backup file -----
-        if event.document and (event.raw_text or "").strip().lower().startswith("/restore"):
+        if event.document and text.lower().startswith("/restore"):
             try:
                 raw = await event.download_media(file=bytes)
                 new = normalize_db(json.loads(raw.decode("utf-8")))
@@ -1197,13 +1398,12 @@ def register_manager_handlers(bot):
                 await event.respond(f"❌ Restore failed: {e}")
             return
 
-        # ----- commands -----
         if text.startswith("/"):
             parts = text.split()
             cmd = parts[0].lower().split("@")[0]
             ADMIN_STATES.pop(ADMIN_ID, None)
             if cmd in ("/start", "/panel", "/menu"):
-                return await event.respond(PANEL_TEXT, buttons=panel_buttons())
+                return await event.respond(panel_text(), buttons=panel_buttons())
             try:
                 if cmd == "/approve":
                     target = int(parts[1])
@@ -1247,46 +1447,34 @@ def register_manager_handlers(bot):
                     save_db(db)
                     return await event.respond(f"📅 `{target}` now valid till **{det['expiry']}**")
                 if cmd == "/user":
-                    return await event.respond(user_info_text(int(parts[1])))
+                    t, rows = user_card(int(parts[1]))
+                    return await event.respond(t, buttons=rows)
                 if cmd == "/backup":
                     await trigger_cloud_backup(force=True)
                     return
             except (IndexError, ValueError):
-                return await event.respond("⚠️ Wrong format. Send /start to see the examples.")
+                return await event.respond("⚠️ Wrong format. Tap ℹ️ Help in the panel for examples.")
             return await event.respond("Unknown command. Send /start.")
 
-        # ----- state-driven input -----
         st = ADMIN_STATES.get(ADMIN_ID)
         if not st:
-            return await event.respond(PANEL_TEXT, buttons=panel_buttons())
-        step = st["step"]
+            return await event.respond(panel_text(), buttons=panel_buttons())
 
-        if step in ("ap_id", "remove", "ban", "unban"):
-            m = re.search(r"\d{5,}", text)
-            if not m:
-                return await event.respond("Please send a valid numeric Telegram ID.")
-            target = int(m.group())
-            if step == "ap_id":
-                st.update(step="ap_tier", uid=target)
-                return await event.respond(f"Approve `{target}` — choose the **year**:", buttons=tier_buttons())
+        if st["step"] == "find":
+            res = search_users(text)
             ADMIN_STATES.pop(ADMIN_ID, None)
-            if step == "remove":
-                if target in db["approved"] and target != ADMIN_ID:
-                    db["approved"].remove(target)
-                    save_db(db)
-                    return await event.respond(f"➖ Removed `{target}`", buttons=panel_buttons())
-                return await event.respond("User is not approved.", buttons=panel_buttons())
-            if step == "ban":
-                if target != ADMIN_ID and target not in db["banned"]:
-                    db["banned"].append(target)
-                    save_db(db)
-                return await event.respond(f"🚫 Banned `{target}`", buttons=panel_buttons())
-            if target in db["banned"]:
-                db["banned"].remove(target)
-                save_db(db)
-            return await event.respond(f"✅ Unbanned `{target}`", buttons=panel_buttons())
+            if not res:
+                return await event.respond("No student found. Try another name, @username or ID.",
+                                           buttons=[[Button.inline("🔍 Search again", b"m:find"),
+                                                     Button.inline("🏠 Panel", b"m:home")]])
+            if len(res) == 1:
+                t, rows = user_card(res[0])
+                return await event.respond(t, buttons=rows)
+            rows = [[Button.inline(f"{display_name(u)[:24]} · {u}", f"u:{u}")] for u in res]
+            rows.append([Button.inline("🏠 Panel", b"m:home")])
+            return await event.respond(f"🔍 **{len(res)} results** - tap one:", buttons=rows)
 
-        if step == "bc_msg":
+        if st["step"] == "bc_msg":
             media_bytes, media_name = None, None
             if event.media:
                 if event.file and event.file.size and event.file.size > 20 * 1024 * 1024:
@@ -1301,8 +1489,8 @@ def register_manager_handlers(bot):
             count = len(get_broadcast_audience(st["target"]))
             label = dict(BROADCAST_TARGETS)[st["target"]]
             return await event.respond(
-                f"📢 **Confirm broadcast**\nAudience: **{label}** — **{count}** users\n\n"
-                "Send it?", buttons=[[Button.inline("✅ Send now", b"bc_go"), Button.inline("❌ Cancel", b"bc_no")]])
+                f"📢 **Confirm broadcast**\nAudience: **{label}** - **{count}** users\n\nSend it?",
+                buttons=[[Button.inline("✅ Send now", b"bc_go"), Button.inline("❌ Cancel", b"bc_no")]])
 
     @bot.on(events.CallbackQuery)
     async def on_cb(event):
@@ -1320,60 +1508,135 @@ def register_manager_handlers(bot):
             except MessageNotModifiedError:
                 pass
 
+        home = [Button.inline("🏠 Panel", b"m:home")]
+
+        if data == "noop":
+            return
         if data == "m:home":
             ADMIN_STATES.pop(ADMIN_ID, None)
-            return await show(PANEL_TEXT, panel_buttons())
-        if data in ("m:approve", "m:remove", "m:ban", "m:unban"):
-            step = {"m:approve": "ap_id", "m:remove": "remove", "m:ban": "ban", "m:unban": "unban"}[data]
-            ADMIN_STATES[ADMIN_ID] = {"step": step}
-            return await show("Send the user's **Telegram ID** (numeric):", [[Button.inline("⬅️ Cancel", b"m:home")]])
+            return await show(panel_text(), panel_buttons())
+        if data == "m:help":
+            return await show(HELP_TEXT, [home])
 
-        if data.startswith("ap_t:"):
-            st = ADMIN_STATES.get(ADMIN_ID)
-            if not st or "uid" not in st:
-                return
-            st["tier"] = data.split(":", 1)[1]
-            return await show(f"`{st['uid']}` · {TIER_LABELS[st['tier']]}\nChoose **content**:", [
-                [Button.inline("📚 Lectures + CBT Q-Bank", b"ap_c:full")],
-                [Button.inline("🎬 Lectures only", b"ap_c:lectures_only")]])
-        if data.startswith("ap_c:"):
-            st = ADMIN_STATES.get(ADMIN_ID)
-            if not st or "tier" not in st:
-                return
-            st["content"] = data.split(":", 1)[1]
-            return await show("Choose **duration**:", [
-                [Button.inline("30 days", b"ap_d:30"), Button.inline("90 days", b"ap_d:90")],
-                [Button.inline("180 days", b"ap_d:180"), Button.inline("365 days", b"ap_d:365")],
-                [Button.inline("♾ Lifetime", b"ap_d:0")]])
-        if data.startswith("ap_d:"):
-            st = ADMIN_STATES.pop(ADMIN_ID, None)
-            if not st or "content" not in st:
-                return
-            msg = await finish_approve(st["uid"], st["tier"], st["content"], int(data.split(":", 1)[1]))
-            return await show(msg, panel_buttons())
+        # ---------- pending requests ----------
+        if data == "m:pend":
+            ids = pending_ids()
+            if not ids:
+                return await show("✅ **No pending requests.**", [home])
+            rows = [[Button.inline(f"{display_name(u)[:24]} · {TIER_SHORT[default_plan_for(u)[0]]}", f"rq:{u}")]
+                    for u in ids[:20]]
+            rows.append(home)
+            return await show(f"⏳ **Pending requests ({len(ids)})**\nTap a student to review.", rows)
 
+        m = re.match(r"^rq:(\d+)$", data)
+        if m:
+            t, rows = request_card(int(m.group(1)), back=True)
+            return await show(t, rows)
+
+        # ---------- students ----------
         if data == "m:paid":
-            lines = []
-            for uid in db["approved"]:
-                if uid == ADMIN_ID:
-                    continue
-                d = db["approved_details"].get(str(uid), {})
-                lines.append(f"{uid} | {esc(display_name(uid))} | {d.get('tier', '-')} | "
-                             f"{'full' if d.get('content_tier') == 'full' else 'lec'} | {d.get('expiry') or 'life'}")
-            if not lines:
-                return await show("No paid users yet.", [[Button.inline("⬅️ Panel", b"m:home")]])
-            await show(f"📋 **Paid users: {len(lines)}** (id | name | year | plan | expiry)",
-                       [[Button.inline("⬅️ Panel", b"m:home")]])
-            chunk = ""
-            for ln in lines:
-                if len(chunk) + len(ln) > 3500:
-                    await bot.send_message(ADMIN_ID, chunk, parse_mode=None)
-                    chunk = ""
-                chunk += ln + "\n"
-            if chunk:
-                await bot.send_message(ADMIN_ID, chunk, parse_mode=None)
-            return
+            return await show(*students_view(0))
+        m = re.match(r"^pp:(\d+)$", data)
+        if m:
+            return await show(*students_view(int(m.group(1))))
+        m = re.match(r"^u:(\d+)$", data)
+        if m:
+            return await show(*user_card(int(m.group(1))))
+        if data == "m:find":
+            ADMIN_STATES[ADMIN_ID] = {"step": "find"}
+            return await show("🔍 Send the student's **name, @username or Telegram ID**:", [home])
 
+        # ---------- one-tap approve ----------
+        m = re.match(r"^qa:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            tier, content, days = default_plan_for(uid)
+            msg = await finish_approve(uid, tier, content, days)
+            return await show(msg, [[Button.inline("👤 View student", f"u:{uid}")], home])
+
+        # ---------- custom plan (stateless) ----------
+        m = re.match(r"^pc:(\d+)$", data)
+        if m:
+            uid = m.group(1)
+            keys = list(TIER_LABELS)
+            rows = [[Button.inline(TIER_LABELS[k], f"pt:{uid}:{k}") for k in keys[i:i + 2]] for i in range(0, len(keys), 2)]
+            rows.append(home)
+            return await show(f"✏️ **Custom plan** for {esc(display_name(uid))}\n\nStep 1/3 - choose the **year**:", rows)
+        m = re.match(r"^pt:(\d+):(\w+)$", data)
+        if m and m.group(2) in TIER_LABELS:
+            uid, tier = m.group(1), m.group(2)
+            return await show(f"Step 2/3 - **{TIER_LABELS[tier]}**\nChoose the **content**:", [
+                [Button.inline("📚 Lectures + CBT Q-Bank", f"pk:{uid}:{tier}:f")],
+                [Button.inline("🎬 Lectures only", f"pk:{uid}:{tier}:l")], home])
+        m = re.match(r"^pk:(\d+):(\w+):([fl])$", data)
+        if m and m.group(2) in TIER_LABELS:
+            uid, tier, c = m.group(1), m.group(2), m.group(3)
+            b = lambda d, lbl: Button.inline(lbl, f"pd:{uid}:{tier}:{c}:{d}")
+            return await show("Step 3/3 - choose the **duration**:", [
+                [b(30, "30 days"), b(90, "90 days")], [b(180, "180 days"), b(365, "1 year")],
+                [b(0, "♾ Lifetime")], home])
+        m = re.match(r"^pd:(\d+):(\w+):([fl]):(\d+)$", data)
+        if m and m.group(2) in TIER_LABELS:
+            uid = int(m.group(1))
+            content = "full" if m.group(3) == "f" else "lectures_only"
+            msg = await finish_approve(uid, m.group(2), content, int(m.group(4)))
+            return await show(msg, [[Button.inline("👤 View student", f"u:{uid}")], home])
+
+        # ---------- reject / ban / unban / remove / extend ----------
+        m = re.match(r"^rj:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            db["pending"][str(uid)] = {**db["pending"].get(str(uid), {}), "rejected": True}
+            save_db(db)
+            await send_via_any(uid, f"❌ Your access request could not be approved at this time.\n"
+                                    f"Please contact {OWNER_CONTACT} for help.")
+            return await show(f"❌ **Rejected** {esc(display_name(uid))} (`{uid}`)",
+                              [[Button.inline("✅ Approve anyway", f"qa:{uid}")], home])
+        m = re.match(r"^bn:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            if uid != ADMIN_ID and uid not in db["banned"]:
+                db["banned"].append(uid)
+            db["pending"].pop(str(uid), None)
+            save_db(db)
+            return await show(*user_card(uid))
+        m = re.match(r"^ub:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            if uid in db["banned"]:
+                db["banned"].remove(uid)
+                save_db(db)
+            return await show(*user_card(uid))
+        m = re.match(r"^rm:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            return await show(f"➖ Remove **{esc(display_name(uid))}**'s access?\n(Their record is kept; you can approve again later.)",
+                              [[Button.inline("✅ Yes, remove", f"rmy:{uid}"), Button.inline("❌ No", f"u:{uid}")]])
+        m = re.match(r"^rmy:(\d+)$", data)
+        if m:
+            uid = int(m.group(1))
+            if uid in db["approved"] and uid != ADMIN_ID:
+                db["approved"].remove(uid)
+                save_db(db)
+            return await show(*user_card(uid))
+        m = re.match(r"^ex:(\d+):(\d+)$", data)
+        if m:
+            uid, days = int(m.group(1)), int(m.group(2))
+            det = db["approved_details"].setdefault(str(uid), {})
+            t, rows = user_card(uid)
+            if not det.get("expiry"):
+                return await show("♾ This student has a **lifetime** plan - nothing to extend.\n\n" + t, rows)
+            base = datetime.now().date()
+            try:
+                base = max(base, datetime.strptime(det["expiry"], "%Y-%m-%d").date())
+            except Exception:
+                pass
+            det["expiry"] = (base + timedelta(days=days)).strftime("%Y-%m-%d")
+            save_db(db)
+            await send_via_any(uid, f"📅 Your subscription has been extended till **{det['expiry']}**.")
+            return await show(*user_card(uid))
+
+        # ---------- stats ----------
         if data == "m:stats":
             tiers = {}
             for uid in db["approved"]:
@@ -1382,15 +1645,15 @@ def register_manager_handlers(bot):
                     tiers[t] = tiers.get(t, 0) + 1
             today = datetime.now().strftime("%Y-%m-%d")
             dl = sum(db["daily_downloads"].get(today, {}).values())
-            tier_txt = "\n".join(f"  • {TIER_LABELS.get(k, k)}: {v}" for k, v in tiers.items()) or "  –"
+            tier_txt = "\n".join(f"  • {TIER_LABELS.get(k, k)}: {v}" for k, v in tiers.items()) or "  -"
             up = int(time.time() - START_TIME)
             return await show(
                 f"📊 **Stats**\n👥 Users: {len(db['users'])}\n💎 Paid: {max(0, len(db['approved']) - 1)}\n{tier_txt}\n"
-                f"🚫 Banned: {len(db['banned'])}\n🧪 Demo trials: {len(db['demo_sessions'])}\n"
+                f"⏳ Pending: {len(pending_ids())}\n🚫 Banned: {len(db['banned'])}\n🧪 Demo trials: {len(db['demo_sessions'])}\n"
                 f"📥 Downloads today: {dl}\n☁️ Cloud DB: {'✅ connected' if _cloud_ok else '❌ not connected'}\n"
-                f"⏱ Uptime: {up // 3600}h {(up % 3600) // 60}m",
-                [[Button.inline("⬅️ Panel", b"m:home")]])
+                f"⏱ Uptime: {up // 3600}h {(up % 3600) // 60}m", [home])
 
+        # ---------- settings ----------
         if data == "m:set":
             return await show(*settings_view())
         if data.startswith("tg:"):
@@ -1403,7 +1666,18 @@ def register_manager_handlers(bot):
             db["settings"]["daily_limit_max"] = int(data.split(":", 1)[1])
             save_db(db)
             return await show(*settings_view())
+        if data.startswith("dc:"):
+            v = data.split(":", 1)[1]
+            if v in CONTENT_LABELS:
+                db["settings"]["default_content"] = v
+                save_db(db)
+            return await show(*settings_view())
+        if data.startswith("df:"):
+            db["settings"]["default_days"] = int(data.split(":", 1)[1])
+            save_db(db)
+            return await show(*settings_view())
 
+        # ---------- demo settings ----------
         if data == "m:demo":
             return await show(*demo_view())
         if data.startswith("dd:"):
@@ -1425,19 +1699,19 @@ def register_manager_handlers(bot):
             await trigger_cloud_backup(force=True)
             return
 
+        # ---------- broadcast ----------
         if data == "m:bc":
             rows = []
             for i in range(0, len(BROADCAST_TARGETS), 2):
                 rows.append([Button.inline(f"{lbl} ({len(get_broadcast_audience(k))})", f"bc_t:{k}")
                              for k, lbl in BROADCAST_TARGETS[i:i + 2]])
-            rows.append([Button.inline("⬅️ Panel", b"m:home")])
-            return await show("📢 **Broadcast** — choose the audience:", rows)
+            rows.append(home)
+            return await show("📢 **Broadcast** - choose the audience:", rows)
         if data.startswith("bc_t:"):
             target = data.split(":", 1)[1]
             ADMIN_STATES[ADMIN_ID] = {"step": "bc_msg", "target": target}
             return await show(f"Audience: **{dict(BROADCAST_TARGETS).get(target, target)}**\n\n"
-                              "Now send the message (text, or a photo/file with caption).",
-                              [[Button.inline("⬅️ Cancel", b"m:home")]])
+                              "Now send the message (text, or a photo/file with caption).", [home])
         if data == "bc_no":
             ADMIN_STATES.pop(ADMIN_ID, None)
             return await show("Broadcast cancelled.", panel_buttons())
