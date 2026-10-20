@@ -46,7 +46,8 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "").strip()  # service_
 PORT = int(os.getenv("PORT", "8080"))
 OWNER_CONTACT = os.getenv("OWNER_CONTACT", "@Nothing_0786")
 CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/index.html")
-SESSION_STRING = os.getenv("SESSION_STRING", "").strip()  # Telethon user-account session string
+# Telethon user-account session string. Clean up quotes/spaces/newlines from copy-paste.
+SESSION_STRING = re.sub(r"\s+", "", os.getenv("SESSION_STRING", "")).strip("'\"`")
 
 PAID_USERS_JSON_RAW = os.getenv("PAID_USERS_BACKUP", "").strip()
 SYNC_INTERVAL_SECONDS = 600
@@ -423,8 +424,19 @@ async def supabase_upsert_student(student_id, passkey, name, active=True, expire
 # CLIENTS
 # ============================================================
 
-user_client = TelegramClient(StringSession(SESSION_STRING) if SESSION_STRING else "session",
-                             API_ID, API_HASH)
+def _make_user_client():
+    if not SESSION_STRING:
+        return TelegramClient("session", API_ID, API_HASH)
+    try:
+        return TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
+    except Exception:
+        raise SystemExit(
+            "SESSION_STRING is not valid (length %d). It must be the full Telethon string, starting with '1' "
+            "and about 350 characters, pasted with no quotes or spaces. Generate a new one with gen_session.py "
+            "(Telethon, not Pyrogram) and paste it again." % len(SESSION_STRING))
+
+
+user_client = _make_user_client()
 active_bots = {}
 manager_bot_client = None
 START_TIME = time.time()
