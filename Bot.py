@@ -1,5 +1,13 @@
+#!/usr/bin/env python3
+# ============================================================
+# MBBS Lecture Bot - full single-file version
+#  - Approvals/settings persist in Supabase (survive restarts)
+#  - Year-wise / paid / demo / everyone broadcast
+#  - Student bots (all, year_1..final_year, demo) + manager bot
+# ============================================================
 
 import asyncio
+import io
 import json
 import logging
 import os
@@ -13,22 +21,32 @@ import aiohttp
 from aiohttp import web
 from telethon import TelegramClient, events, Button
 from telethon.errors import FloodWaitError, MessageNotModifiedError
+from telethon.sessions import StringSession
 
 # ============================================================
-# CONFIGURATION (Set these as Render/Host environment variables)
+# CONFIGURATION  (set ALL of these as environment variables)
 # ============================================================
 
-API_ID = int(os.getenv("API_ID", "37864520"))
-API_HASH = os.getenv("API_HASH", "d92bf252ab0a7835d2639d49920f714a")
-GROUP_ID = int(os.getenv("GROUP_ID", "-1004409849262"))
+
+def _req(name):
+    v = os.getenv(name, "").strip()
+    if not v:
+        raise SystemExit(f"Missing required environment variable: {name}")
+    return v
+
+
+API_ID = int(_req("API_ID"))
+API_HASH = _req("API_HASH")
+GROUP_ID = int(_req("GROUP_ID"))
+ADMIN_ID = int(_req("ADMIN_ID"))
+SUPABASE_URL = _req("SUPABASE_URL").rstrip("/")
+SUPABASE_KEY = _req("SUPABASE_KEY")                      # publishable key (students table, as before)
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "").strip()  # service_role key (bot_state table)
+
 PORT = int(os.getenv("PORT", "8080"))
-ADMIN_ID = int(os.getenv("ADMIN_ID", "8417145295"))
 OWNER_CONTACT = os.getenv("OWNER_CONTACT", "@Nothing_0786")
-
-# CBT student portal (GitHub Pages) and Supabase database integration
 CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/index.html")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://iafqcssktvejitssqawi.supabase.co").rstrip("/")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_I6SvDlS24OOid9g9DiA9qQ_jquGYE4C")
+SESSION_STRING = os.getenv("SESSION_STRING", "").strip()  # Telethon user-account session string
 
 PAID_USERS_JSON_RAW = os.getenv("PAID_USERS_BACKUP", "").strip()
 SYNC_INTERVAL_SECONDS = 600
@@ -45,7 +63,7 @@ BOT_TOKENS = {
 }
 
 # ============================================================
-# SUBJECTS & CURRICULUM TOPICS PER YEAR
+# SUBJECTS & CURRICULUM TOPICS PER YEAR  (forum topic IDs)
 # ============================================================
 
 TOPICS_ALL = {
@@ -74,7 +92,7 @@ BOT_SUBJECTS_MAP = {
     "year_2": TOPICS_Y2,
     "year_3": TOPICS_Y3,
     "final_year": TOPICS_FINAL,
-    "demo": TOPICS_ALL,  # Default demo topics (customizable via Manager)
+    "demo": TOPICS_ALL,
 }
 
 BOT_TITLES_MAP = {
@@ -86,11 +104,17 @@ BOT_TITLES_MAP = {
     "demo": "MBBS Demo Trial Experience",
 }
 
+TIER_LABELS = {
+    "all": "All Years", "year_1": "1st Year", "year_2": "2nd Year",
+    "year_3": "3rd Year", "final_year": "Final Year",
+}
+CONTENT_LABELS = {"full": "Lectures + CBT Q-Bank", "lectures_only": "Lectures only"}
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logging.getLogger("telethon").setLevel(logging.WARNING)
 
 # ============================================================
-# DATABASE & SETTINGS STORAGE
+# DATABASE & SETTINGS STORAGE  (local file + Supabase cloud copy)
 # ============================================================
 
 DB_FILE = "bot_database.json"
@@ -100,30 +124,53 @@ DEFAULT_SETTINGS = {
     "daily_limit_enabled": False,
     "daily_limit_max": 30,
     "cloud_backup_enabled": True,
-    # Demo bot specific management settings
-    "demo_duration_mins": 10,        # 5 to 10 mins trial duration
-    "demo_max_downloads": 2,         # Strict 2 lecture downloads restriction
-    "demo_year_tier": "all",         # Year library visible in demo: all, year_1, year_2, year_3, final_year
-    "demo_auto_start": True,         # Instantly starts countdown when student opens /start
+    "demo_duration_mins": 10,
+    "demo_max_downloads": 2,
+    "demo_year_tier": "all",
+    "demo_auto_start": True,
 }
 
-def load_db():
-    data = {
-        "users": {},
-        "banned": [],
-        "approved": [],
-        "approved_details": {},
-        "settings": DEFAULT_SETTINGS.copy(),
-        "daily_downloads": {},
-        "demo_sessions": {},          # Tracks demo user sessions and lecture quotas
+
+def _empty_db():
+    return {
+        "users": {}, "banned": [], "approved": [], "approved_details": {},
+        "settings": DEFAULT_SETTINGS.copy(), "daily_downloads": {}, "demo_sessions": {},
     }
 
+
+def normalize_db(data):
+    base = _empty_db()
+    if isinstance(data, dict):
+        base.update(data)
+    if not isinstance(base.get("settings"), dict):
+        base["settings"] = {}
+    for k, v in DEFAULT_SETTINGS.items():
+        base["settings"].setdefault(k, v)
+    for key in ("users", "approved_details", "daily_downloads", "demo_sessions"):
+        if not isinstance(base.get(key), dict):
+            base[key] = {}
+    for key in ("banned", "approved"):
+        if not isinstance(base.get(key), list):
+            base[key] = []
+    base["approved"] = [int(x) for x in base["approved"]]
+    base["banned"] = [int(x) for x in base["banned"]]
+    for uid in base["approved"]:
+        base["approved_details"].setdefault(str(uid), {
+            "tier": "all", "content_tier": "full", "expiry": None,
+            "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        })
+    return base
+
+
+def load_db():
+    data = {}
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
-                data.update(json.load(f))
+                data = json.load(f)
         except Exception:
             logging.exception("Failed to read database file")
+    data = normalize_db(data)
 
     if PAID_USERS_JSON_RAW:
         try:
@@ -132,32 +179,83 @@ def load_db():
                 for uid, val in env.get("users", {}).items():
                     data["users"].setdefault(uid, val)
                 for uid in env.get("approved", []):
-                    if uid not in data["approved"]:
-                        data["approved"].append(uid)
+                    if int(uid) not in data["approved"]:
+                        data["approved"].append(int(uid))
                 for uid, val in env.get("approved_details", {}).items():
                     data["approved_details"].setdefault(uid, val)
                 logging.info("Merged paid users from PAID_USERS_BACKUP.")
         except Exception:
             logging.exception("Failed parsing PAID_USERS_BACKUP")
+    return normalize_db(data)
 
-    for k, v in DEFAULT_SETTINGS.items():
-        data["settings"].setdefault(k, v)
 
-    for key in ("users", "approved_details", "daily_downloads", "demo_sessions"):
-        if not isinstance(data.get(key), dict):
-            data[key] = {}
-    for key in ("banned", "approved"):
-        if not isinstance(data.get(key), list):
-            data[key] = []
+db = load_db()
 
-    for uid in data["approved"]:
-        data["approved_details"].setdefault(str(uid), {
-            "tier": "all", "content_tier": "full", "expiry": None,
-            "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        })
-    return data
+# ---------- cloud persistence (Supabase table: bot_state) ----------
 
-def _write_db(data):
+_cloud_ok = False            # True only after we have successfully read the cloud copy
+_cloud_save_pending = False
+
+
+def _cloud_headers():
+    return {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+
+async def cloud_load_db():
+    """Returns (ok, data). ok=False on any error. data=None if no row exists yet."""
+    if not SUPABASE_SERVICE_KEY:
+        return False, None
+    try:
+        timeout = aiohttp.ClientTimeout(total=25)
+        async with aiohttp.ClientSession(timeout=timeout) as s:
+            async with s.get(f"{SUPABASE_URL}/rest/v1/bot_state?id=eq.1&select=data",
+                             headers=_cloud_headers()) as r:
+                if r.status >= 300:
+                    logging.warning("Cloud load failed %s: %s", r.status, (await r.text())[:200])
+                    return False, None
+                rows = await r.json()
+                return True, (rows[0]["data"] if rows else None)
+    except Exception:
+        logging.exception("Cloud load failed")
+        return False, None
+
+
+async def cloud_save_db():
+    global _cloud_save_pending
+    _cloud_save_pending = False
+    if not SUPABASE_SERVICE_KEY or not _cloud_ok:
+        return
+    try:
+        headers = _cloud_headers()
+        headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        timeout = aiohttp.ClientTimeout(total=25)
+        async with aiohttp.ClientSession(timeout=timeout) as s:
+            async with s.post(f"{SUPABASE_URL}/rest/v1/bot_state?on_conflict=id",
+                              headers=headers,
+                              data=json.dumps({"id": 1, "data": db})) as r:
+                if r.status >= 300:
+                    logging.warning("Cloud save failed %s: %s", r.status, (await r.text())[:200])
+    except Exception:
+        logging.exception("Cloud save failed")
+
+
+def schedule_cloud_save():
+    global _cloud_save_pending
+    if _cloud_save_pending or not _cloud_ok:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    _cloud_save_pending = True
+    loop.call_later(2.0, lambda: loop.create_task(cloud_save_db()))
+
+
+def _write_local(data):
     try:
         tmp = DB_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
@@ -167,29 +265,103 @@ def _write_db(data):
         logging.exception("Failed to write database file")
 
 
+def _write_db(data):
+    _write_local(data)
+    schedule_cloud_save()
+
+
 def save_db(data):
     _write_db(data)
     schedule_reconcile()
 
 
-db = load_db()
-
-if ADMIN_ID not in db["approved"]:
-    db["approved"].append(ADMIN_ID)
+def ensure_admin():
+    if ADMIN_ID not in db["approved"]:
+        db["approved"].append(ADMIN_ID)
     db["approved_details"][str(ADMIN_ID)] = {
-        "tier": "all", "content_tier": "full", "expiry": None, "added_at": "SYSTEM"
+        "tier": "all", "content_tier": "full", "expiry": None, "added_at": "SYSTEM",
+        **{k: v for k, v in db["approved_details"].get(str(ADMIN_ID), {}).items()
+           if k in ("qbank_id", "qbank_pass", "qb_state", "creds_sent")},
     }
-    _write_db(db)
+
+
+def _merge_local_into(cloud):
+    """Cloud is the base; add anything that exists only locally (used on late recovery)."""
+    local = db
+    for uid in local["approved"]:
+        if uid not in cloud["approved"]:
+            cloud["approved"].append(uid)
+            cloud["approved_details"].setdefault(str(uid), local["approved_details"].get(str(uid), {}))
+    for uid in local["banned"]:
+        if uid not in cloud["banned"]:
+            cloud["banned"].append(uid)
+    for uid, u in local["users"].items():
+        cloud["users"].setdefault(uid, u)
+    for uid, s in local["demo_sessions"].items():
+        cloud["demo_sessions"].setdefault(uid, s)
+    return cloud
+
+
+async def restore_db_from_cloud(retries=4, merge_local=False):
+    """Load the DB from Supabase. Never overwrites the cloud unless the read succeeded."""
+    global _cloud_ok
+    if not SUPABASE_SERVICE_KEY:
+        return False
+    for i in range(retries):
+        ok, cloud = await cloud_load_db()
+        if ok:
+            if cloud:
+                cloud = normalize_db(cloud)
+                if merge_local:
+                    cloud = _merge_local_into(cloud)
+                db.clear()
+                db.update(cloud)
+                logging.info("Database restored from Supabase: %d paid users", len(db["approved"]))
+            else:
+                logging.info("No cloud DB yet; seeding it from local data.")
+            ensure_admin()
+            _cloud_ok = True
+            _write_local(db)
+            await cloud_save_db()
+            return True
+        await asyncio.sleep(3 * (i + 1))
+    logging.error("Could not reach Supabase cloud DB; running on local data only.")
+    return False
+
+
+ensure_admin()
+_write_local(db)
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+
+def esc(s):
+    return re.sub(r"[*_`\[\]]", "", str(s or ""))
+
+
+def display_name(uid):
+    u = db.get("users", {}).get(str(uid), {})
+    return (f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()
+            or u.get("username") or f"Candidate {uid}")
+
+
+def fmt_secs(sec):
+    sec = int(sec)
+    return f"{sec // 60}:{sec % 60:02d}"
+
 
 # ============================================================
 # Q-BANK & DEMO CREDENTIALS LOGIC
 # ============================================================
 
-_ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"  # Avoid confusing characters (0/O/1/I)
+_ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 
 def _pick(n):
     return "".join(secrets.choice(_ALPHA) for _ in range(n))
+
 
 def get_or_create_qbank_creds(user_id):
     s_uid = str(user_id)
@@ -205,15 +377,6 @@ def get_or_create_qbank_creds(user_id):
         det["creds_sent"] = False
         _write_db(db)
     return det["qbank_id"], det["qbank_pass"]
-
-
-def get_user_content_tier(user_id):
-    uid = int(user_id)
-    if uid == ADMIN_ID:
-        return "full"
-    if uid not in db.get("approved", []):
-        return None
-    return db.get("approved_details", {}).get(str(uid), {}).get("content_tier", "lectures_only")
 
 
 def has_qbank(user_id):
@@ -233,14 +396,7 @@ def generate_demo_webapp_url(qid, qpass):
     return f"{CBT_WEBAPP_BASE_URL}?uid={quote(qid)}&key={quote(qpass)}"
 
 
-def display_name(uid):
-    u = db.get("users", {}).get(str(uid), {})
-    return (f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()
-            or u.get("username") or f"Candidate {uid}")
-
 async def supabase_upsert_student(student_id, passkey, name, active=True, expires_at=None, is_demo=False):
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise RuntimeError("SUPABASE_URL / SUPABASE_KEY not set")
     headers = {
         "apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
@@ -248,7 +404,7 @@ async def supabase_upsert_student(student_id, passkey, name, active=True, expire
     }
     row = {
         "student_id": student_id, "student_name": name, "passkey": passkey,
-        "is_demo": is_demo, "active": active, "expires_at": expires_at
+        "is_demo": is_demo, "active": active, "expires_at": expires_at,
     }
     timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(timeout=timeout) as s:
@@ -258,8 +414,36 @@ async def supabase_upsert_student(student_id, passkey, name, active=True, expire
                 raise RuntimeError(f"Supabase {r.status}: {(await r.text())[:200]}")
 
 
-_reconcile_lock = None
-_reconcile_pending = False
+# ============================================================
+# CLIENTS
+# ============================================================
+
+user_client = TelegramClient(StringSession(SESSION_STRING) if SESSION_STRING else "session",
+                             API_ID, API_HASH)
+active_bots = {}
+manager_bot_client = None
+START_TIME = time.time()
+
+TOPIC_CACHE = {}
+TOPIC_LOCKS = {}
+TOPIC_CACHE_TTL = 600
+ADMIN_STATES = {}
+
+
+async def send_via_any(chat_id, text, buttons=None, pref=None):
+    """Send a DM through whichever student bot can reach this user."""
+    if pref is None:
+        pref = db.get("users", {}).get(str(chat_id), {}).get("bot_used")
+    bots = [active_bots[pref]] if pref in active_bots else []
+    bots += [b for k, b in active_bots.items() if k != pref]
+    for bot in bots:
+        try:
+            await bot.send_message(chat_id, text, buttons=buttons)
+            return True
+        except Exception:
+            continue
+    return False
+
 
 async def send_login_card(chat_id, user_id, title="🎉 **Your CBT Q-Bank login is ready!**"):
     qid, pw = get_or_create_qbank_creds(user_id)
@@ -270,16 +454,15 @@ async def send_login_card(chat_id, user_id, title="🎉 **Your CBT Q-Bank login 
         "Send /mylogin any time to see this again."
     )
     buttons = [[Button.url("🌐 Launch MBBS CBT Q-Bank", generate_webapp_launch_url(user_id))]]
-    pref = db.get("users", {}).get(str(user_id), {}).get("bot_used")
-    bots = [active_bots[pref]] if pref in active_bots else []
-    bots += [b for k, b in active_bots.items() if k != pref]
-    for bot in bots:
-        try:
-            await bot.send_message(chat_id, text, buttons=buttons)
-            return True
-        except Exception:
-            continue
-    return False
+    return await send_via_any(chat_id, text, buttons)
+
+
+# ============================================================
+# Q-BANK RECONCILE (keeps Supabase students table in sync)
+# ============================================================
+
+_reconcile_lock = None
+_reconcile_pending = False
 
 
 async def reconcile_now():
@@ -329,6 +512,7 @@ async def reconcile_now():
         if changed:
             _write_db(db)
 
+
 def schedule_reconcile():
     global _reconcile_pending
     try:
@@ -347,99 +531,89 @@ def schedule_reconcile():
 
     loop.call_later(1.0, lambda: loop.create_task(_go()))
 
+
 # ============================================================
-# DEMO SESSION ENGINE (5-10 MINS LIMIT & 2 DOWNLOADS RESTRICTION)
+# DEMO SESSION ENGINE
 # ============================================================
+
 
 def get_demo_topics():
     tier = db["settings"].get("demo_year_tier", "all")
-    if tier in BOT_SUBJECTS_MAP:
-        return BOT_SUBJECTS_MAP[tier]
-    return TOPICS_ALL
+    return BOT_SUBJECTS_MAP.get(tier, TOPICS_ALL)
 
 
-def get_or_start_demo_session(user_id, user_name="Demo Candidate"):
+def get_or_start_demo_session(user_id):
     s_uid = str(user_id)
     session = db["demo_sessions"].get(s_uid)
-    duration_mins = db["settings"].get("demo_duration_mins", 10)
-    max_dl = db["settings"].get("demo_max_downloads", 2)
-    now = time.time()
-
     if not session:
-        cbt_id = "DEMO-" + _pick(4)
-        cbt_pass = _pick(6)
         session = {
-            "start_time": now,
-            "duration_mins": duration_mins,
-            "max_downloads": max_dl,
+            "start_time": time.time(),
+            "duration_mins": db["settings"].get("demo_duration_mins", 10),
+            "max_downloads": db["settings"].get("demo_max_downloads", 2),
             "downloads_used": 0,
-            "cbt_id": cbt_id,
-            "cbt_pass": cbt_pass,
+            "cbt_id": "DEMO-" + _pick(4),
+            "cbt_pass": _pick(6),
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "cbt_synced": False,
         }
         db["demo_sessions"][s_uid] = session
         _write_db(db)
-
     return session
 
+
 def check_demo_status(user_id):
-    s_uid = str(user_id)
-    session = db["demo_sessions"].get(s_uid)
+    """Returns (status, remaining_secs, downloads_used, downloads_max)."""
+    session = db["demo_sessions"].get(str(user_id))
     if not session:
         return "new", 0, 0, 0
-
-    now = time.time()
-    elapsed = now - session["start_time"]
-    total_allowed = session.get("duration_mins", 10) * 60
-    remaining_secs = max(0, total_allowed - elapsed)
+    elapsed = time.time() - session["start_time"]
+    total = session.get("duration_mins", 10) * 60
     dl_used = session.get("downloads_used", 0)
     dl_max = session.get("max_downloads", 2)
-
-    if elapsed > total_allowed:
+    if elapsed > total:
         return "expired", 0, dl_used, dl_max
-
+    remaining = int(max(0, total - elapsed))
     if dl_used >= dl_max:
-        return "download_limit_reached", int(remaining_secs), dl_used, dl_max
-
-    return "active", int(remaining_secs), dl_used, dl_max
+        return "download_limit_reached", remaining, dl_used, dl_max
+    return "active", remaining, dl_used, dl_max
 
 
 def record_demo_download(user_id):
-    s_uid = str(user_id)
-    session = db["demo_sessions"].get(s_uid)
+    session = db["demo_sessions"].get(str(user_id))
     if session:
         session["downloads_used"] = session.get("downloads_used", 0) + 1
         _write_db(db)
 
+
 async def ensure_demo_cbt_synced(user_id, name="Demo Student"):
-    s_uid = str(user_id)
-    session = db["demo_sessions"].get(s_uid)
+    session = db["demo_sessions"].get(str(user_id))
     if not session or session.get("cbt_synced"):
         return
     try:
-        exp = (datetime.utcnow() + timedelta(minutes=session.get("duration_mins", 10) + 60)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        exp = (datetime.utcnow() + timedelta(minutes=session.get("duration_mins", 10) + 60)
+               ).strftime("%Y-%m-%dT%H:%M:%SZ")
         await supabase_upsert_student(
             session["cbt_id"], session["cbt_pass"], f"Demo: {name}",
-            active=True, expires_at=exp, is_demo=True
-        )
+            active=True, expires_at=exp, is_demo=True)
         session["cbt_synced"] = True
         _write_db(db)
     except Exception as e:
         logging.warning("Could not sync demo CBT user %s: %s", user_id, e)
 
+
 # ============================================================
-# USER TRACKING & GLOBAL ACCESS CONTROL
+# USER TRACKING & ACCESS CONTROL
 # ============================================================
+
 
 def track_user(user, bot_type):
     if not user:
         return
     uid = str(user.id)
     new = {
-        "first_name": user.first_name or "",
-        "last_name": user.last_name or "",
-        "username": user.username or "",
+        "first_name": getattr(user, "first_name", "") or "",
+        "last_name": getattr(user, "last_name", "") or "",
+        "username": getattr(user, "username", "") or "",
         "bot_used": bot_type,
     }
     cur = db["users"].get(uid)
@@ -455,13 +629,14 @@ def track_user(user, bot_type):
 def is_banned(user_id):
     return int(user_id) in db.get("banned", [])
 
+
 def check_access(user_id, bot_type):
+    """Approvals are NEVER removed here; expiry only blocks access (record is kept)."""
     uid = int(user_id)
     if uid == ADMIN_ID:
         return True, "admin"
     if uid not in db.get("approved", []):
         return False, "not_approved"
-
     details = db.get("approved_details", {}).get(str(uid), {})
 
     if db["settings"].get("expiry_enabled", False):
@@ -469,15 +644,13 @@ def check_access(user_id, bot_type):
         if expiry_str:
             try:
                 if datetime.now().date() > datetime.strptime(expiry_str, "%Y-%m-%d").date():
-                    db["approved"].remove(uid)
-                    save_db(db)
                     return False, "expired"
             except Exception:
                 pass
 
     if db["settings"].get("tier_access_enabled", False):
         user_tier = details.get("tier", "all")
-        if user_tier != "all" and user_tier != bot_type:
+        if user_tier != "all" and user_tier != bot_type and bot_type != "demo":
             return False, f"tier_mismatch:{user_tier}"
     return True, "allowed"
 
@@ -498,11 +671,29 @@ def record_download(user_id):
     if int(user_id) == ADMIN_ID:
         return
     today = datetime.now().strftime("%Y-%m-%d")
-    for day in [d for d in db["daily_downloads"] if d < (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")]:
+    cutoff = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    for day in [d for d in db["daily_downloads"] if d < cutoff]:
         db["daily_downloads"].pop(day, None)
     day_map = db["daily_downloads"].setdefault(today, {})
     day_map[str(user_id)] = day_map.get(str(user_id), 0) + 1
     _write_db(db)
+
+
+def approve_user(uid, tier="all", content_tier="full", days=0):
+    uid = int(uid)
+    if uid not in db["approved"]:
+        db["approved"].append(uid)
+    if uid in db["banned"]:
+        db["banned"].remove(uid)
+    det = db["approved_details"].setdefault(str(uid), {})
+    det["tier"] = tier
+    det["content_tier"] = content_tier
+    det["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d") if days else None
+    det["added_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if content_tier == "full":
+        get_or_create_qbank_creds(uid)
+    save_db(db)
+    return det
 
 
 LOCKED_MESSAGE = (
@@ -513,1608 +704,866 @@ LOCKED_MESSAGE = (
 )
 
 # ============================================================
-# CLIENT INSTANCES & APPLICATION RUNTIME
+# LECTURE LISTING (via user account) + DELIVERY (via bots)
 # ============================================================
 
-user_client = TelegramClient("session", API_ID, API_HASH)
-active_bots = {}
-manager_bot_client = None
-USER_CLIENT_ID = None
-START_TIME = time.time()
 
-user_subjects = {}
-user_units = {}
-TOPIC_CACHE = {}
-TOPIC_CACHE_TTL = 600
+def lecture_title(msg):
+    t = (msg.message or "").strip().split("\n")[0].strip()
+    if not t and msg.file and msg.file.name:
+        t = msg.file.name
+    return (t or f"Lecture {msg.id}")[:60]
 
-relay_lock = asyncio.Lock()
-active_relay_future = None
-ADMIN_STATES = {}
+
+async def get_topic_items(topic_id, force=False):
+    c = TOPIC_CACHE.get(topic_id)
+    if c and not force and time.time() - c[0] < TOPIC_CACHE_TTL:
+        return c[1]
+    lock = TOPIC_LOCKS.setdefault(topic_id, asyncio.Lock())
+    async with lock:
+        c = TOPIC_CACHE.get(topic_id)
+        if c and not force and time.time() - c[0] < TOPIC_CACHE_TTL:
+            return c[1]
+        try:
+            items = []
+            async for m in user_client.iter_messages(GROUP_ID, reply_to=topic_id, reverse=True, limit=2000):
+                if m.document:
+                    items.append({"id": m.id, "title": lecture_title(m)})
+            TOPIC_CACHE[topic_id] = (time.time(), items)
+            return items
+        except Exception:
+            logging.exception("Listing topic %s failed", topic_id)
+            if c:
+                return c[1]
+            raise
+
 
 # ============================================================
-# CLOUD BACKUP & ADMIN NOTIFICATIONS
+# STUDENT BOT HANDLERS
 # ============================================================
+
+PAGE_SIZE = 8
+
+
+def register_student_handlers(bot, bot_type):
+    is_demo = bot_type == "demo"
+
+    def topics_for():
+        return get_demo_topics() if is_demo else BOT_SUBJECTS_MAP.get(bot_type, TOPICS_ALL)
+
+    async def reply(event, text, buttons=None):
+        if isinstance(event, events.CallbackQuery.Event):
+            try:
+                await event.edit(text, buttons=buttons)
+            except MessageNotModifiedError:
+                pass
+            except Exception:
+                await bot.send_message(event.sender_id, text, buttons=buttons)
+        else:
+            await event.respond(text, buttons=buttons)
+
+    async def gate(event):
+        uid = event.sender_id
+        if uid != ADMIN_ID:
+            try:
+                track_user(await event.get_sender(), bot_type)
+            except Exception:
+                pass
+        if is_banned(uid):
+            await reply(event, f"🚫 **You are banned from this bot.**\nContact {OWNER_CONTACT}.")
+            return False
+        if is_demo or uid == ADMIN_ID:
+            return True
+        ok, reason = check_access(uid, bot_type)
+        if ok:
+            return True
+        if reason == "expired":
+            await reply(event, f"⏰ **Your subscription has expired.**\nContact {OWNER_CONTACT} to renew.\n\nYour ID: `{uid}`")
+        elif reason.startswith("tier_mismatch:"):
+            tier = reason.split(":", 1)[1]
+            await reply(event, f"⚠️ Your plan is **{TIER_LABELS.get(tier, tier)}**. "
+                               "Please use the bot for your own year.")
+        else:
+            await reply(event, LOCKED_MESSAGE.format(user_id=uid))
+        return False
+
+    def demo_header(uid):
+        st, rem, used, mx = check_demo_status(uid)
+        return f"⏱ **{fmt_secs(rem)}** left  |  📥 Downloads **{used}/{mx}**"
+
+    async def home_view(uid):
+        name = esc(display_name(uid))
+        buttons = [[Button.inline("📚 Browse Lectures", b"lib")]]
+        if is_demo and uid != ADMIN_ID:
+            session = get_or_start_demo_session(uid)
+            await ensure_demo_cbt_synced(uid, name)
+            text = (f"👋 Welcome, **{name}**!\n📖 **{BOT_TITLES_MAP['demo']}**\n\n"
+                    f"{demo_header(uid)}\n\n"
+                    "Try our lectures and CBT Q-Bank for a few minutes.")
+            buttons.append([Button.url("🌐 Try CBT Q-Bank (Demo)",
+                                       generate_demo_webapp_url(session["cbt_id"], session["cbt_pass"]))])
+        else:
+            det = db["approved_details"].get(str(uid), {})
+            exp = det.get("expiry")
+            text = (f"👋 Welcome, **{name}**!\n📖 **{BOT_TITLES_MAP.get(bot_type, 'MBBS Library')}**\n\n"
+                    f"💎 Plan: **{TIER_LABELS.get(det.get('tier', 'all'), 'All Years')}** · "
+                    f"{CONTENT_LABELS.get(det.get('content_tier', 'full'), 'Lectures only')}\n"
+                    f"📅 Valid till: **{exp or 'Lifetime'}**")
+            if uid == ADMIN_ID or has_qbank(uid):
+                buttons.append([Button.url("🌐 Open CBT Q-Bank", generate_webapp_launch_url(uid))])
+        return text, buttons
+
+    async def show_home(event):
+        uid = event.sender_id
+        if is_demo and uid != ADMIN_ID:
+            st = check_demo_status(uid)[0]
+            if st == "new" and not db["settings"].get("demo_auto_start", True):
+                m = db["settings"].get("demo_duration_mins", 10)
+                n = db["settings"].get("demo_max_downloads", 2)
+                await reply(event, f"🧪 **Free Demo**\n\n⏱ {m} minutes · 📥 {n} lecture downloads\n\n"
+                                   "Tap below to start. The timer begins immediately.",
+                            [[Button.inline("▶️ Start Free Demo", b"demo:start")]])
+                return
+            if st == "expired":
+                await reply(event, f"⏰ **Your demo has ended.**\n\nGet full access: {OWNER_CONTACT}\n"
+                                   f"Your ID: `{uid}`")
+                return
+        text, buttons = await home_view(uid)
+        await reply(event, text, buttons)
+
+    async def show_subjects(event):
+        uid = event.sender_id
+        if is_demo and uid != ADMIN_ID and check_demo_status(uid)[0] == "expired":
+            return await show_home(event)
+        items = list(topics_for().items())
+        rows = []
+        for i in range(0, len(items), 2):
+            rows.append([Button.inline(f"📘 {n}", f"t:{tid}:0") for n, tid in items[i:i + 2]])
+        rows.append([Button.inline("🏠 Home", b"home")])
+        head = "📚 **Select a subject:**"
+        if is_demo and uid != ADMIN_ID:
+            head += f"\n\n{demo_header(uid)}"
+        await reply(event, head, rows)
+
+    async def show_lectures(event, tid, page):
+        uid = event.sender_id
+        if tid not in topics_for().values():
+            return
+        if is_demo and uid != ADMIN_ID and check_demo_status(uid)[0] == "expired":
+            return await show_home(event)
+        try:
+            items = await get_topic_items(tid)
+        except Exception:
+            await reply(event, "⚠️ Could not load lectures right now. Please try again shortly.",
+                        [[Button.inline("⬅️ Back", b"lib")]])
+            return
+        subject = next((n for n, t in topics_for().items() if t == tid), "Subject")
+        if not items:
+            await reply(event, f"📘 **{subject}**\n\nNo lectures uploaded yet.", [[Button.inline("⬅️ Back", b"lib")]])
+            return
+        pages = (len(items) + PAGE_SIZE - 1) // PAGE_SIZE
+        page = max(0, min(page, pages - 1))
+        chunk = items[page * PAGE_SIZE:(page + 1) * PAGE_SIZE]
+        rows = [[Button.inline(f"🎬 {it['title'][:45]}", f"d:{tid}:{it['id']}")] for it in chunk]
+        nav = []
+        if page > 0:
+            nav.append(Button.inline("⬅️ Prev", f"t:{tid}:{page - 1}"))
+        nav.append(Button.inline(f"{page + 1}/{pages}", b"noop"))
+        if page < pages - 1:
+            nav.append(Button.inline("Next ➡️", f"t:{tid}:{page + 1}"))
+        rows.append(nav)
+        rows.append([Button.inline("⬅️ Subjects", b"lib"), Button.inline("🏠 Home", b"home")])
+        head = f"📘 **{esc(subject)}** — {len(items)} lectures"
+        if is_demo and uid != ADMIN_ID:
+            head += f"\n{demo_header(uid)}"
+        await reply(event, head, rows)
+
+    async def send_lecture(event, tid, mid):
+        uid = event.sender_id
+        if tid not in topics_for().values():
+            return
+        # limits
+        if is_demo and uid != ADMIN_ID:
+            st, rem, used, mx = check_demo_status(uid)
+            if st == "expired":
+                return await show_home(event)
+            if st == "download_limit_reached":
+                await bot.send_message(uid, f"📥 Demo download limit reached ({used}/{mx}).\n"
+                                            f"Get full access: {OWNER_CONTACT}")
+                return
+        elif uid != ADMIN_ID:
+            ok, count, mx = check_daily_limit(uid)
+            if not ok:
+                await bot.send_message(uid, f"📥 Daily limit reached ({count}/{mx}). Try again tomorrow.")
+                return
+        # only allow messages that are really in this subject's topic
+        try:
+            items = await get_topic_items(tid)
+        except Exception:
+            await bot.send_message(uid, "⚠️ Could not load that lecture. Try again.")
+            return
+        entry = next((i for i in items if i["id"] == mid), None)
+        if not entry:
+            await bot.send_message(uid, "⚠️ Lecture not found (list may have updated). Reopen the subject.")
+            return
+
+        wait = await bot.send_message(uid, "📤 Sending your lecture…")
+        sent = False
+        try:
+            msg = await bot.get_messages(GROUP_ID, ids=mid)
+            if msg and msg.media:
+                await bot.send_file(uid, msg.media, caption=f"🎬 {esc(entry['title'])}")
+                sent = True
+        except FloodWaitError as e:
+            await asyncio.sleep(min(e.seconds, 30) + 1)
+        except Exception:
+            logging.warning("send_file failed for %s, trying forward", mid)
+        if not sent:
+            try:
+                await bot.forward_messages(uid, mid, GROUP_ID)
+                sent = True
+            except Exception:
+                logging.exception("Forward failed for %s", mid)
+        try:
+            await wait.delete()
+        except Exception:
+            pass
+        if not sent:
+            await bot.send_message(uid, "⚠️ Could not send this lecture. Please contact " + OWNER_CONTACT)
+            return
+        if is_demo and uid != ADMIN_ID:
+            record_demo_download(uid)
+            await bot.send_message(uid, f"✅ Sent!  {demo_header(uid)}")
+        else:
+            record_download(uid)
+
+    # ---------------- message handlers ----------------
+
+    @bot.on(events.NewMessage(pattern=r"^/start", incoming=True, func=lambda e: e.is_private))
+    async def on_start(event):
+        if not await gate(event):
+            return
+        if is_demo and event.sender_id != ADMIN_ID and db["settings"].get("demo_auto_start", True):
+            get_or_start_demo_session(event.sender_id)
+        await show_home(event)
+
+    @bot.on(events.NewMessage(pattern=r"^/(help|menu)", incoming=True, func=lambda e: e.is_private))
+    async def on_help(event):
+        if not await gate(event):
+            return
+        await event.respond("**Commands**\n/start – home\n/mylogin – CBT Q-Bank login\n"
+                            "/status – your plan\n/myid – your Telegram ID\n\n"
+                            f"Support: {OWNER_CONTACT}")
+
+    @bot.on(events.NewMessage(pattern=r"^/myid", incoming=True, func=lambda e: e.is_private))
+    async def on_myid(event):
+        await event.respond(f"🆔 Your Telegram ID: `{event.sender_id}`")
+
+    @bot.on(events.NewMessage(pattern=r"^/status", incoming=True, func=lambda e: e.is_private))
+    async def on_status(event):
+        if not await gate(event):
+            return
+        uid = event.sender_id
+        if is_demo and uid != ADMIN_ID:
+            st = check_demo_status(uid)[0]
+            await event.respond(f"🧪 Demo status: **{st}**\n{demo_header(uid)}")
+            return
+        det = db["approved_details"].get(str(uid), {})
+        await event.respond(
+            f"💎 **Your plan**\nYear: **{TIER_LABELS.get(det.get('tier', 'all'), 'All Years')}**\n"
+            f"Content: **{CONTENT_LABELS.get(det.get('content_tier', 'full'), 'Lectures only')}**\n"
+            f"Valid till: **{det.get('expiry') or 'Lifetime'}**")
+
+    @bot.on(events.NewMessage(pattern=r"^/mylogin", incoming=True, func=lambda e: e.is_private))
+    async def on_mylogin(event):
+        if not await gate(event):
+            return
+        uid = event.sender_id
+        if is_demo and uid != ADMIN_ID:
+            s = get_or_start_demo_session(uid)
+            await ensure_demo_cbt_synced(uid, esc(display_name(uid)))
+            await event.respond(
+                f"🧪 **Demo CBT login**\n🆔 `{s['cbt_id']}`\n🔑 `{s['cbt_pass']}`",
+                buttons=[[Button.url("🌐 Open Demo CBT", generate_demo_webapp_url(s['cbt_id'], s['cbt_pass']))]])
+        elif uid == ADMIN_ID:
+            await event.respond("Admin link:", buttons=[[Button.url("🌐 Open CBT", CBT_WEBAPP_BASE_URL)]])
+        elif has_qbank(uid):
+            await send_login_card(uid, uid)
+        else:
+            await event.respond(f"Your plan is **lectures only**. For the CBT Q-Bank contact {OWNER_CONTACT}.")
+
+    @bot.on(events.CallbackQuery)
+    async def on_cb(event):
+        data = event.data.decode(errors="ignore")
+        uid = event.sender_id
+        try:
+            await event.answer()
+        except Exception:
+            pass
+        if data == "noop":
+            return
+        if not await gate(event):
+            return
+        if data == "demo:start" and is_demo:
+            get_or_start_demo_session(uid)
+            return await show_home(event)
+        if data == "home":
+            return await show_home(event)
+        if data == "lib":
+            return await show_subjects(event)
+        m = re.match(r"^t:(\d+):(\d+)$", data)
+        if m:
+            return await show_lectures(event, int(m.group(1)), int(m.group(2)))
+        m = re.match(r"^d:(\d+):(\d+)$", data)
+        if m:
+            return await send_lecture(event, int(m.group(1)), int(m.group(2)))
+
+
+# ============================================================
+# BROADCAST HELPERS
+# ============================================================
+
+BROADCAST_TARGETS = [
+    ("everyone", "👥 Everyone"), ("paid", "💎 All Paid"),
+    ("year_1", "1️⃣ 1st Year"), ("year_2", "2️⃣ 2nd Year"),
+    ("year_3", "3️⃣ 3rd Year"), ("final_year", "🎓 Final Year"),
+    ("demo", "🧪 Demo Users"),
+]
+
+
+def get_broadcast_audience(target):
+    ids = set()
+    if target == "everyone":
+        ids = {int(u) for u in db["users"]}
+    elif target == "paid":
+        ids = {int(u) for u in db["approved"]}
+    elif target == "demo":
+        ids = {int(u) for u in db["demo_sessions"]}
+    else:  # a specific year: paid users on that year (or on 'all') + users of that year's bot
+        for uid in db["approved"]:
+            tier = db["approved_details"].get(str(uid), {}).get("tier", "all")
+            if tier in (target, "all"):
+                ids.add(int(uid))
+        for u, info in db["users"].items():
+            if info.get("bot_used") == target:
+                ids.add(int(u))
+    ids -= set(db["banned"])
+    ids.discard(ADMIN_ID)
+    return sorted(ids)
+
+
+async def send_broadcast_one(uid, text, entities, media_bytes, media_name):
+    pref = db["users"].get(str(uid), {}).get("bot_used")
+    bots = [active_bots[pref]] if pref in active_bots else []
+    bots += [b for k, b in active_bots.items() if k != pref]
+    for bot in bots:
+        for _ in range(2):
+            try:
+                if media_bytes:
+                    f = io.BytesIO(media_bytes)
+                    f.name = media_name or "file"
+                    await bot.send_file(uid, f, caption=text or None, formatting_entities=entities or None)
+                else:
+                    await bot.send_message(uid, text, formatting_entities=entities or None)
+                return True
+            except FloodWaitError as e:
+                await asyncio.sleep(min(e.seconds, 60) + 1)
+            except Exception:
+                break
+    return False
+
+
+async def do_broadcast(target, text, entities, media_bytes, media_name):
+    audience = get_broadcast_audience(target)
+    sent = failed = 0
+    for uid in audience:
+        if await send_broadcast_one(uid, text, entities, media_bytes, media_name):
+            sent += 1
+        else:
+            failed += 1
+        await asyncio.sleep(0.06)
+    label = dict(BROADCAST_TARGETS).get(target, target)
+    try:
+        await manager_bot_client.send_message(
+            ADMIN_ID, f"📢 **Broadcast finished** ({label})\n✅ Sent: {sent}\n❌ Failed: {failed}\n"
+                      f"(Failed = user blocked the bot or never started it)")
+    except Exception:
+        pass
+
+
+# ============================================================
+# MANAGER (ADMIN) BOT
+# ============================================================
+
+
+def panel_buttons():
+    return [
+        [Button.inline("➕ Approve", b"m:approve"), Button.inline("➖ Remove", b"m:remove")],
+        [Button.inline("🚫 Ban", b"m:ban"), Button.inline("✅ Unban", b"m:unban")],
+        [Button.inline("📋 Paid Users", b"m:paid"), Button.inline("📊 Stats", b"m:stats")],
+        [Button.inline("📢 Broadcast", b"m:bc"), Button.inline("⚙️ Settings", b"m:set")],
+        [Button.inline("🧪 Demo Settings", b"m:demo"), Button.inline("☁️ Backup Now", b"m:backup")],
+    ]
+
+
+PANEL_TEXT = ("🛠 **Admin Panel**\n\n"
+              "Shortcuts:\n`/approve <id> <tier> <full|lectures> <days>`\n"
+              "`/remove <id>` · `/ban <id>` · `/unban <id>`\n"
+              "`/extend <id> <days>` · `/user <id>`\n"
+              "tier = all, year_1, year_2, year_3, final_year (days 0 = lifetime)\n"
+              "To restore: send a backup .json with caption `/restore`")
+
+
+def settings_view():
+    s = db["settings"]
+    toggles = [("expiry_enabled", "Expiry check"), ("tier_access_enabled", "Year-wise bot access"),
+               ("daily_limit_enabled", "Daily download limit"), ("cloud_backup_enabled", "Telegram auto-backup")]
+    rows = [[Button.inline(f"{lbl}: {'✅ ON' if s.get(k) else '❌ OFF'}", f"tg:{k}")] for k, lbl in toggles]
+    cur = s.get("daily_limit_max", 30)
+    rows.append([Button.inline(("• " if cur == n else "") + f"{n}/day", f"lim:{n}") for n in (10, 20, 30, 50)])
+    rows.append([Button.inline("⬅️ Panel", b"m:home")])
+    return "⚙️ **Settings**\n(Daily limit applies only when enabled)", rows
+
+
+def demo_view():
+    s = db["settings"]
+    rows = [
+        [Button.inline(("• " if s["demo_duration_mins"] == n else "") + f"{n} min", f"dd:{n}") for n in (5, 7, 10)],
+        [Button.inline(("• " if s["demo_max_downloads"] == n else "") + f"{n} downloads", f"dm:{n}") for n in (1, 2, 3)],
+        [Button.inline(("• " if s["demo_year_tier"] == t else "") + TIER_LABELS[t], f"dy:{t}")
+         for t in ("all", "year_1", "year_2")],
+        [Button.inline(("• " if s["demo_year_tier"] == t else "") + TIER_LABELS[t], f"dy:{t}")
+         for t in ("year_3", "final_year")],
+        [Button.inline(f"Auto-start: {'✅ ON' if s.get('demo_auto_start') else '❌ OFF'}", b"tg:demo_auto_start")],
+        [Button.inline("⬅️ Panel", b"m:home")],
+    ]
+    return ("🧪 **Demo Settings**\n"
+            f"Duration: {s['demo_duration_mins']} min · Downloads: {s['demo_max_downloads']} · "
+            f"Library: {TIER_LABELS[s['demo_year_tier']]}\n(Applies to new demo sessions)"), rows
+
+
+def user_info_text(uid):
+    uid = int(uid)
+    det = db["approved_details"].get(str(uid), {})
+    status = "💎 Approved" if uid in db["approved"] else "⛔ Not approved"
+    if uid in db["banned"]:
+        status = "🚫 Banned"
+    t = (f"👤 **{esc(display_name(uid))}** (`{uid}`)\n{status}\n"
+         f"Year: {TIER_LABELS.get(det.get('tier', ''), '-')} · "
+         f"Content: {CONTENT_LABELS.get(det.get('content_tier', ''), '-')}\n"
+         f"Expiry: {det.get('expiry') or 'Lifetime'}\nAdded: {det.get('added_at', '-')}")
+    if det.get("qbank_id"):
+        t += f"\nQ-Bank: `{det['qbank_id']}` / `{det.get('qbank_pass')}` ({det.get('qb_state')})"
+    return t
+
+
+def register_manager_handlers(bot):
+    def tier_buttons():
+        rows = [[Button.inline(TIER_LABELS[t], f"ap_t:{t}")] for t in TIER_LABELS]
+        return rows
+
+    async def finish_approve(uid, tier, content, days):
+        approve_user(uid, tier, content, days)
+        note = (f"✅ **Subscription activated!**\nYear: **{TIER_LABELS.get(tier)}** · "
+                f"**{CONTENT_LABELS.get(content)}**\nValid: **{'Lifetime' if not days else f'{days} days'}**\n"
+                "Send /start to begin.")
+        delivered = await send_via_any(uid, note)
+        extra = "" if delivered else "\n⚠️ Could not DM the user (they must /start a bot first)."
+        if content == "full":
+            extra += "\n🔑 Q-Bank login will be sent automatically."
+        return (f"✅ Approved `{uid}` — {TIER_LABELS.get(tier)} · {CONTENT_LABELS.get(content)} · "
+                f"{'Lifetime' if not days else f'{days} days'}{extra}")
+
+    @bot.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
+    async def on_msg(event):
+        uid = event.sender_id
+        if uid != ADMIN_ID:
+            await event.respond("🔒 This is the private manager bot.")
+            return
+        text = (event.raw_text or "").strip()
+
+        # ----- restore from backup file -----
+        if event.document and (event.raw_text or "").strip().lower().startswith("/restore"):
+            try:
+                raw = await event.download_media(file=bytes)
+                new = normalize_db(json.loads(raw.decode("utf-8")))
+                db.clear()
+                db.update(new)
+                ensure_admin()
+                _write_db(db)
+                schedule_reconcile()
+                await event.respond(f"✅ Restored: {len(db['users'])} users, {len(db['approved'])} paid.")
+            except Exception as e:
+                await event.respond(f"❌ Restore failed: {e}")
+            return
+
+        # ----- commands -----
+        if text.startswith("/"):
+            parts = text.split()
+            cmd = parts[0].lower().split("@")[0]
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            if cmd in ("/start", "/panel", "/menu"):
+                return await event.respond(PANEL_TEXT, buttons=panel_buttons())
+            try:
+                if cmd == "/approve":
+                    target = int(parts[1])
+                    tier = parts[2] if len(parts) > 2 else "all"
+                    content = "lectures_only" if (len(parts) > 3 and parts[3].lower().startswith("l")) else "full"
+                    days = int(parts[4]) if len(parts) > 4 else 0
+                    if tier not in TIER_LABELS:
+                        return await event.respond("Tier must be: " + ", ".join(TIER_LABELS))
+                    return await event.respond(await finish_approve(target, tier, content, days))
+                if cmd == "/remove":
+                    target = int(parts[1])
+                    if target in db["approved"] and target != ADMIN_ID:
+                        db["approved"].remove(target)
+                        save_db(db)
+                        return await event.respond(f"➖ Removed `{target}` (record kept, can re-approve).")
+                    return await event.respond("User is not approved.")
+                if cmd == "/ban":
+                    target = int(parts[1])
+                    if target != ADMIN_ID and target not in db["banned"]:
+                        db["banned"].append(target)
+                        save_db(db)
+                    return await event.respond(f"🚫 Banned `{target}`")
+                if cmd == "/unban":
+                    target = int(parts[1])
+                    if target in db["banned"]:
+                        db["banned"].remove(target)
+                        save_db(db)
+                    return await event.respond(f"✅ Unbanned `{target}`")
+                if cmd == "/extend":
+                    target, days = int(parts[1]), int(parts[2])
+                    det = db["approved_details"].setdefault(str(target), {})
+                    base = datetime.now().date()
+                    if det.get("expiry"):
+                        try:
+                            base = max(base, datetime.strptime(det["expiry"], "%Y-%m-%d").date())
+                        except Exception:
+                            pass
+                    det["expiry"] = (base + timedelta(days=days)).strftime("%Y-%m-%d")
+                    if target not in db["approved"]:
+                        db["approved"].append(target)
+                    save_db(db)
+                    return await event.respond(f"📅 `{target}` now valid till **{det['expiry']}**")
+                if cmd == "/user":
+                    return await event.respond(user_info_text(int(parts[1])))
+                if cmd == "/backup":
+                    await trigger_cloud_backup(force=True)
+                    return
+            except (IndexError, ValueError):
+                return await event.respond("⚠️ Wrong format. Send /start to see the examples.")
+            return await event.respond("Unknown command. Send /start.")
+
+        # ----- state-driven input -----
+        st = ADMIN_STATES.get(ADMIN_ID)
+        if not st:
+            return await event.respond(PANEL_TEXT, buttons=panel_buttons())
+        step = st["step"]
+
+        if step in ("ap_id", "remove", "ban", "unban"):
+            m = re.search(r"\d{5,}", text)
+            if not m:
+                return await event.respond("Please send a valid numeric Telegram ID.")
+            target = int(m.group())
+            if step == "ap_id":
+                st.update(step="ap_tier", uid=target)
+                return await event.respond(f"Approve `{target}` — choose the **year**:", buttons=tier_buttons())
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            if step == "remove":
+                if target in db["approved"] and target != ADMIN_ID:
+                    db["approved"].remove(target)
+                    save_db(db)
+                    return await event.respond(f"➖ Removed `{target}`", buttons=panel_buttons())
+                return await event.respond("User is not approved.", buttons=panel_buttons())
+            if step == "ban":
+                if target != ADMIN_ID and target not in db["banned"]:
+                    db["banned"].append(target)
+                    save_db(db)
+                return await event.respond(f"🚫 Banned `{target}`", buttons=panel_buttons())
+            if target in db["banned"]:
+                db["banned"].remove(target)
+                save_db(db)
+            return await event.respond(f"✅ Unbanned `{target}`", buttons=panel_buttons())
+
+        if step == "bc_msg":
+            media_bytes, media_name = None, None
+            if event.media:
+                if event.file and event.file.size and event.file.size > 20 * 1024 * 1024:
+                    return await event.respond("⚠️ Media too large (max 20 MB). Send text or a smaller file.")
+                media_bytes = await event.download_media(file=bytes)
+                media_name = (event.file.name if event.file and event.file.name else
+                              ("photo.jpg" if event.photo else "file"))
+            if not text and not media_bytes:
+                return await event.respond("Send the text (or photo/file with caption) to broadcast.")
+            st.update(step="bc_confirm", text=text, entities=event.message.entities,
+                      media=media_bytes, media_name=media_name)
+            count = len(get_broadcast_audience(st["target"]))
+            label = dict(BROADCAST_TARGETS)[st["target"]]
+            return await event.respond(
+                f"📢 **Confirm broadcast**\nAudience: **{label}** — **{count}** users\n\n"
+                "Send it?", buttons=[[Button.inline("✅ Send now", b"bc_go"), Button.inline("❌ Cancel", b"bc_no")]])
+
+    @bot.on(events.CallbackQuery)
+    async def on_cb(event):
+        if event.sender_id != ADMIN_ID:
+            return await event.answer("Not allowed", alert=True)
+        data = event.data.decode(errors="ignore")
+        try:
+            await event.answer()
+        except Exception:
+            pass
+
+        async def show(text, buttons=None):
+            try:
+                await event.edit(text, buttons=buttons)
+            except MessageNotModifiedError:
+                pass
+
+        if data == "m:home":
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            return await show(PANEL_TEXT, panel_buttons())
+        if data in ("m:approve", "m:remove", "m:ban", "m:unban"):
+            step = {"m:approve": "ap_id", "m:remove": "remove", "m:ban": "ban", "m:unban": "unban"}[data]
+            ADMIN_STATES[ADMIN_ID] = {"step": step}
+            return await show("Send the user's **Telegram ID** (numeric):", [[Button.inline("⬅️ Cancel", b"m:home")]])
+
+        if data.startswith("ap_t:"):
+            st = ADMIN_STATES.get(ADMIN_ID)
+            if not st or "uid" not in st:
+                return
+            st["tier"] = data.split(":", 1)[1]
+            return await show(f"`{st['uid']}` · {TIER_LABELS[st['tier']]}\nChoose **content**:", [
+                [Button.inline("📚 Lectures + CBT Q-Bank", b"ap_c:full")],
+                [Button.inline("🎬 Lectures only", b"ap_c:lectures_only")]])
+        if data.startswith("ap_c:"):
+            st = ADMIN_STATES.get(ADMIN_ID)
+            if not st or "tier" not in st:
+                return
+            st["content"] = data.split(":", 1)[1]
+            return await show("Choose **duration**:", [
+                [Button.inline("30 days", b"ap_d:30"), Button.inline("90 days", b"ap_d:90")],
+                [Button.inline("180 days", b"ap_d:180"), Button.inline("365 days", b"ap_d:365")],
+                [Button.inline("♾ Lifetime", b"ap_d:0")]])
+        if data.startswith("ap_d:"):
+            st = ADMIN_STATES.pop(ADMIN_ID, None)
+            if not st or "content" not in st:
+                return
+            msg = await finish_approve(st["uid"], st["tier"], st["content"], int(data.split(":", 1)[1]))
+            return await show(msg, panel_buttons())
+
+        if data == "m:paid":
+            lines = []
+            for uid in db["approved"]:
+                if uid == ADMIN_ID:
+                    continue
+                d = db["approved_details"].get(str(uid), {})
+                lines.append(f"{uid} | {esc(display_name(uid))} | {d.get('tier', '-')} | "
+                             f"{'full' if d.get('content_tier') == 'full' else 'lec'} | {d.get('expiry') or 'life'}")
+            if not lines:
+                return await show("No paid users yet.", [[Button.inline("⬅️ Panel", b"m:home")]])
+            await show(f"📋 **Paid users: {len(lines)}** (id | name | year | plan | expiry)",
+                       [[Button.inline("⬅️ Panel", b"m:home")]])
+            chunk = ""
+            for ln in lines:
+                if len(chunk) + len(ln) > 3500:
+                    await bot.send_message(ADMIN_ID, chunk, parse_mode=None)
+                    chunk = ""
+                chunk += ln + "\n"
+            if chunk:
+                await bot.send_message(ADMIN_ID, chunk, parse_mode=None)
+            return
+
+        if data == "m:stats":
+            tiers = {}
+            for uid in db["approved"]:
+                if uid != ADMIN_ID:
+                    t = db["approved_details"].get(str(uid), {}).get("tier", "all")
+                    tiers[t] = tiers.get(t, 0) + 1
+            today = datetime.now().strftime("%Y-%m-%d")
+            dl = sum(db["daily_downloads"].get(today, {}).values())
+            tier_txt = "\n".join(f"  • {TIER_LABELS.get(k, k)}: {v}" for k, v in tiers.items()) or "  –"
+            up = int(time.time() - START_TIME)
+            return await show(
+                f"📊 **Stats**\n👥 Users: {len(db['users'])}\n💎 Paid: {max(0, len(db['approved']) - 1)}\n{tier_txt}\n"
+                f"🚫 Banned: {len(db['banned'])}\n🧪 Demo trials: {len(db['demo_sessions'])}\n"
+                f"📥 Downloads today: {dl}\n☁️ Cloud DB: {'✅ connected' if _cloud_ok else '❌ not connected'}\n"
+                f"⏱ Uptime: {up // 3600}h {(up % 3600) // 60}m",
+                [[Button.inline("⬅️ Panel", b"m:home")]])
+
+        if data == "m:set":
+            return await show(*settings_view())
+        if data.startswith("tg:"):
+            key = data.split(":", 1)[1]
+            if key in DEFAULT_SETTINGS and isinstance(DEFAULT_SETTINGS[key], bool):
+                db["settings"][key] = not db["settings"].get(key, False)
+                save_db(db)
+            return await show(*(demo_view() if key == "demo_auto_start" else settings_view()))
+        if data.startswith("lim:"):
+            db["settings"]["daily_limit_max"] = int(data.split(":", 1)[1])
+            save_db(db)
+            return await show(*settings_view())
+
+        if data == "m:demo":
+            return await show(*demo_view())
+        if data.startswith("dd:"):
+            db["settings"]["demo_duration_mins"] = int(data.split(":", 1)[1])
+            save_db(db)
+            return await show(*demo_view())
+        if data.startswith("dm:"):
+            db["settings"]["demo_max_downloads"] = int(data.split(":", 1)[1])
+            save_db(db)
+            return await show(*demo_view())
+        if data.startswith("dy:"):
+            t = data.split(":", 1)[1]
+            if t in TIER_LABELS:
+                db["settings"]["demo_year_tier"] = t
+                save_db(db)
+            return await show(*demo_view())
+
+        if data == "m:backup":
+            await trigger_cloud_backup(force=True)
+            return
+
+        if data == "m:bc":
+            rows = []
+            for i in range(0, len(BROADCAST_TARGETS), 2):
+                rows.append([Button.inline(f"{lbl} ({len(get_broadcast_audience(k))})", f"bc_t:{k}")
+                             for k, lbl in BROADCAST_TARGETS[i:i + 2]])
+            rows.append([Button.inline("⬅️ Panel", b"m:home")])
+            return await show("📢 **Broadcast** — choose the audience:", rows)
+        if data.startswith("bc_t:"):
+            target = data.split(":", 1)[1]
+            ADMIN_STATES[ADMIN_ID] = {"step": "bc_msg", "target": target}
+            return await show(f"Audience: **{dict(BROADCAST_TARGETS).get(target, target)}**\n\n"
+                              "Now send the message (text, or a photo/file with caption).",
+                              [[Button.inline("⬅️ Cancel", b"m:home")]])
+        if data == "bc_no":
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            return await show("Broadcast cancelled.", panel_buttons())
+        if data == "bc_go":
+            st = ADMIN_STATES.pop(ADMIN_ID, None)
+            if not st or st.get("step") != "bc_confirm":
+                return
+            asyncio.create_task(do_broadcast(st["target"], st["text"], st["entities"], st["media"], st["media_name"]))
+            return await show("📤 Broadcast started. You'll get a report when it finishes.", panel_buttons())
+
+
+# ============================================================
+# TELEGRAM BACKUP (extra safety copy sent to admin)
+# ============================================================
+
 
 async def trigger_cloud_backup(force=False):
     if not manager_bot_client or not (force or db["settings"].get("cloud_backup_enabled", True)):
         return
     try:
+        _write_local(db)
         if os.path.exists(DB_FILE):
             await manager_bot_client.send_file(
                 ADMIN_ID, DB_FILE,
-                caption=("☁️ **Auto-Sync Cloud Backup**\n"
-                         f"📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
+                caption=("☁️ **Backup**\n"
+                         f"📅 `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
                          f"👥 Registered: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`\n"
-                         f"🧪 Demo Trials: `{len(db.get('demo_sessions', {}))}`"))
+                         f"🧪 Demo: `{len(db.get('demo_sessions', {}))}`\n"
+                         "To restore: send this file back with caption `/restore`"))
     except Exception:
-        logging.exception("Cloud backup failed")
+        logging.exception("Backup failed")
 
 
-async def auto_restore_from_telegram():
-    global db
-    if not manager_bot_client:
-        return
-    try:
-        if len(db.get("users", {})) <= 1 and len(db.get("approved", [])) <= 1:
-            logging.info("Checking Telegram chat for database backup...")
-            async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=30):
-                if msg.file and (msg.file.name == "bot_database.json"
-                                 or (msg.text and "Auto-Sync Cloud Backup" in msg.text)):
-                    await msg.download_media(file=DB_FILE)
-                    db = load_db()
-                    logging.info("Restored database from chat backup.")
-                    await manager_bot_client.send_message(
-                        ADMIN_ID, "🔄 **Cloud Database Auto-Restored Successfully from Chat!**")
-                    break
-    except Exception:
-        logging.exception("Auto-restore from Telegram failed")
-
-async def notify_manager_new_request(user, bot_type):
-    if not manager_bot_client:
-        return
-    try:
-        name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Student"
-        username = f"@{user.username}" if user.username else "No username"
-        text = (f"🔔 **New Student Access Request!**\n\n👤 **Student:** {name} ({username})\n"
-                f"🆔 **User ID:** `{user.id}`\n🤖 **Bot Selected:** `{bot_type}`\n"
-                f"🕒 **Time:** `{datetime.now().strftime('%H:%M:%S')}`")
-        buttons = [
-            [Button.inline("⚡ Full (Lec + Notes + Q-Bank)", data=f"adm_app_full:{user.id}".encode()),
-             Button.inline("📚 Lectures Only", data=f"adm_app_lec:{user.id}".encode())],
-            [Button.inline("🧪 Reset / Grant Demo", data=f"adm_demo_grant:{user.id}".encode()),
-             Button.inline("⛔ Ban", data=f"adm_ban:{user.id}".encode())],
-        ]
-        await manager_bot_client.send_message(ADMIN_ID, text, buttons=buttons)
-    except Exception:
-        logging.exception("Failed to dispatch manager alert")
+# ============================================================
+# BACKGROUND TASKS & WEB SERVER
+# ============================================================
 
 
-async def background_loop():
-    """Periodic Supabase sync + cloud backup."""
-    last_backup = time.time()
+async def sync_loop():
     while True:
-        try:
-            await reconcile_now()
-            if time.time() - last_backup >= BACKUP_INTERVAL_SECONDS:
-                last_backup = time.time()
-                await trigger_cloud_backup()
-        except Exception:
-            logging.exception("Background loop error")
         await asyncio.sleep(SYNC_INTERVAL_SECONDS)
+        try:
+            if SUPABASE_SERVICE_KEY and not _cloud_ok:
+                await restore_db_from_cloud(retries=1, merge_local=True)
+            await reconcile_now()
+            if _cloud_ok:
+                await cloud_save_db()
+        except Exception:
+            logging.exception("Sync loop error")
 
-# ============================================================
-# WEB SERVER FOR HOST HEALTH CHECKS
-# ============================================================
 
-async def health_check(request):
-    return web.Response(text="MBBS Multi-Bot & Demo Engine is Online 24/7.")
+async def backup_loop():
+    while True:
+        await asyncio.sleep(BACKUP_INTERVAL_SECONDS)
+        await trigger_cloud_backup()
 
 
-async def start_web_server():
+async def start_web():
     app = web.Application()
-    app.router.add_get("/", health_check)
-    app.router.add_get("/health", health_check)
+
+    async def health(_):
+        return web.json_response({"status": "ok", "uptime": int(time.time() - START_TIME),
+                                  "cloud_db": _cloud_ok})
+
+    app.router.add_get("/", health)
+    app.router.add_get("/health", health)
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", PORT).start()
-    logging.info("Health-check web server listening on port %s", PORT)
+    logging.info("Web server on port %s", PORT)
+
 
 # ============================================================
-# UI MENUS GENERATOR
+# MAIN
 # ============================================================
 
-async def edit(event, text, buttons=None):
-    try:
-        await event.edit(text, buttons=buttons)
-    except MessageNotModifiedError:
-        pass
-
-
-def make_main_menu(topics, user_id=None, is_demo=False):
-    subjects = list(topics.keys())
-    buttons = []
-    for i in range(0, len(subjects), 2):
-        row = [Button.inline(subjects[i], data=f"sub:{i}".encode())]
-        if i + 1 < len(subjects):
-            row.append(Button.inline(subjects[i + 1], data=f"sub:{i + 1}".encode()))
-        buttons.append(row)
-
-    if is_demo:
-        session = db["demo_sessions"].get(str(user_id), {})
-        cbt_id = session.get("cbt_id")
-        cbt_pw = session.get("cbt_pass")
-        if cbt_id and cbt_pw:
-            url = generate_demo_webapp_url(cbt_id, cbt_pw)
-            buttons.append([Button.url("🧪 Test CBT Q-Bank App (Demo)", url)])
-        buttons.append([Button.url("💎 Enroll Now / Get Full Plan", f"https://t.me/{OWNER_CONTACT.lstrip('@')}")])
-    elif user_id is not None and has_qbank(user_id):
-        buttons.append([Button.inline("🔑 My CBT Q-Bank Login", data=b"mylogin")])
-    return buttons
-
-
-def make_subject_menu():
-    return [
-        [Button.inline("📚 Video Lectures", data=b"lectures"), Button.inline("📝 Notes & PDFs", data=b"notes")],
-        [Button.inline("🎯 High-Yield MCQ Hub", data=b"mcq_hub")],
-        [Button.inline("⬅️ All Subjects", data=b"home")],
-    ]
-
-def make_mcq_hub_menu(user_id, is_demo=False):
-    if is_demo:
-        session = db["demo_sessions"].get(str(user_id), {})
-        cbt_btn = Button.url(
-            "🧪 Launch Demo CBT Q-Bank",
-            generate_demo_webapp_url(session.get("cbt_id", ""), session.get("cbt_pass", ""))
-        )
-    elif get_user_content_tier(user_id) == "full":
-        cbt_btn = Button.url("🌐 Launch MBBS CBT Q-Bank App", generate_webapp_launch_url(user_id))
-    else:
-        cbt_btn = Button.inline("🔒 CBT Q-Bank (Upgrade Required)", data=b"mcq_upgrade_info")
-
-    return [
-        [cbt_btn],
-        [Button.inline("📂 Topic-Wise Q-Bank PDFs", data=b"mcq_p:topic_wise")],
-        [Button.inline("🏛️ Previous Year Questions (PYQs)", data=b"mcq_p:pyqs")],
-        [Button.inline("🎲 Random / Mock Test MCQs", data=b"mcq_p:random")],
-        [Button.inline("⬅️ Back to Subject", data=b"sub_back")],
-    ]
-
-
-def extract_hashtag(text):
-    if not text:
-        return None
-    m = re.search(r"(?<!\w)#([A-Za-z0-9_]+)", text)
-    return m.group(1) if m else None
-
-
-def get_filename(message, number=1):
-    try:
-        if message.document and message.document.attributes:
-            for attr in message.document.attributes:
-                if getattr(attr, "file_name", None):
-                    return attr.file_name
-    except Exception:
-        pass
-    text = (message.text or "").strip()
-    if text:
-        clean = re.sub(r"#\w+", "", text.splitlines()[0]).strip()
-        if clean:
-            return clean
-    return f"Lecture {number}"
-
-# ============================================================
-# TOPIC FETCHER & RELAY ENGINE
-# ============================================================
-
-async def get_topic_messages(topic_id):
-    messages = []
-    try:
-        async for message in user_client.iter_messages(GROUP_ID, reply_to=topic_id):
-            messages.append(message)
-        messages.reverse()
-    except FloodWaitError as e:
-        await asyncio.sleep(e.seconds)
-    except Exception:
-        logging.exception("Error while reading topic messages")
-    return messages
-
-
-async def get_topic_units(topic_id):
-    now = time.time()
-    cached = TOPIC_CACHE.get(topic_id)
-    if cached and now - cached[0] < TOPIC_CACHE_TTL:
-        return cached[1]
-
-    units, current = {}, None
-    for message in await get_topic_messages(topic_id):
-        tag = extract_hashtag(message.text or "")
-        if tag:
-            current = tag
-            units.setdefault(current, [])
-        if current is not None and message.media:
-            units[current].append(message)
-
-    if units:
-        TOPIC_CACHE[topic_id] = (now, units)
-    return units
-
-async def deliver_lecture(bot_client, bot_entity, chat_id, message, status_msg=None):
-    global active_relay_future
-
-    async with relay_lock:
-        future = asyncio.get_running_loop().create_future()
-        active_relay_future = future
-        relayed = None
-        try:
-            await user_client.forward_messages(bot_entity, message)
-            relayed = await asyncio.wait_for(future, timeout=10.0)
-            try:
-                await bot_client.send_file(
-                    entity=chat_id, file=relayed.media,
-                    caption=message.text or "", supports_streaming=True
-                )
-            except Exception:
-                await relayed.forward_to(chat_id)
-            if status_msg:
-                try:
-                    await status_msg.delete()
-                except Exception:
-                    pass
-            return True
-        except Exception:
-            logging.warning("Relay fallback triggered.")
-        finally:
-            active_relay_future = None
-            if relayed:
-                try:
-                    await relayed.delete()
-                except Exception:
-                    pass
-
-        file_path = None
-        try:
-            if status_msg:
-                try:
-                    await status_msg.edit("⚡ **Streaming lecture...**")
-                except Exception:
-                    pass
-            file_path = await user_client.download_media(message, file="downloads/")
-            if file_path:
-                await bot_client.send_file(
-                    entity=chat_id, file=file_path,
-                    caption=message.text or "", supports_streaming=True
-                )
-                if status_msg:
-                    try:
-                        await status_msg.delete()
-                    except Exception:
-                        pass
-                return True
-        except Exception:
-            logging.exception("Delivery failed.")
-            if status_msg:
-                try:
-                    await status_msg.edit("❌ Failed to deliver lecture.")
-                except Exception:
-                    pass
-        finally:
-            if file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                except Exception:
-                    pass
-        return False
-
-# ============================================================
-# STUDENT BOTS (REGULAR ENROLLED USERS)
-# ============================================================
-
-def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
-    entity_box = {}
-
-    async def guard(event, check_limit=False):
-        uid = event.sender_id
-        if is_banned(uid):
-            await event.answer("⛔ You are restricted from using this service.", alert=True)
-            return False
-        allowed, _ = check_access(uid, bot_key)
-        if not allowed:
-            await event.answer("🔒 Paid access only.", alert=True)
-            return False
-        if check_limit and not check_daily_limit(uid)[0]:
-            await event.answer("⚠️ Daily download limit reached!", alert=True)
-            return False
-        return True
-
-    @bot_client.on(events.NewMessage)
-    async def relay_listener(event):
-        if event.is_private and event.sender_id == USER_CLIENT_ID:
-            if active_relay_future and not active_relay_future.done():
-                active_relay_future.set_result(event.message)
-
-    @bot_client.on(events.NewMessage(pattern=r"^/start(?:\s.*)?$"))
-    async def start_handler(event):
-        sender = await event.get_sender()
-        track_user(sender, bot_key)
-        uid = event.sender_id
-
-        if is_banned(uid):
-            await event.respond("⛔ You are restricted from using this service.")
-            return
-
-        allowed, reason = check_access(uid, bot_key)
-        if not allowed:
-            if reason.startswith("tier_mismatch"):
-                user_tier = reason.split(":")[1]
-                label = BOT_TITLES_MAP.get(user_tier, user_tier.replace("_", " ").title())
-                await event.respond(
-                    f"⚠️ **Year Access Restricted**\n\nYour subscription is activated for **{label}**, "
-                    f"but this is the **{bot_title}**.\n\nTo upgrade or switch years, contact {OWNER_CONTACT}."
-                )
-            elif reason == "expired":
-                await event.respond(
-                    f"⚠️ **Subscription Expired!**\n\nYour access period has ended. "
-                    f"Contact {OWNER_CONTACT} to renew your enrollment."
-                )
-            else:
-                await event.respond(LOCKED_MESSAGE.format(user_id=uid))
-                await notify_manager_new_request(sender, bot_key)
-            return
-
-        tier = get_user_content_tier(uid)
-        banner = ""
-        if tier == "full" and uid != ADMIN_ID:
-            qid, qpass = get_or_create_qbank_creds(uid)
-            banner = ("\n\n━━━━━━━━━━━━━━━━━━━━━━\n🩺 **YOUR CBT Q-BANK LOGIN:**\n"
-                      f"🆔 **Student ID:** `{qid}`\n🔑 **Password:** `{qpass}`\n"
-                      "*(The launch button logs you in automatically)*\n━━━━━━━━━━━━━━━━━━━━━━")
-        elif tier == "lectures_only":
-            banner = ("\n\n━━━━━━━━━━━━━━━━━━━━━━\n📚 **PLAN:** Video Lectures & Notes Only\n"
-                      f"💡 *To unlock the CBT Q-Bank app, contact {OWNER_CONTACT}*\n━━━━━━━━━━━━━━━━━━━━━━")
-
-        limit_note = ""
-        if db["settings"].get("daily_limit_enabled", False) and uid != ADMIN_ID:
-            _, cur, mx = check_daily_limit(uid)
-            limit_note = f"\n⚡ Daily Limit: `{cur}/{mx}` downloads used"
-
-        await event.respond(
-            f"🎓 **{bot_title}**{limit_note}{banner}\n\nSelect a subject below to begin:",
-            buttons=make_main_menu(bot_topics, uid)
-        )
-
-    @bot_client.on(events.NewMessage(pattern=r"^/mylogin$"))
-    async def mylogin_cmd(event):
-        uid = event.sender_id
-        if uid == ADMIN_ID:
-            await event.respond("ℹ️ Admin accounts do not use a student Q-Bank login.")
-        elif is_banned(uid) or not has_qbank(uid):
-            await event.respond(
-                f"🔒 The CBT Q-Bank login is included in the **Full plan** (Lectures + Notes + MCQ).\n"
-                f"To upgrade, contact {OWNER_CONTACT}."
-            )
-        elif not check_access(uid, bot_key)[0]:
-            await event.respond(f"🔒 Your access is not active. Contact {OWNER_CONTACT}")
-        else:
-            await send_login_card(event.chat_id, uid, title="🔑 **Your CBT Q-Bank login**")
-
-    @bot_client.on(events.CallbackQuery(data=b"mylogin"))
-    async def mylogin_cb(event):
-        uid = event.sender_id
-        if not await guard(event):
-            return
-        if not has_qbank(uid):
-            await event.answer("🔒 Full plan required.", alert=True)
-            return
-        await event.answer()
-        await send_login_card(event.chat_id, uid, title="🔑 **Your CBT Q-Bank login**")
-
-    @bot_client.on(events.CallbackQuery(data=b"home"))
-    async def cb_home(event):
-        if not await guard(event):
-            return
-        await edit(
-            event, f"🎓 **{bot_title}**\n\nSelect a subject below:",
-            make_main_menu(bot_topics, event.sender_id)
-        )
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^sub:(\d+)$"))
-    async def cb_sub(event):
-        if not await guard(event):
-            return
-        idx = int(event.pattern_match.group(1))
-        subjects = list(bot_topics.keys())
-        if 0 <= idx < len(subjects):
-            user_subjects[event.sender_id] = subjects[idx]
-            await edit(event, f"📚 **{subjects[idx]}**\n\nChoose an option below:", make_subject_menu())
-
-    @bot_client.on(events.CallbackQuery(data=b"sub_back"))
-    async def cb_sub_back(event):
-        if not await guard(event):
-            return
-        subj = user_subjects.get(event.sender_id, next(iter(bot_topics)))
-        await edit(event, f"📚 **{subj}**\n\nChoose an option below:", make_subject_menu())
-
-    @bot_client.on(events.CallbackQuery(data=b"lectures"))
-    async def cb_lectures(event):
-        if not await guard(event):
-            return
-        uid = event.sender_id
-        subj = user_subjects.get(uid)
-        if not subj or subj not in bot_topics:
-            await event.answer("Select subject again.")
-            return
-        await event.answer("Loading lectures...")
-        units = await get_topic_units(bot_topics[subj])
-        if not units:
-            await edit(event, f"📚 **{subj}**\n\nNo lecture units found.",
-                       [[Button.inline("⬅️ Back", data=b"sub_back")]])
-            return
-        names = list(units.keys())
-        user_units[uid] = {"subject": subj, "units": units, "unit_names": names}
-        buttons = [[Button.inline(f"📂 #{u} ({len(units[u])})", data=f"unit:{i}".encode())]
-                   for i, u in enumerate(names)]
-        buttons.append([Button.inline("⬅️ Back to Subject", data=b"sub_back")])
-        await edit(event, f"📚 **{subj} Lectures**\n\nSelect a unit:", buttons)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
-    async def cb_unit(event):
-        if not await guard(event):
-            return
-        data = user_units.get(event.sender_id)
-        if not data:
-            await event.answer("Reopen the subject.")
-            return
-        idx = int(event.pattern_match.group(1))
-        if 0 <= idx < len(data["unit_names"]):
-            name = data["unit_names"][idx]
-            lectures = data["units"].get(name, [])
-            buttons = []
-            for i, lec in enumerate(lectures):
-                fname = get_filename(lec, i + 1)
-                if len(fname) > 42:
-                    fname = fname[:39] + "..."
-                buttons.append([Button.inline(f"📄 {fname}", data=f"file:{lec.id}".encode())])
-            buttons.append([Button.inline("⬅️ Units", data=b"lectures")])
-            await edit(event, f"📂 **#{name}** ({len(lectures)} lectures):\n\nSelect a lecture:", buttons)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
-    async def cb_file(event):
-        if not await guard(event, check_limit=True):
-            return
-        uid = event.sender_id
-        mid = int(event.pattern_match.group(1))
-        await event.answer("⚡ Sending lecture...")
-        status = await bot_client.send_message(event.chat_id, "⚡ **Sending lecture directly...**")
-        try:
-            msg = await user_client.get_messages(GROUP_ID, ids=mid)
-            if msg and msg.media:
-                if await deliver_lecture(bot_client, entity_box.get("entity"), event.chat_id, msg, status):
-                    record_download(uid)
-            else:
-                await status.edit("❌ Lecture file not found.")
-        except Exception:
-            logging.exception("File deliver error")
-            await status.edit("❌ Delivery failed.")
-
-    @bot_client.on(events.CallbackQuery(data=b"notes"))
-    async def cb_notes(event):
-        if not await guard(event, check_limit=True):
-            return
-        uid = event.sender_id
-        subj = user_subjects.get(uid)
-        if not subj:
-            await event.answer("Select subject again.")
-            return
-        await event.answer()
-        status = await bot_client.send_message(event.chat_id, f"🔍 Searching notes for **{subj}**...")
-        try:
-            notes = await get_topic_messages(bot_topics.get("Notes", 33))
-            key = re.sub(r"[^a-zA-Z0-9]", "", subj).lower()
-            found = [m for m in notes if m.media and (
-                key in re.sub(r"[^a-zA-Z0-9]", "", (m.text or "")).lower()
-                or key in re.sub(r"[^a-zA-Z0-9]", "", get_filename(m)).lower())]
-            if not found:
-                await status.edit(f"❌ No notes found for **{subj}**.")
-                return
-            await status.edit(f"⚡ Delivering {len(found)} note(s)...")
-            sent = 0
-            for m in found:
-                if await deliver_lecture(bot_client, entity_box.get("entity"), event.chat_id, m, None):
-                    sent += 1
-            if sent:
-                record_download(uid)
-            try:
-                await status.delete()
-            except Exception:
-                pass
-        except Exception:
-            logging.exception("Notes deliver error")
-            await status.edit("❌ Could not deliver notes.")
-
-    @bot_client.on(events.CallbackQuery(data=b"mcq_hub"))
-    async def cb_mcq_hub(event):
-        if not await guard(event):
-            return
-        uid = event.sender_id
-        subj = user_subjects.get(uid, next(iter(bot_topics)))
-        await edit(
-            event,
-            f"🎯 **{subj} MCQ & Question Bank Hub**\n\nSelect your practice material:\n\n"
-            "• 🌐 **Interactive CBT App**: browser exam simulator with timers & rationales.\n"
-            "• 📂 **Topic-Wise Q-Bank**: unit-wise question papers & PDFs.\n"
-            "• 🏛️ **Previous Year Questions (PYQs)**: past recalls.\n"
-            "• 🎲 **Random / Mock Test MCQs**: mixed subject questions.",
-            make_mcq_hub_menu(uid)
-        )
-
-    @bot_client.on(events.CallbackQuery(data=b"mcq_upgrade_info"))
-    async def cb_upgrade_info(event):
-        await event.answer("🔒 Q-Bank Access Required", alert=True)
-        await event.respond(
-            "🔒 **Interactive Q-Bank Not Included in Your Current Plan**\n\n"
-            "Your account currently has access to **Lectures & Notes Only**.\n\n"
-            f"To unlock the CBT test simulator with scorecards and option shuffling, "
-            f"contact {OWNER_CONTACT} to upgrade your plan."
-        )
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^mcq_p:(.+)$"))
-    async def cb_mcq_paper(event):
-        if not await guard(event):
-            return
-        cat = event.pattern_match.group(1).decode()
-        subj = user_subjects.get(event.sender_id, next(iter(bot_topics)))
-        titles = {
-            "topic_wise": "📂 Topic-Wise Q-Bank PDFs",
-            "pyqs": "🏛️ Previous Year Questions (PYQs)",
-            "random": "🎲 Random / Mock Test MCQs"
-        }
-        await edit(
-            event,
-            f"📑 **{subj} — {titles.get(cat, 'MCQs')}**\n\nThis section is being updated. "
-            "Use the CBT Q-Bank app for practice meanwhile.",
-            [[Button.inline("⬅️ Back to MCQ Hub", data=b"mcq_hub")]]
-        )
-
-    return entity_box
-
-# ============================================================
-# DEMO BOT ENGINE (@Demoprep_bot)
-# Strict 5-10 Mins Window + 2 Lecture Downloads Max + Demo CBT Login
-# ============================================================
-
-def setup_demo_bot_handlers(bot_client):
-    entity_box = {}
-
-    def format_countdown(seconds):
-        mins = seconds // 60
-        secs = seconds % 60
-        return f"{mins}m {secs:02d}s"
-
-    async def demo_guard(event, check_download=False):
-        uid = event.sender_id
-        if is_banned(uid):
-            await event.answer("⛔ Access Restricted.", alert=True)
-            return False
-
-        status, remaining, dl_used, dl_max = check_demo_status(uid)
-
-        if status == "expired":
-            await event.answer("⏳ Demo Trial Expired!", alert=True)
-            await event.respond(
-                "⏳ **Your Demo Trial Period Has Ended!**\n\n"
-                f"You have completed your preview session.\n"
-                f"To unlock unlimited high-speed lectures, notes, and the full CBT Q-Bank, "
-                f"contact {OWNER_CONTACT} for enrollment.",
-                buttons=[[Button.url("💎 Enroll / Contact Owner", f"https://t.me/{OWNER_CONTACT.lstrip('@')}")]]
-            )
-            return False
-
-        if check_download and dl_used >= dl_max:
-            await event.answer("⚠️ Demo Download Limit Reached (Max 2 lectures)!", alert=True)
-            await event.respond(
-                f"⚠️ **Demo Quota Exceeded ({dl_used}/{dl_max} downloads used)**\n\n"
-                "In demo mode, you can download up to **2 sample lectures** to test streaming and quality.\n\n"
-                f"To get complete unrestricted access to all 19 subjects, contact {OWNER_CONTACT}.",
-                buttons=[[Button.url("💎 Get Full Plan", f"https://t.me/{OWNER_CONTACT.lstrip('@')}")]]
-            )
-            return False
-
-        return True
-
-    @bot_client.on(events.NewMessage)
-    async def demo_relay_listener(event):
-        if event.is_private and event.sender_id == USER_CLIENT_ID:
-            if active_relay_future and not active_relay_future.done():
-                active_relay_future.set_result(event.message)
-
-    @bot_client.on(events.NewMessage(pattern=r"^/start(?:\s.*)?$"))
-    async def demo_start(event):
-        sender = await event.get_sender()
-        uid = event.sender_id
-        track_user(sender, "demo")
-
-        if is_banned(uid):
-            await event.respond("⛔ You are restricted from using this service.")
-            return
-
-        session = get_or_start_demo_session(uid, sender.first_name or "Doctor")
-        await ensure_demo_cbt_synced(uid, sender.first_name or "Doctor")
-
-        status, remaining, dl_used, dl_max = check_demo_status(uid)
-
-        if status == "expired":
-            await event.respond(
-                "⏳ **Demo Trial Expired**\n\n"
-                f"You have already utilized your preview session.\n"
-                f"Contact {OWNER_CONTACT} to activate your full MBBS subscription.",
-                buttons=[[Button.url("💎 Upgrade to Full Plan", f"https://t.me/{OWNER_CONTACT.lstrip('@')}")]]
-            )
-            return
-
-        demo_topics = get_demo_topics()
-        tier_name = db["settings"].get("demo_year_tier", "all")
-        tier_label = BOT_TITLES_MAP.get(tier_name, tier_name.replace("_", " ").title())
-
-        demo_cbt_url = generate_demo_webapp_url(session["cbt_id"], session["cbt_pass"])
-
-        welcome_text = (
-            "🧪 **Welcome to MBBS Demo Trial Hub!**\n\n"
-            "This trial is configured so you can verify our lecture quality and test our interactive CBT simulator.\n\n"
-            f"⏱️ **Trial Time Remaining:** `{format_countdown(remaining)}`\n"
-            f"📥 **Lecture Downloads Allowed:** `{dl_used}/{dl_max}` used\n"
-            f"📚 **Visible Curriculum:** `{tier_label}`\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🩺 **YOUR TRIAL CBT Q-BANK LOGIN:**\n"
-            f"🆔 **Demo ID:** `{session['cbt_id']}`\n"
-            f"🔑 **Password:** `{session['cbt_pass']}`\n"
-            "*(Auto logs in when you tap the CBT button)*\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "Choose a subject below to test sample lectures:"
-        )
-
-        await event.respond(welcome_text, buttons=make_main_menu(demo_topics, uid, is_demo=True))
-
-    @bot_client.on(events.CallbackQuery(data=b"home"))
-    async def demo_cb_home(event):
-        if not await demo_guard(event):
-            return
-        uid = event.sender_id
-        status, remaining, dl_used, dl_max = check_demo_status(uid)
-        demo_topics = get_demo_topics()
-        text = (
-            "🧪 **MBBS Demo Trial Menu**\n\n"
-            f"⏱️ **Time Left:** `{format_countdown(remaining)}` | 📥 **Downloads:** `{dl_used}/{dl_max}`\n\n"
-            "Select a subject below:"
-        )
-        await edit(event, text, make_main_menu(demo_topics, uid, is_demo=True))
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^sub:(\d+)$"))
-    async def demo_cb_sub(event):
-        if not await demo_guard(event):
-            return
-        idx = int(event.pattern_match.group(1))
-        demo_topics = get_demo_topics()
-        subjects = list(demo_topics.keys())
-        if 0 <= idx < len(subjects):
-            user_subjects[event.sender_id] = subjects[idx]
-            await edit(event, f"📚 **{subjects[idx]} (Trial Mode)**\n\nSelect an option to test:", make_subject_menu())
-
-    @bot_client.on(events.CallbackQuery(data=b"sub_back"))
-    async def demo_cb_sub_back(event):
-        if not await demo_guard(event):
-            return
-        demo_topics = get_demo_topics()
-        subj = user_subjects.get(event.sender_id, next(iter(demo_topics)))
-        await edit(event, f"📚 **{subj} (Trial Mode)**\n\nSelect an option to test:", make_subject_menu())
-
-    @bot_client.on(events.CallbackQuery(data=b"lectures"))
-    async def demo_cb_lectures(event):
-        if not await demo_guard(event):
-            return
-        uid = event.sender_id
-        demo_topics = get_demo_topics()
-        subj = user_subjects.get(uid)
-        if not subj or subj not in demo_topics:
-            await event.answer("Select subject again.")
-            return
-        await event.answer("Loading sample units...")
-        units = await get_topic_units(demo_topics[subj])
-        if not units:
-            await edit(event, f"📚 **{subj}**\n\nNo lecture units found.",
-                       [[Button.inline("⬅️ Back", data=b"sub_back")]])
-            return
-        names = list(units.keys())
-        user_units[uid] = {"subject": subj, "units": units, "unit_names": names}
-        buttons = [[Button.inline(f"📂 #{u} ({len(units[u])})", data=f"unit:{i}".encode())]
-                   for i, u in enumerate(names)]
-        buttons.append([Button.inline("⬅️ Back to Subject", data=b"sub_back")])
-        await edit(event, f"📚 **{subj} Lectures (Trial Mode)**\n\nSelect a unit to inspect:", buttons)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^unit:(\d+)$"))
-    async def demo_cb_unit(event):
-        if not await demo_guard(event):
-            return
-        data = user_units.get(event.sender_id)
-        if not data:
-            await event.answer("Reopen the subject.")
-            return
-        idx = int(event.pattern_match.group(1))
-        if 0 <= idx < len(data["unit_names"]):
-            name = data["unit_names"][idx]
-            lectures = data["units"].get(name, [])
-            buttons = []
-            for i, lec in enumerate(lectures[:6]):  # Show up to 6 sample lectures
-                fname = get_filename(lec, i + 1)
-                if len(fname) > 38:
-                    fname = fname[:35] + "..."
-                buttons.append([Button.inline(f"📄 {fname}", data=f"file:{lec.id}".encode())])
-            buttons.append([Button.inline("⬅️ Units", data=b"lectures")])
-            await edit(event, f"📂 **#{name}** (Demo Preview):\n\nChoose a sample lecture (Max 2 downloads):", buttons)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^file:(\d+)$"))
-    async def demo_cb_file(event):
-        if not await demo_guard(event, check_download=True):
-            return
-        uid = event.sender_id
-        mid = int(event.pattern_match.group(1))
-        await event.answer("⚡ Sending sample lecture...")
-        status = await bot_client.send_message(event.chat_id, "⚡ **Streaming demo lecture...**")
-        try:
-            msg = await user_client.get_messages(GROUP_ID, ids=mid)
-            if msg and msg.media:
-                if await deliver_lecture(bot_client, entity_box.get("entity"), event.chat_id, msg, status):
-                    record_demo_download(uid)
-                    status_type, remaining, dl_used, dl_max = check_demo_status(uid)
-                    await bot_client.send_message(
-                        event.chat_id,
-                        f"✅ **Sample Delivered!**\n\n"
-                        f"📥 Downloads remaining: `{max(0, dl_max - dl_used)}/{dl_max}`\n"
-                        f"⏱️ Time left: `{format_countdown(remaining)}`\n\n"
-                        f"💬 To get unlimited access without limits, contact {OWNER_CONTACT}",
-                        buttons=[[Button.url("💎 Enroll in Full Plan", f"https://t.me/{OWNER_CONTACT.lstrip('@')}")]]
-                    )
-            else:
-                await status.edit("❌ Lecture file not found.")
-        except Exception:
-            logging.exception("Demo file deliver error")
-            await status.edit("❌ Delivery failed.")
-
-    @bot_client.on(events.CallbackQuery(data=b"notes"))
-    async def demo_cb_notes(event):
-        if not await demo_guard(event, check_download=True):
-            return
-        uid = event.sender_id
-        demo_topics = get_demo_topics()
-        subj = user_subjects.get(uid)
-        if not subj:
-            await event.answer("Select subject again.")
-            return
-        await event.answer()
-        status = await bot_client.send_message(event.chat_id, f"🔍 Searching sample notes for **{subj}**...")
-        try:
-            notes = await get_topic_messages(demo_topics.get("Notes", 33))
-            key = re.sub(r"[^a-zA-Z0-9]", "", subj).lower()
-            found = [m for m in notes if m.media and (
-                key in re.sub(r"[^a-zA-Z0-9]", "", (m.text or "")).lower()
-                or key in re.sub(r"[^a-zA-Z0-9]", "", get_filename(m)).lower())]
-            if not found:
-                await status.edit(f"❌ No demo notes found for **{subj}**.")
-                return
-            await status.edit("⚡ Delivering sample note PDF...")
-            if await deliver_lecture(bot_client, entity_box.get("entity"), event.chat_id, found[0], None):
-                record_demo_download(uid)
-            try:
-                await status.delete()
-            except Exception:
-                pass
-        except Exception:
-            logging.exception("Demo notes deliver error")
-            await status.edit("❌ Could not deliver notes.")
-
-    @bot_client.on(events.CallbackQuery(data=b"mcq_hub"))
-    async def demo_cb_mcq_hub(event):
-        if not await demo_guard(event):
-            return
-        uid = event.sender_id
-        demo_topics = get_demo_topics()
-        subj = user_subjects.get(uid, next(iter(demo_topics)))
-        await edit(
-            event,
-            f"🎯 **{subj} Demo MCQ & CBT Simulator**\n\n"
-            "You have trial access to test our CBT Web Application with interactive timers and explanations.\n\n"
-            "Tap below to test the CBT app:",
-            make_mcq_hub_menu(uid, is_demo=True)
-        )
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^mcq_p:(.+)$"))
-    async def demo_cb_mcq_paper(event):
-        if not await demo_guard(event):
-            return
-        await edit(
-            event,
-            "📑 **Demo Question Bank**\n\n"
-            "Full unit MCQ question papers & recall banks are reserved for verified subscribers.\n\n"
-            f"Please test the interactive CBT app or contact {OWNER_CONTACT} to unlock all PDFs.",
-            [[Button.inline("⬅️ Back to MCQ Hub", data=b"mcq_hub")]]
-        )
-
-    return entity_box
-
-# ============================================================
-# BROADCAST DISPATCHER
-# ============================================================
-
-async def execute_broadcast(payload, is_raw_event=False):
-    sent = failed = 0
-    text_body = None if (is_raw_event and payload.media) else (payload.text if is_raw_event else str(payload))
-
-    for uid_str, udata in list(db.get("users", {}).items()):
-        if is_banned(uid_str):
-            continue
-        target = int(uid_str)
-        client = (active_bots.get(udata.get("bot_used")) or manager_bot_client
-                  or (next(iter(active_bots.values())) if active_bots else None))
-        if not client:
-            failed += 1
-            continue
-
-        async def send():
-            if text_body is None:
-                await client.send_file(target, file=payload.media, caption=payload.text or "")
-            else:
-                await client.send_message(target, f"📢 **MBBS Announcement:**\n\n{text_body}")
-
-        try:
-            await send()
-            sent += 1
-        except FloodWaitError as e:
-            await asyncio.sleep(e.seconds)
-            try:
-                await send()
-                sent += 1
-            except Exception:
-                failed += 1
-        except Exception as err:
-            logging.warning("Broadcast skipped for %s: %s", target, err)
-            failed += 1
-        await asyncio.sleep(0.08)
-    return sent, failed
-
-# ============================================================
-# MANAGER BOT (ADMIN CONTROL CENTER & DEMO CONFIGURATOR)
-# ============================================================
-
-def paid_counts():
-    paid = [u for u in db.get("approved", []) if u != ADMIN_ID]
-    qb = sum(1 for u in paid if db["approved_details"].get(str(u), {}).get("content_tier") == "full")
-    return len(paid), qb, len(paid) - qb
-
-def dashboard_text():
-    paid, qb, lec = paid_counts()
-    demo_count = len(db.get("demo_sessions", {}))
-    return ("🎛️ **MBBS Management Control Center**\n\n"
-            f"🤖 **Managed Bots Online:** `{len(active_bots)}` bots\n"
-            f"👥 **Total Registered Students:** `{len(db.get('users', {}))}`\n"
-            f"💎 **Verified Paid Members:** `{paid}`\n"
-            f"  └ 🩺 Full (Lectures + Notes + Q-Bank): `{qb}`\n"
-            f"  └ 📚 Lectures Only: `{lec}`\n"
-            f"🧪 **Demo Trial Sessions:** `{demo_count}` candidates\n"
-            f"🚫 **Blocked Users:** `{len(db.get('banned', []))}`\n\n"
-            "Select an administrative action below:")
-
-
-def make_manager_menu():
-    return [
-        [Button.inline("📊 System Stats", data=b"mgmt_stats"), Button.inline("⚙️ Feature Toggles", data=b"mgmt_toggles")],
-        [Button.inline("🧪 Demo Bot Controls", data=b"mgmt_demo_menu"), Button.inline("⏳ Pending Requests", data=b"mgmt_pending")],
-        [Button.inline("💎 Verified Members", data=b"mgmt_approved_p:0"), Button.inline("👥 Registered Users", data=b"mgmt_users_p:0")],
-        [Button.inline("📢 Broadcast Announcement", data=b"mgmt_announce"), Button.inline("☁️ Cloud Backup Now", data=b"mgmt_do_backup")],
-        [Button.inline("🟢 Alert: Server Online", data=b"mgmt_alert_online"), Button.inline("🔴 Alert: Server Down", data=b"mgmt_alert_down")],
-        [Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home")],
-    ]
-
-
-def make_toggles_menu():
-    s = db["settings"]
-    on = lambda k: "🟢 ON" if s.get(k) else "🔴 OFF"
-    limit = f"🟢 ON ({s.get('daily_limit_max', 30)}/d)" if s.get("daily_limit_enabled") else "🔴 OFF"
-    return [
-        [Button.inline(f"⏳ Subscription Expiry: {on('expiry_enabled')}", data=b"tog:expiry_enabled")],
-        [Button.inline(f"🎓 Year-Lock Tier: {on('tier_access_enabled')}", data=b"tog:tier_access_enabled")],
-        [Button.inline(f"🛡️ Anti-Leech Limit: {limit}", data=b"tog:daily_limit_enabled")],
-        [Button.inline(f"☁️ Cloud Auto-Sync: {on('cloud_backup_enabled')}", data=b"tog:cloud_backup_enabled")],
-        [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")],
-    ]
-
-def make_demo_control_menu():
-    s = db["settings"]
-    duration = s.get("demo_duration_mins", 10)
-    max_dl = s.get("demo_max_downloads", 2)
-    tier = s.get("demo_year_tier", "all")
-    tier_label = BOT_TITLES_MAP.get(tier, tier).replace("MBBS ", "").replace(" Library", "")
-
-    return [
-        [Button.inline(f"⏱️ Trial Duration: {duration} mins", data=b"demo_tog:duration")],
-        [Button.inline(f"📥 Max Downloads: {max_dl} files", data=b"demo_tog:max_dl")],
-        [Button.inline(f"📚 Visible Year: {tier_label}", data=b"demo_tog:tier")],
-        [Button.inline("👥 View Demo Users", data=b"demo_users_p:0"), Button.inline("🧪 Generate Demo Link", data=b"demo_gen_direct")],
-        [Button.inline("⬅️ Back to Dashboard", data=b"mgmt_home")],
-    ]
-
-
-def grant_plan(target_id, tier):
-    """Approve a student with a plan: 'full' or 'lectures_only'."""
-    t = str(target_id)
-    if target_id not in db["approved"]:
-        db["approved"].append(target_id)
-    if target_id in db["banned"]:
-        db["banned"].remove(target_id)
-    det = db["approved_details"].setdefault(t, {})
-    det.update({"content_tier": tier, "tier": det.get("tier", "all"), "expiry": det.get("expiry")})
-    det.setdefault("added_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    if tier == "full":
-        get_or_create_qbank_creds(target_id)
-    save_db(db)
-
-def setup_manager_bot_handlers(client):
-    back_menu = [[Button.inline("⬅️ Menu", data=b"mgmt_home")]]
-
-    def admin_only(event):
-        return event.sender_id == ADMIN_ID
-
-    @client.on(events.NewMessage(pattern=r"^/start$"))
-    async def manager_start(event):
-        if not admin_only(event):
-            await event.respond("⛔ Access Denied.")
-            return
-        ADMIN_STATES.pop(ADMIN_ID, None)
-        await event.respond(dashboard_text(), buttons=make_manager_menu())
-
-    @client.on(events.CallbackQuery(data=b"mgmt_home"))
-    async def cb_home(event):
-        if not admin_only(event):
-            return
-        ADMIN_STATES.pop(ADMIN_ID, None)
-        await edit(event, dashboard_text(), make_manager_menu())
-
-    # ==========================
-    # DEMO BOT MANAGEMENT PANELS
-    # ==========================
-    @client.on(events.CallbackQuery(data=b"mgmt_demo_menu"))
-    async def cb_demo_menu(event):
-        if not admin_only(event):
-            return
-        s = db["settings"]
-        active_trials = 0
-        now = time.time()
-        for session in db.get("demo_sessions", {}).values():
-            if now - session.get("start_time", 0) < session.get("duration_mins", 10) * 60:
-                active_trials += 1
-
-        text = (
-            "🧪 **Demo Bot Control Center (@Demoprep_bot)**\n\n"
-            "Configure real-time demo limits, visible subjects, and download restrictions.\n\n"
-            f"⏱️ **Current Trial Duration:** `{s.get('demo_duration_mins', 10)} minutes`\n"
-            f"📥 **Lecture Download Restriction:** `{s.get('demo_max_downloads', 2)} lectures max`\n"
-            f"📚 **Active Curriculum Shown:** `{s.get('demo_year_tier', 'all')}`\n"
-            f"🟢 **Active Demo Candidates Now:** `{active_trials}` online\n\n"
-            "Tap any setting below to switch values:"
-        )
-        await edit(event, text, make_demo_control_menu())
-
-    @client.on(events.CallbackQuery(data=b"demo_tog:duration"))
-    async def cb_toggle_demo_duration(event):
-        if not admin_only(event):
-            return
-        cur = db["settings"].get("demo_duration_mins", 10)
-        # Cycle through 5 -> 10 -> 15 -> 30 -> 5
-        durations = [5, 10, 15, 30]
-        idx = durations.index(cur) if cur in durations else 0
-        new_val = durations[(idx + 1) % len(durations)]
-        db["settings"]["demo_duration_mins"] = new_val
-        save_db(db)
-        await event.answer(f"Demo duration set to {new_val} minutes!", alert=True)
-        await cb_demo_menu(event)
-
-    @client.on(events.CallbackQuery(data=b"demo_tog:max_dl"))
-    async def cb_toggle_demo_dl(event):
-        if not admin_only(event):
-            return
-        cur = db["settings"].get("demo_max_downloads", 2)
-        # Cycle through 1 -> 2 -> 3 -> 5 -> 1
-        dls = [1, 2, 3, 5]
-        idx = dls.index(cur) if cur in dls else 0
-        new_val = dls[(idx + 1) % len(dls)]
-        db["settings"]["demo_max_downloads"] = new_val
-        save_db(db)
-        await event.answer(f"Demo download quota set to {new_val} lectures!", alert=True)
-        await cb_demo_menu(event)
-
-    @client.on(events.CallbackQuery(data=b"demo_tog:tier"))
-    async def cb_toggle_demo_tier(event):
-        if not admin_only(event):
-            return
-        tiers = ["all", "year_1", "year_2", "year_3", "final_year"]
-        cur = db["settings"].get("demo_year_tier", "all")
-        idx = tiers.index(cur) if cur in tiers else 0
-        new_tier = tiers[(idx + 1) % len(tiers)]
-        db["settings"]["demo_year_tier"] = new_tier
-        save_db(db)
-        await event.answer(f"Demo year library switched to {new_tier.upper()}!", alert=True)
-        await cb_demo_menu(event)
-
-    @client.on(events.CallbackQuery(pattern=rb"^demo_users_p:(\d+)$"))
-    async def cb_demo_users_page(event):
-        if not admin_only(event):
-            return
-        demos = list(db.get("demo_sessions", {}).items())
-        if not demos:
-            await edit(event, "ℹ️ **No demo candidate sessions recorded yet.**",
-                       [[Button.inline("⬅️ Demo Menu", data=b"mgmt_demo_menu")]])
-            return
-
-        per = 5
-        pages = max(1, (len(demos) + per - 1) // per)
-        page = max(0, min(int(event.pattern_match.group(1)), pages - 1))
-        msg = f"🧪 **Demo Candidates ({len(demos)}) — Page {page + 1}/{pages}:**\n\n"
-        buttons = []
-
-        now = time.time()
-        for uid_str, sess in demos[page * per:(page + 1) * per]:
-            u = db.get("users", {}).get(uid_str, {})
-            name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or f"Candidate {uid_str}"
-            elapsed = now - sess.get("start_time", 0)
-            total = sess.get("duration_mins", 10) * 60
-            expired = elapsed > total
-            rem = max(0, total - elapsed)
-            rem_str = f"{int(rem // 60)}m {int(rem % 60)}s left" if not expired else "EXPIRED"
-
-            msg += (
-                f"• **{name}** (`{uid_str}`)\n"
-                f"  └ ⏱️ {rem_str} | 📥 {sess.get('downloads_used', 0)}/{sess.get('max_downloads', 2)} DLs\n"
-                f"  └ CBT ID: `{sess.get('cbt_id')}` | Pass: `{sess.get('cbt_pass')}`\n\n"
-            )
-            buttons.append([
-                Button.inline(f"🔄 Reset Trial {name[:10]}", data=f"adm_demo_grant:{uid_str}".encode()),
-                Button.inline("⚡ Grant Full", data=f"adm_app_full:{uid_str}".encode())
-            ])
-
-        nav = []
-        if page > 0:
-            nav.append(Button.inline("◀ Prev", data=f"demo_users_p:{page - 1}".encode()))
-        if page < pages - 1:
-            nav.append(Button.inline("Next ▶", data=f"demo_users_p:{page + 1}".encode()))
-        if nav:
-            buttons.append(nav)
-        buttons.append([Button.inline("⬅️ Demo Menu", data=b"mgmt_demo_menu")])
-        await edit(event, msg, buttons)
-
-    @client.on(events.CallbackQuery(data=b"demo_gen_direct"))
-    async def cb_gen_direct_demo(event):
-        if not admin_only(event):
-            return
-        qid = "DEMO-" + _pick(4)
-        pw = _pick(6)
-        exp = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        try:
-            await supabase_upsert_student(qid, pw, "Direct Trial Lead", True, exp, is_demo=True)
-            url = f"{CBT_WEBAPP_BASE_URL}?uid={quote(qid)}&key={quote(pw)}"
-            text = (
-                "🧪 **Direct Demo Access Card Generated**\n\n"
-                f"🤖 **Demo Telegram Bot:** @Demoprep_bot\n"
-                f"🆔 **Demo CBT ID:** `{qid}`\n"
-                f"🔑 **Password:** `{pw}`\n\n"
-                f"🌐 **Direct One-Click Portal Link:**\n{url}\n\n"
-                "*(Share this directly with prospective students who ask for proof)*"
-            )
-            await edit(event, text, [[Button.inline("⬅️ Demo Menu", data=b"mgmt_demo_menu")]])
-        except Exception as e:
-            await event.answer(f"Failed to sync demo: {e}", alert=True)
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_demo_grant:(\d+)$"))
-    async def cb_adm_demo_grant(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        s_uid = str(uid)
-        db["demo_sessions"].pop(s_uid, None)
-        sess = get_or_start_demo_session(uid)
-        await ensure_demo_cbt_synced(uid)
-        await event.answer("✅ Demo trial reset/granted for candidate!", alert=True)
-        await edit(
-            event,
-            f"✅ **Demo Session Reset for User `{uid}`**\n\n"
-            f"⏱️ Duration: `{sess.get('duration_mins')} mins`\n"
-            f"📥 Allowed Downloads: `{sess.get('max_downloads')}`\n"
-            f"🆔 Demo CBT ID: `{sess.get('cbt_id')}`\n"
-            f"🔑 Demo Password: `{sess.get('cbt_pass')}`\n\n"
-            "The candidate can now use @Demoprep_bot with a fresh quota.",
-            [[Button.inline("⬅️ Demo Menu", data=b"mgmt_demo_menu")]]
-        )
-
-    # ---------- Broadcast Listeners ----------
-    @client.on(events.CallbackQuery(data=b"mgmt_announce"))
-    async def cb_announce(event):
-        if not admin_only(event):
-            return
-        ADMIN_STATES[ADMIN_ID] = "WAITING_BROADCAST_MESSAGE"
-        await edit(
-            event,
-            "📢 **Broadcast Mode Activated**\n\nSend the message (text, photo, file or forward) "
-            "you want to broadcast to **ALL registered students**.",
-            [[Button.inline("❌ Cancel Broadcast", data=b"mgmt_cancel_broadcast")]]
-        )
-
-    @client.on(events.CallbackQuery(data=b"mgmt_cancel_broadcast"))
-    async def cb_cancel_broadcast(event):
-        if not admin_only(event):
-            return
-        ADMIN_STATES.pop(ADMIN_ID, None)
-        await event.answer("Broadcast canceled.", alert=True)
-        await edit(event, dashboard_text(), make_manager_menu())
-
-    @client.on(events.NewMessage)
-    async def broadcast_capture(event):
-        if not admin_only(event) or not event.is_private:
-            return
-        if ADMIN_STATES.get(ADMIN_ID) != "WAITING_BROADCAST_MESSAGE":
-            return
-        if event.text and event.text.startswith("/"):
-            return
-        ADMIN_STATES.pop(ADMIN_ID, None)
-        total = len(db.get("users", {}))
-        status = await event.respond(f"⏳ **Broadcasting to {total} students...**")
-        sent, failed = await execute_broadcast(event.message, is_raw_event=True)
-        await status.edit(
-            f"✅ **Broadcast Completed!**\n\n📬 Delivered: `{sent}`\n"
-            f"❌ Failed/Blocked: `{failed}`\n👥 Total Target: `{total}`",
-            buttons=[[Button.inline("⬅️ Return to Dashboard", data=b"mgmt_home")]]
-        )
-
-    @client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
-    async def cmd_broadcast(event):
-        if not admin_only(event):
-            return
-        text = event.pattern_match.group(1).strip()
-        status = await event.respond(f"📢 Broadcasting to `{len(db.get('users', {}))}` students...")
-        sent, failed = await execute_broadcast(text)
-        await status.edit(f"✅ **Broadcast complete!**\n📬 Delivered: `{sent}` | ❌ Failed: `{failed}`")
-
-    @client.on(events.CallbackQuery(data=b"mgmt_toggles"))
-    async def cb_toggles(event):
-        if admin_only(event):
-            await edit(event, "⚙️ **System Feature Controls (ON / OFF)**", make_toggles_menu())
-
-    @client.on(events.CallbackQuery(pattern=rb"^tog:(.+)$"))
-    async def cb_toggle_switch(event):
-        if not admin_only(event):
-            return
-        key = event.pattern_match.group(1).decode()
-        if key in db["settings"]:
-            db["settings"][key] = not db["settings"][key]
-            save_db(db)
-            await event.answer(f"{key} is now {'ON' if db['settings'][key] else 'OFF'}!", alert=True)
-            await edit(event, "⚙️ **System Feature Controls (ON / OFF)**", make_toggles_menu())
-
-    @client.on(events.CallbackQuery(data=b"mgmt_do_backup"))
-    async def cb_do_backup(event):
-        if not admin_only(event):
-            return
-        await event.answer("Dispatching cloud backup to chat...")
-        await trigger_cloud_backup(force=True)
-        await edit(event, "✅ **Cloud backup dispatched!** `bot_database.json` was sent to this chat.", back_menu)
-
-    @client.on(events.CallbackQuery(data=b"mgmt_stats"))
-    async def cb_stats(event):
-        if not admin_only(event):
-            return
-        paid, qb, lec = paid_counts()
-        up = int(time.time() - START_TIME)
-        synced = sum(1 for d in db["approved_details"].values() if str(d.get("qb_state", "")).startswith("on"))
-        demos = len(db.get("demo_sessions", {}))
-        await edit(
-            event,
-            "📊 **Live System Analytics**\n\n"
-            f"👥 **Total Registered Students:** `{len(db.get('users', {}))}`\n"
-            f"💎 **Verified Paid:** `{paid}`\n"
-            f"  └ 🩺 Full (Lectures + Notes + Q-Bank): `{qb}`\n"
-            f"  └ 📚 Lectures & Notes Only: `{lec}`\n"
-            f"🧪 **Demo Trial Sessions Issued:** `{demos}`\n"
-            f"🔑 **Q-Bank logins live on portal:** `{synced}`\n"
-            f"🚫 **Blocked:** `{len(db.get('banned', []))}`\n"
-            f"⏱️ **Server Uptime:** `{up // 3600}h {(up % 3600) // 60}m {up % 60}s`\n\n"
-            f"🤖 **Connected Active Bots:** `{len(active_bots)}` online",
-            back_menu
-        )
-
-    @client.on(events.CallbackQuery(pattern=rb"^mgmt_users_p:(\d+)$"))
-    async def cb_users_page(event):
-        if not admin_only(event):
-            return
-        users = list(db.get("users", {}).items())
-        if not users:
-            await edit(event, "ℹ️ **No registered students yet.**", back_menu)
-            return
-        per = 6
-        pages = max(1, (len(users) + per - 1) // per)
-        page = max(0, min(int(event.pattern_match.group(1)), pages - 1))
-        msg = f"👥 **Registered Students ({len(users)}) — Page {page + 1}/{pages}:**\n\n"
-        buttons = []
-        for uid_str, u in users[page * per:(page + 1) * per]:
-            name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or "Student"
-            uname = f"@{u['username']}" if u.get("username") else "No username"
-            approved = int(uid_str) in db.get("approved", [])
-            tier = db["approved_details"].get(uid_str, {}).get("content_tier") if approved else None
-            badge = "🩺 Full" if tier == "full" else ("📚 Lec" if tier == "lectures_only" else "⏳ Free")
-            msg += f"• **{name}** ({uname})\n  └ ID: `{uid_str}` | Plan: **{badge}** | Bot: `{u.get('bot_used', 'all')}`\n\n"
-            if not approved:
-                buttons.append([
-                    Button.inline(f"⚡ Full {name[:10]}", data=f"adm_app_full:{uid_str}".encode()),
-                    Button.inline("🧪 Demo", data=f"adm_demo_grant:{uid_str}".encode())
-                ])
-            else:
-                buttons.append([Button.inline(f"⚙️ Manage {name[:12]}", data=f"adm_tier_opt:{uid_str}".encode())])
-        nav = []
-        if page > 0:
-            nav.append(Button.inline("◀ Prev", data=f"mgmt_users_p:{page - 1}".encode()))
-        if page < pages - 1:
-            nav.append(Button.inline("Next ▶", data=f"mgmt_users_p:{page + 1}".encode()))
-        if nav:
-            buttons.append(nav)
-        buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
-        await edit(event, msg, buttons)
-
-    @client.on(events.CallbackQuery(pattern=rb"^mgmt_approved_p:(\d+)$"))
-    async def cb_approved_page(event):
-        if not admin_only(event):
-            return
-        paid = [u for u in db.get("approved", []) if u != ADMIN_ID]
-        if not paid:
-            await edit(event, "ℹ️ **No verified paid students found yet.**", back_menu)
-            return
-        per = 6
-        pages = max(1, (len(paid) + per - 1) // per)
-        page = max(0, min(int(event.pattern_match.group(1)), pages - 1))
-        msg = f"💎 **Verified Paid Members ({len(paid)}) — Page {page + 1}/{pages}:**\n\n"
-        buttons = []
-        for uid in paid[page * per:(page + 1) * per]:
-            s = str(uid)
-            u = db.get("users", {}).get(s, {})
-            name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or f"User {uid}"
-            uname = f"@{u['username']}" if u.get("username") else "No username"
-            det = db.get("approved_details", {}).get(s, {})
-            full = det.get("content_tier") == "full"
-            msg += (f"• **{name}** ({uname})\n  └ ID: `{uid}` | Plan: **{'🩺 Full' if full else '📚 Lectures Only'}** "
-                    f"| Q-ID: `{det.get('qbank_id', '—') if full else '—'}`\n\n")
-            buttons.append([Button.inline(f"✏️ Edit {name[:12]}", data=f"adm_tier_opt:{uid}".encode()),
-                            Button.inline("❌ Revoke", data=f"adm_rev:{uid}".encode())])
-        nav = []
-        if page > 0:
-            nav.append(Button.inline("◀ Prev", data=f"mgmt_approved_p:{page - 1}".encode()))
-        if page < pages - 1:
-            nav.append(Button.inline("Next ▶", data=f"mgmt_approved_p:{page + 1}".encode()))
-        if nav:
-            buttons.append(nav)
-        buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
-        await edit(event, msg, buttons)
-
-    @client.on(events.CallbackQuery(data=b"mgmt_pending"))
-    async def cb_pending(event):
-        if not admin_only(event):
-            return
-        pending = [(u, d) for u, d in db.get("users", {}).items()
-                   if not is_banned(u) and int(u) not in db.get("approved", [])]
-        if not pending:
-            await edit(event, "✅ **No pending access requests!**", back_menu)
-            return
-        buttons = []
-        for uid, u in pending[-6:]:
-            name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or "Student"
-            buttons.append([Button.inline(f"⚡ Full {name[:12]}", data=f"adm_app_full:{uid}".encode()),
-                            Button.inline("📚 Lec", data=f"adm_app_lec:{uid}".encode())])
-        buttons.append([Button.inline("⬅️ Back", data=b"mgmt_home")])
-        await edit(event, f"⏳ **Pending Verification Requests ({len(pending)}):**", buttons)
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_app_full:(\d+)$"))
-    async def cb_app_full(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        grant_plan(target, "full")
-        qid, qpass = get_or_create_qbank_creds(target)
-        await event.answer("✅ Full Access Granted!", alert=True)
-        await edit(
-            event,
-            f"✅ User `{target}` granted **Full Access (Lectures + Notes + Q-Bank)**!\n\n"
-            f"🆔 Student ID: `{qid}`\n🔑 Password: `{qpass}`\n\n"
-            "_The login has been dispatched to the candidate and synced to the CBT portal._",
-            back_menu
-        )
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_app_lec:(\d+)$"))
-    async def cb_app_lec(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        grant_plan(target, "lectures_only")
-        await event.answer("✅ Lectures Only Granted!", alert=True)
-        await edit(event, f"✅ User `{target}` enrolled in **Lectures & Notes Only**.", back_menu)
-        for bot in active_bots.values():
-            try:
-                await bot.send_message(
-                    target,
-                    "🎉 **Access Granted!**\n\nYour account has been enrolled in "
-                    "**MBBS Video Lectures & Notes**.\nSend /start to begin studying!"
-                )
-                break
-            except Exception:
-                continue
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_tier_opt:(\d+)$"))
-    async def cb_tier_options(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        cur = db.get("approved_details", {}).get(str(uid), {}).get("content_tier", "none")
-        await edit(
-            event,
-            f"⚙️ **Modify Subscription for User `{uid}`:**\n\n• Current Plan: **{cur.upper()}**\n\n"
-            "Select an updated plan below:",
-            [[Button.inline("🩺 Full (Lectures + Notes + Q-Bank)", data=f"adm_set_tier:{uid}:full".encode())],
-             [Button.inline("📚 Lectures & Notes Only", data=f"adm_set_tier:{uid}:lectures_only".encode())],
-             [Button.inline("🧪 Reset Demo Session", data=f"adm_demo_grant:{uid}".encode())],
-             [Button.inline("⬅️ Back", data=b"mgmt_approved_p:0")]]
-        )
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_set_tier:(\d+):([a-z_]+)$"))
-    async def cb_apply_tier(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        tier = event.pattern_match.group(2).decode()
-        if tier not in ("full", "lectures_only"):
-            return
-        grant_plan(uid, tier)
-        await event.answer("✅ Plan updated!", alert=True)
-        await edit(
-            event,
-            f"✅ User `{uid}` updated to **{tier.upper()}**!"
-            + ("\n_Q-Bank login sent / activated._" if tier == "full" else "\n_Q-Bank login switched off._"),
-            [[Button.inline("💎 Back to Verified Members", data=b"mgmt_approved_p:0")]]
-        )
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_rev:(\d+)$"))
-    async def cb_rev(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        if target in db.get("approved", []):
-            db["approved"].remove(target)
-            save_db(db)
-            await reconcile_now()
-            await trigger_cloud_backup()
-        await event.answer("🔒 Access Revoked!", alert=True)
-        await edit(event, f"🔒 Access revoked for `{target}`.", back_menu)
-
-    @client.on(events.CallbackQuery(pattern=rb"^adm_ban:(\d+)$"))
-    async def cb_ban(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        if target not in db["banned"]:
-            db["banned"].append(target)
-        if target in db["approved"]:
-            db["approved"].remove(target)
-        save_db(db)
-        await reconcile_now()
-        await trigger_cloud_backup()
-        await event.answer("⛔ User Banned!", alert=True)
-        await edit(event, f"⛔ User `{target}` banned.", back_menu)
-
-    async def alert_paid(event, notice, label):
-        await event.answer("Sending notice...")
-        sender = next(iter(active_bots.values())) if active_bots else client
-        sent = 0
-        for uid in list(db.get("approved", [])):
-            if uid == ADMIN_ID:
-                continue
-            try:
-                await sender.send_message(uid, notice)
-                sent += 1
-            except Exception:
-                pass
-            await asyncio.sleep(0.05)
-        await edit(event, f"✅ **{label} notice delivered to `{sent}` paid students!**", back_menu)
-
-    @client.on(events.CallbackQuery(data=b"mgmt_alert_online"))
-    async def cb_online(event):
-        if admin_only(event):
-            await alert_paid(
-                event,
-                "🟢 **MBBS Platform Status: All Systems Operational**\n\nThe lecture streaming "
-                "servers, Demo bot, and CBT Q-Bank app are fully online. Happy studying!",
-                "Server Online"
-            )
-
-    @client.on(events.CallbackQuery(data=b"mgmt_alert_down"))
-    async def cb_down(event):
-        if admin_only(event):
-            await alert_paid(
-                event,
-                "🛠️ **Scheduled Maintenance Notice**\n\nWe are performing quick cloud updates "
-                "to improve lecture delivery speeds. Services will be back shortly. Thank you!",
-                "Maintenance"
-            )
-
-    @client.on(events.NewMessage(pattern=r"^/users$"))
-    async def cmd_users(event):
-        if not admin_only(event):
-            return
-        users = db.get("users", {})
-        if not users:
-            await event.respond("ℹ️ No registered users found.")
-            return
-        msg = f"👥 **Registered Students ({len(users)}) — last 25:**\n\n"
-        for uid_str, d in list(users.items())[-25:]:
-            name = f"{d.get('first_name', '')} {d.get('last_name', '')}".strip() or "Student"
-            uname = f"@{d['username']}" if d.get("username") else "No username"
-            approved = int(uid_str) in db.get("approved", [])
-            tier = db["approved_details"].get(uid_str, {}).get("content_tier", "none") if approved else "Unverified"
-            msg += f"• `{uid_str}`: **{name}** ({uname})\n  └ Plan: `{tier}` | Joined: `{d.get('joined_at', '-')}`\n"
-        await event.respond(msg)
-
-    @client.on(events.NewMessage(pattern=r"^/approved$"))
-    async def cmd_approved(event):
-        if not admin_only(event):
-            return
-        paid = [u for u in db.get("approved", []) if u != ADMIN_ID]
-        if not paid:
-            await event.respond("ℹ️ No verified paid members yet.")
-            return
-        msg = f"💎 **Verified Paid Members ({len(paid)}):**\n\n"
-        for uid in paid:
-            det = db["approved_details"].get(str(uid), {})
-            tier = det.get("content_tier", "lectures_only")
-            login = f"ID: `{det.get('qbank_id')}` | Pass: `{det.get('qbank_pass')}`" if tier == "full" else "no Q-Bank login"
-            msg += f"👤 **{display_name(uid)}** (`{uid}`)\n  └ Plan: **{tier.upper()}** | {login}\n\n"
-        await event.respond(msg)
-
-    @client.on(events.NewMessage(pattern=r"^/reset_demo (\d+)$"))
-    async def cmd_reset_demo(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        db["demo_sessions"].pop(str(target), None)
-        sess = get_or_start_demo_session(target)
-        await ensure_demo_cbt_synced(target)
-        await event.respond(
-            f"✅ **Demo Session Reset for User `{target}`**\n\n"
-            f"⏱️ Duration: `{sess['duration_mins']} mins`\n"
-            f"📥 Allowed Downloads: `{sess['max_downloads']}`\n"
-            f"🆔 Demo CBT ID: `{sess['cbt_id']}`\n🔑 Pass: `{sess['cbt_pass']}`"
-        )
-
-    @client.on(events.NewMessage(pattern=r"^/grant_qbank (\d+)$"))
-    async def cmd_grant_qbank(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        grant_plan(target, "full")
-        qid, qpass = get_or_create_qbank_creds(target)
-        await event.respond(f"✅ User `{target}` granted **Full Access**!\n🆔 `{qid}` | 🔑 `{qpass}`")
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.NewMessage(pattern=r"^/sync_students$"))
-    async def cmd_sync(event):
-        if not admin_only(event):
-            return
-        for det in db["approved_details"].values():
-            det["qb_state"] = None
-        _write_db(db)
-        await reconcile_now()
-        live = sum(1 for d in db["approved_details"].values() if str(d.get("qb_state", "")).startswith("on"))
-        await event.respond(f"✅ Synced with the portal database. Live Q-Bank logins: `{live}`")
-
-    @client.on(events.NewMessage(pattern=r"^/demo(?:\s+(\d+))?$"))
-    async def cmd_demo(event):
-        """Create a temporary demo login for the CBT portal: /demo or /demo 5 (days)."""
-        if not admin_only(event):
-            return
-        days = max(1, min(int(event.pattern_match.group(1) or 3), 60))
-        qid, pw = "DEMO-" + _pick(4), _pick(6)
-        try:
-            exp = (datetime.utcnow() + timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            await supabase_upsert_student(qid, pw, "Demo Trial", True, exp, is_demo=True)
-        except Exception as e:
-            await event.respond(f"❌ Could not create demo login: `{e}`")
-            return
-        await event.respond(
-            f"🧪 **Demo trial login created** ({days} day(s), max 10 questions per test)\n\n"
-            f"🆔 `{qid}`\n🔑 `{pw}`\n\n🌐 {CBT_WEBAPP_BASE_URL}?uid={quote(qid)}&key={quote(pw)}"
-        )
-
-# ============================================================
-# SYSTEM INITIALIZATION & APPLICATION LIFECYCLE
-# ============================================================
 
 async def main():
-    global USER_CLIENT_ID, manager_bot_client
-    os.makedirs("downloads", exist_ok=True)
-    await start_web_server()
+    global manager_bot_client
+    await start_web()
 
-    logging.info("Starting Telegram user client ('session')...")
-    await user_client.start()
-    me = await user_client.get_me()
-    USER_CLIENT_ID = me.id
-    logging.info("User client connected as: %s (ID: %s)", me.first_name, me.id)
+    if SUPABASE_SERVICE_KEY:
+        await restore_db_from_cloud()
+    else:
+        logging.warning("SUPABASE_SERVICE_KEY not set: approvals will NOT survive a restart!")
+    ensure_admin()
 
-    runners = [user_client.run_until_disconnected()]
+    await user_client.connect()
+    if not await user_client.is_user_authorized():
+        raise SystemExit("User account not logged in. Set SESSION_STRING (see gen_session.py).")
 
-    for key, token in BOT_TOKENS.items():
-        if not token or "..." in token:
-            logging.warning("Skipping bot '%s' (token not configured or placeholder).", key)
+    clients = [user_client]
+    for name, token in BOT_TOKENS.items():
+        if not token:
             continue
-        try:
-            client = TelegramClient(f"bot_session_{key}", API_ID, API_HASH)
-            await client.start(bot_token=token)
-            bot_me = await client.get_me()
-
-            if key == "manager":
-                manager_bot_client = client
-                setup_manager_bot_handlers(client)
-                runners.append(client.run_until_disconnected())
-                logging.info("Started [Management Bot] -> @%s", bot_me.username)
-                continue
-
-            entity = await user_client.get_entity(bot_me.username)
-
-            if key == "demo":
-                box = setup_demo_bot_handlers(client)
-                box["entity"] = entity
-                active_bots[key] = client
-                runners.append(client.run_until_disconnected())
-                logging.info("Started [Demo Proof Bot] -> @%s", bot_me.username)
-                continue
-
-            box = setup_bot_handlers(client, key, BOT_SUBJECTS_MAP[key], BOT_TITLES_MAP[key])
-            box["entity"] = entity
-            active_bots[key] = client
-            runners.append(client.run_until_disconnected())
-            logging.info("Started [%s] -> @%s", BOT_TITLES_MAP[key], bot_me.username)
-        except Exception:
-            logging.exception("Failed to start bot key: %s", key)
+        c = TelegramClient(StringSession(), API_ID, API_HASH)
+        await c.start(bot_token=token)
+        if name == "manager":
+            manager_bot_client = c
+            register_manager_handlers(c)
+        else:
+            active_bots[name] = c
+            register_student_handlers(c, name)
+        clients.append(c)
+        logging.info("Bot '%s' started", name)
 
     if manager_bot_client:
-        await auto_restore_from_telegram()
         try:
-            await manager_bot_client.send_message(
-                ADMIN_ID,
-                "🟢 **MBBS Multi-Bot & Demo Bot System Online!**\n\n"
-                f"• Active Study & Demo Bots: `{len(active_bots)}` online\n"
-                f"• User Client Connected: `{me.first_name}`\n"
-                f"• Registered Students: `{len(db.get('users', {}))}`\n\n"
-                "Demo countdown timers, 2-lecture restrictions, and automated Demo CBT logins are active."
-            )
+            if not SUPABASE_SERVICE_KEY:
+                await manager_bot_client.send_message(
+                    ADMIN_ID, "⚠️ SUPABASE_SERVICE_KEY is not set — approvals will be lost on restart.")
+            elif not _cloud_ok:
+                await manager_bot_client.send_message(
+                    ADMIN_ID, "⚠️ Could not reach the Supabase bot_state table. Running on local data; "
+                              "will retry automatically.")
+            else:
+                await manager_bot_client.send_message(
+                    ADMIN_ID, f"✅ Bot online. Cloud DB connected — {max(0, len(db['approved']) - 1)} paid users loaded.")
         except Exception:
             pass
 
-    asyncio.create_task(background_loop())
-    logging.info("All MBBS bots, Demo Bot, and Management Control Bot are operational.")
-    await asyncio.gather(*runners)
+    asyncio.create_task(sync_loop())
+    asyncio.create_task(backup_loop())
+    schedule_reconcile()
+    await asyncio.gather(*[c.run_until_disconnected() for c in clients])
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logging.info("System shutting down gracefully.")
-    except Exception:
-        logging.exception("Fatal system crash")
-
+    asyncio.run(main())
