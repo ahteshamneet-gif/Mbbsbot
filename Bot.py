@@ -2,9 +2,10 @@
 #!/usr/bin/env python3
 # ============================================================
 # MBBS Lecture & CBT Q-Bank Bot — Unified Production Engine
-#  - Combines the clean Student UI from v1 Backup (Subject -> Lectures / Notes / MCQ Hub, #hashtag units)
-#  - Keeps Supabase Cloud DB persistence + Telegram Chat Auto-Restore fallback
-#  - Fast, 1-Tap Admin Control Center with Registered Users, Paid Members, Server Alerts & Custom Plans
+#  - Clean Student UI (Subject -> Lectures / Notes / MCQ Hub, #hashtag units + Search)
+#  - Year-Wise Demo Bot experience (Students can switch 1st/2nd/3rd/Final Year or Admin can lock a default year)
+#  - Supabase Cloud DB persistence + Telegram Chat Auto-Restore fallback
+#  - Fast, 1-Tap Button-Driven Admin Control Center (No clutter, full student & demo management)
 # ============================================================
 
 import asyncio
@@ -15,7 +16,7 @@ import os
 import re
 import secrets
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
 import aiohttp
@@ -59,7 +60,7 @@ BOT_TOKENS = {
 }
 
 # ============================================================
-# SUBJECTS PER YEAR (Restored Notes Topic 33 & Clean Mapping)
+# SUBJECTS PER YEAR (Includes Notes Topic 33 & Clean Mapping)
 # ============================================================
 
 TOPICS_ALL = {
@@ -155,8 +156,27 @@ def normalize_db(data):
     for key in ("banned", "approved"):
         if not isinstance(base.get(key), list):
             base[key] = []
-    base["approved"] = [int(x) for x in base["approved"]]
-    base["banned"] = [int(x) for x in base["banned"]]
+    # Deduplicate and normalize integer IDs
+    approved_clean = []
+    for x in base["approved"]:
+        try:
+            val = int(x)
+            if val not in approved_clean:
+                approved_clean.append(val)
+        except Exception:
+            pass
+    base["approved"] = approved_clean
+
+    banned_clean = []
+    for x in base["banned"]:
+        try:
+            val = int(x)
+            if val not in banned_clean:
+                banned_clean.append(val)
+        except Exception:
+            pass
+    base["banned"] = banned_clean
+
     for uid in base["approved"]:
         base["approved_details"].setdefault(str(uid), {
             "tier": "all", "content_tier": "full", "expiry": None,
@@ -180,12 +200,12 @@ def load_db():
             env = json.loads(PAID_USERS_JSON_RAW)
             if isinstance(env, dict):
                 for uid, val in env.get("users", {}).items():
-                    data["users"].setdefault(uid, val)
+                    data["users"].setdefault(str(uid), val)
                 for uid in env.get("approved", []):
                     if int(uid) not in data["approved"]:
                         data["approved"].append(int(uid))
                 for uid, val in env.get("approved_details", {}).items():
-                    data["approved_details"].setdefault(uid, val)
+                    data["approved_details"].setdefault(str(uid), val)
                 logging.info("Merged paid users from PAID_USERS_BACKUP.")
         except Exception:
             logging.exception("Failed parsing PAID_USERS_BACKUP")
@@ -354,7 +374,7 @@ def display_name(uid):
 
 
 def fmt_secs(sec):
-    sec = int(sec)
+    sec = max(0, int(sec))
     return f"{sec // 60}:{sec % 60:02d}"
 
 
@@ -443,6 +463,7 @@ START_TIME = time.time()
 user_subjects = {}
 user_units = {}
 user_search_state = {}
+user_demo_years = {}  # Tracks which MBBS year a Demo user selected
 TOPIC_CACHE = {}
 TOPIC_LOCKS = {}
 TOPIC_CACHE_TTL = 600
@@ -464,6 +485,13 @@ async def send_via_any(chat_id, text, buttons=None, pref=None):
         try:
             await bot.send_message(chat_id, text, buttons=buttons)
             return True
+        except FloodWaitError as e:
+            await asyncio.sleep(min(e.seconds, 15) + 1)
+            try:
+                await bot.send_message(chat_id, text, buttons=buttons)
+                return True
+            except Exception:
+                continue
         except Exception:
             continue
     return False
@@ -490,7 +518,10 @@ async def reconcile_now():
     async with _reconcile_lock:
         changed = False
         for s, det in list(db.get("approved_details", {}).items()):
-            uid = int(s)
+            try:
+                uid = int(s)
+            except Exception:
+                continue
             if uid == ADMIN_ID:
                 continue
             full = has_qbank(uid)
@@ -549,12 +580,21 @@ def schedule_reconcile():
 
 
 # ============================================================
-# DEMO SESSION ENGINE
+# DEMO SESSION ENGINE (With Year-Wise Selection Support)
 # ============================================================
 
-def get_demo_topics():
-    tier = db["settings"].get("demo_year_tier", "all")
-    return BOT_SUBJECTS_MAP.get(tier, TOPICS_ALL)
+def get_demo_topics(user_id=None):
+    """Returns topics for the demo user's chosen year, or falls back to Admin's default demo_year_tier."""
+    admin_tier = db["settings"].get("demo_year_tier", "all")
+    if admin_tier != "all":
+        return BOT_SUBJECTS_MAP.get(admin_tier, TOPICS_ALL)
+    if user_id is not None:
+        chosen = user_demo_years.get(int(user_id))
+        if not chosen:
+            chosen = db["demo_sessions"].get(str(user_id), {}).get("year_tier")
+        if chosen and chosen in BOT_SUBJECTS_MAP:
+            return BOT_SUBJECTS_MAP[chosen]
+    return TOPICS_ALL
 
 
 def get_or_start_demo_session(user_id):
@@ -568,6 +608,7 @@ def get_or_start_demo_session(user_id):
             "downloads_used": 0,
             "cbt_id": "DEMO-" + _pick(4),
             "cbt_pass": _pick(6),
+            "year_tier": db["settings"].get("demo_year_tier", "all"),
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "cbt_synced": False,
         }
@@ -604,7 +645,7 @@ async def ensure_demo_cbt_synced(user_id, name="Demo Student"):
     if not session or session.get("cbt_synced"):
         return
     try:
-        exp = (datetime.utcnow() + timedelta(minutes=session.get("duration_mins", 10) + 60)
+        exp = (datetime.now(timezone.utc) + timedelta(minutes=session.get("duration_mins", 10) + 60)
                ).strftime("%Y-%m-%dT%H:%M:%SZ")
         await supabase_upsert_student(
             session["cbt_id"], session["cbt_pass"], f"Demo: {name}",
@@ -752,7 +793,7 @@ async def trigger_cloud_backup(force=False):
                 caption=("☁️ **Auto-Sync Cloud Backup**\n"
                          f"📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
                          f"👥 Registered: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`\n"
-                         "💡 *Reply or send this file with `/restore` to restore anytime.*"))
+                         "💡 *Send this file back with caption `/restore` to restore anytime.*"))
     except Exception:
         logging.exception("Cloud backup failed")
 
@@ -781,7 +822,7 @@ async def auto_restore_from_telegram():
 
 
 async def notify_manager_new_request(user, bot_type):
-    if not manager_bot_client:
+    if not manager_bot_client or not user:
         return
     try:
         uid = user.id
@@ -861,9 +902,11 @@ async def get_topic_messages(topic_id, force=False):
             if messages:
                 TOPIC_CACHE[f"msgs_{topic_id}"] = (time.time(), messages)
         except FloodWaitError as e:
-            await asyncio.sleep(e.seconds)
+            await asyncio.sleep(min(e.seconds, 30) + 1)
         except Exception:
             logging.exception("Error while reading topic messages")
+            if cached:
+                return cached[1]
         return messages
 
 
@@ -885,7 +928,6 @@ async def get_topic_units(topic_id, force=False):
             if current is not None:
                 units[current].append(message)
 
-    # If a topic has media files without any #hashtag headers, group them cleanly under "All_Lectures"
     if not units and all_media:
         units["All_Lectures"] = all_media
 
@@ -895,13 +937,15 @@ async def get_topic_units(topic_id, force=False):
 
 
 async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, status_msg=None):
+    caption_text = message.text or ""
+
     # 1) Fast Path: If the student bot itself is in the group, send directly without relay!
     try:
         direct_msg = await bot_client.get_messages(GROUP_ID, ids=message.id)
         if direct_msg and direct_msg.media:
             await bot_client.send_file(
                 entity=chat_id, file=direct_msg.media,
-                caption=message.text or "", supports_streaming=True
+                caption=caption_text, supports_streaming=True
             )
             if status_msg:
                 try:
@@ -909,6 +953,8 @@ async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, sta
                 except Exception:
                     pass
             return True
+    except FloodWaitError as e:
+        await asyncio.sleep(min(e.seconds, 20) + 1)
     except Exception:
         pass
 
@@ -923,11 +969,11 @@ async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, sta
                 me = await bot_client.get_me()
                 target_entity = me.username
             await user_client.forward_messages(target_entity, message)
-            relayed = await asyncio.wait_for(future, timeout=12.0)
+            relayed = await asyncio.wait_for(future, timeout=15.0)
             try:
                 await bot_client.send_file(
                     entity=chat_id, file=relayed.media,
-                    caption=message.text or "", supports_streaming=True
+                    caption=caption_text, supports_streaming=True
                 )
             except Exception:
                 await relayed.forward_to(chat_id)
@@ -947,7 +993,19 @@ async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, sta
                 except Exception:
                     pass
 
-        # 3) Fallback Path: Download & Re-upload
+        # 3) Direct Forward Fallback (if bot has group read permissions)
+        try:
+            await bot_client.forward_messages(chat_id, message.id, GROUP_ID)
+            if status_msg:
+                try:
+                    await status_msg.delete()
+                except Exception:
+                    pass
+            return True
+        except Exception:
+            pass
+
+        # 4) Final Fallback Path: Download & Re-upload
         file_path = None
         try:
             if status_msg:
@@ -959,7 +1017,7 @@ async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, sta
             if file_path:
                 await bot_client.send_file(
                     entity=chat_id, file=file_path,
-                    caption=message.text or "", supports_streaming=True
+                    caption=caption_text, supports_streaming=True
                 )
                 if status_msg:
                     try:
@@ -984,7 +1042,7 @@ async def deliver_lecture(bot_client, bot_key, bot_entity, chat_id, message, sta
 
 
 # ============================================================
-# STUDENT UI MENUS (Simple & Clean v1 Style + Search)
+# STUDENT UI MENUS (Simple & Clean v1 Style + Demo Year Picker)
 # ============================================================
 
 async def edit(event, text, buttons=None):
@@ -999,6 +1057,20 @@ async def edit(event, text, buttons=None):
             pass
 
 
+def make_demo_year_picker(user_id):
+    """Lets a Demo Bot student choose which MBBS Year they want to explore."""
+    sess = get_or_start_demo_session(user_id)
+    return [
+        [Button.inline("1️⃣ 1st Year MBBS", data=b"demo_yr:year_1"),
+         Button.inline("2️⃣ 2nd Year MBBS", data=b"demo_yr:year_2")],
+        [Button.inline("3️⃣ 3rd Year MBBS", data=b"demo_yr:year_3"),
+         Button.inline("4️⃣ Final Year MBBS", data=b"demo_yr:final_year")],
+        [Button.inline("📚 All MBBS Subjects (Full Library)", data=b"demo_yr:all")],
+        [Button.url("🌐 Try CBT Q-Bank (Demo)", generate_demo_webapp_url(sess["cbt_id"], sess["cbt_pass"]))],
+        [Button.inline("📩 Request Full Access", data=b"req_access")],
+    ]
+
+
 def make_main_menu(topics, user_id=None, is_demo_user=False):
     subjects = [s for s in topics.keys() if s != "Notes"]
     buttons = []
@@ -1010,6 +1082,8 @@ def make_main_menu(topics, user_id=None, is_demo_user=False):
 
     if is_demo_user:
         sess = get_or_start_demo_session(user_id)
+        if db["settings"].get("demo_year_tier", "all") == "all":
+            buttons.append([Button.inline("🎓 Switch MBBS Year", data=b"demo_pick_year")])
         buttons.append([Button.url("🌐 Try CBT Q-Bank (Demo)", generate_demo_webapp_url(sess["cbt_id"], sess["cbt_pass"]))])
         buttons.append([Button.inline("📩 Request Full Access", data=b"req_access")])
     elif user_id is not None and (int(user_id) == ADMIN_ID or has_qbank(user_id)):
@@ -1056,13 +1130,25 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         return is_demo_bot and int(uid) != ADMIN_ID and int(uid) not in db.get("approved", [])
 
     def active_topics_for(uid):
-        if is_demo_user(uid):
-            return get_demo_topics()
+        if is_demo_bot:
+            if is_demo_user(uid):
+                return get_demo_topics(uid)
+            if int(uid) == ADMIN_ID:
+                return TOPICS_ALL
+            tier = db.get("approved_details", {}).get(str(uid), {}).get("tier", "all")
+            return BOT_SUBJECTS_MAP.get(tier, TOPICS_ALL)
         return bot_topics
+
+    def demo_year_label(uid):
+        admin_tier = db["settings"].get("demo_year_tier", "all")
+        if admin_tier != "all":
+            return TIER_LABELS.get(admin_tier, "All Years")
+        chosen = user_demo_years.get(int(uid)) or db["demo_sessions"].get(str(uid), {}).get("year_tier", "all")
+        return TIER_LABELS.get(chosen, "All Years")
 
     def demo_banner(uid):
         st, rem, used, mx = check_demo_status(uid)
-        return f"\n⏱ **Demo Time Left:** `{fmt_secs(rem)}` | 📥 **Downloads:** `{used}/{mx}`"
+        return f"\n🎓 **Year:** `{demo_year_label(uid)}` | ⏱ **Time Left:** `{fmt_secs(rem)}` | 📥 **Files:** `{used}/{mx}`"
 
     async def guard(event, check_limit=False):
         uid = event.sender_id
@@ -1097,14 +1183,18 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             return False
         return True
 
+    @bot_client.on(events.CallbackQuery(data=b"noop"))
+    async def cb_noop(event):
+        await event.answer()
+
     @bot_client.on(events.NewMessage)
     async def relay_listener(event):
-        if event.is_private and USER_CLIENT_ID and event.sender_id == USER_CLIENT_ID:
+        if event.is_private and USER_CLIENT_ID and event.sender_id == USER_CLIENT_ID and event.media:
             fut = RELAY_FUTURES.get(bot_key)
             if fut and not fut.done():
                 fut.set_result(event.message)
 
-    @bot_client.on(events.NewMessage(pattern=r"^/start(?:\s.*)?$"))
+    @bot_client.on(events.NewMessage(pattern=r"^/(start|help|menu)(?:\s.*)?$"))
     async def start_handler(event):
         sender = await event.get_sender()
         track_user(sender, bot_key)
@@ -1135,6 +1225,17 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                     buttons=[[Button.inline("📩 Request Full Access", data=b"req_access")]]
                 )
                 return
+
+            # If Admin set demo_year_tier to "all", let student pick their MBBS year first!
+            if db["settings"].get("demo_year_tier", "all") == "all" and uid not in user_demo_years:
+                await event.respond(
+                    f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+                    f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+                    "👇 **Select your MBBS Year to explore lectures, notes & MCQs:**",
+                    buttons=make_demo_year_picker(uid)
+                )
+                return
+
             await event.respond(
                 f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
                 f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
@@ -1190,9 +1291,52 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             return
         sess = get_or_start_demo_session(uid)
         await ensure_demo_cbt_synced(uid, display_name(uid))
+        if db["settings"].get("demo_year_tier", "all") == "all":
+            await edit(
+                event,
+                f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+                f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+                "👇 **Select your MBBS Year to explore lectures, notes & MCQs:**",
+                make_demo_year_picker(uid)
+            )
+            return
         await edit(
             event,
             f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+            f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+            "Select a subject below to begin:",
+            make_main_menu(active_topics_for(uid), uid, is_demo_user=True)
+        )
+
+    @bot_client.on(events.CallbackQuery(data=b"demo_pick_year"))
+    async def cb_demo_pick_year(event):
+        if not await guard(event):
+            return
+        uid = event.sender_id
+        sess = get_or_start_demo_session(uid)
+        await edit(
+            event,
+            f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+            f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+            "👇 **Select which MBBS Year you want to try:**",
+            make_demo_year_picker(uid)
+        )
+
+    @bot_client.on(events.CallbackQuery(pattern=rb"^demo_yr:(\w+)$"))
+    async def cb_demo_set_year(event):
+        if not await guard(event):
+            return
+        uid = event.sender_id
+        yr = event.pattern_match.group(1).decode()
+        if yr not in BOT_SUBJECTS_MAP:
+            yr = "all"
+        user_demo_years[uid] = yr
+        sess = get_or_start_demo_session(uid)
+        sess["year_tier"] = yr
+        _write_db(db)
+        await edit(
+            event,
+            f"🎓 **{bot_title} — {TIER_LABELS.get(yr, 'All Years')}**{demo_banner(uid)}\n\n"
             f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
             "Select a subject below to begin:",
             make_main_menu(active_topics_for(uid), uid, is_demo_user=True)
@@ -1666,8 +1810,6 @@ def make_manager_menu():
         [Button.inline("🟢 Alert: Server Online", data=b"mgmt_alert_online"),
          Button.inline("🔴 Alert: Server Down", data=b"mgmt_alert_down")],
         [Button.inline("☁️ Cloud Backup Now", data=b"mgmt_do_backup"),
-         Button.inline("🔄 Reload Topic Cache", data=b"mgmt_clear_cache")],
-        [Button.inline("ℹ️ Admin Commands Help", data=b"mgmt_help"),
          Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home")],
     ]
 
@@ -1756,6 +1898,10 @@ def setup_manager_bot_handlers(client):
     def admin_only(event):
         return event.sender_id == ADMIN_ID
 
+    @client.on(events.CallbackQuery(data=b"noop"))
+    async def cb_mgmt_noop(event):
+        await event.answer()
+
     @client.on(events.NewMessage(pattern=r"^/(start|panel|menu)$"))
     async def manager_start(event):
         if not admin_only(event):
@@ -1770,38 +1916,6 @@ def setup_manager_bot_handlers(client):
             return
         ADMIN_STATES.pop(ADMIN_ID, None)
         await edit(event, dashboard_text(), make_manager_menu())
-
-    @client.on(events.CallbackQuery(data=b"mgmt_clear_cache"))
-    async def cb_clear_cache(event):
-        if not admin_only(event):
-            return
-        TOPIC_CACHE.clear()
-        await event.answer("✅ Topic cache cleared! Lectures will reload fresh.", alert=True)
-        await edit(event, dashboard_text(), make_manager_menu())
-
-    @client.on(events.CallbackQuery(data=b"mgmt_help"))
-    async def cb_help(event):
-        if not admin_only(event):
-            return
-        help_msg = (
-            "ℹ️ **Admin Quick Reference & Commands**\n\n"
-            "**Interactive Panel:**\n"
-            "• Use **Pending Requests** or **Registered Users** for 1-tap Full or Lectures-Only approval.\n"
-            "• Use **Find / Search Student** to look up any student by Name, `@username`, or User ID.\n\n"
-            "**Direct Commands:**\n"
-            "• `/grant_qbank <id>` — Approve Full Plan + auto-send Q-Bank login\n"
-            "• `/grant_lectures <id>` — Approve Lectures & Notes Only\n"
-            "• `/approve <id> <tier> <full|lectures> <days>` — Custom approval\n"
-            "• `/extend <id> <days>` — Extend expiry date\n"
-            "• `/reset_pass <id>` — Generate & send new Q-Bank password\n"
-            "• `/user <id>` — Open full interactive profile card\n"
-            "• `/remove <id>` | `/ban <id>` | `/unban <id>`\n"
-            "• `/demo [days]` — Generate standalone demo CBT login\n"
-            "• `/sync_students` — Force re-sync all Q-Bank logins with Supabase\n"
-            "• `/users` | `/approved` | `/broadcast <text>`\n"
-            "• Send `bot_database.json` with caption `/restore` to restore backup."
-        )
-        await edit(event, help_msg, back_menu)
 
     # ---------- Broadcast Center (Targeted & Global) ----------
     @client.on(events.CallbackQuery(data=b"mgmt_announce"))
@@ -1931,15 +2045,6 @@ def setup_manager_bot_handlers(client):
                 buttons=[[Button.inline("⬅️ Return to Dashboard", data=b"mgmt_home")]]
             )
 
-    @client.on(events.NewMessage(pattern=r"^/broadcast (.+)"))
-    async def cmd_broadcast(event):
-        if not admin_only(event):
-            return
-        text = event.pattern_match.group(1).strip()
-        status = await event.respond("📢 Broadcasting to all students...")
-        sent, failed, _ = await execute_broadcast(text, target="everyone", is_raw_event=False)
-        await status.edit(f"✅ **Broadcast complete!**\n📬 Delivered: `{sent}` | ❌ Failed: `{failed}`")
-
     # ---------- Feature Toggles / Backup / Stats ----------
     @client.on(events.CallbackQuery(data=b"mgmt_toggles"))
     async def cb_toggles(event):
@@ -2005,7 +2110,6 @@ def setup_manager_bot_handlers(client):
             back_menu
         )
 
-    # ---------- Demo Trial Control Panel ----------
     @client.on(events.CallbackQuery(data=b"mgmt_demo"))
     async def cb_demo_panel(event):
         if not admin_only(event):
@@ -2013,10 +2117,16 @@ def setup_manager_bot_handlers(client):
         s = db["settings"]
         dur = s.get("demo_duration_mins", 10)
         dl = s.get("demo_max_downloads", 2)
+        yr_tier = s.get("demo_year_tier", "all")
         auto = "🟢 ON" if s.get("demo_auto_start", True) else "🔴 OFF"
+        yr_desc = "All Years (Student Picks Year)" if yr_tier == "all" else f"Locked to {TIER_LABELS.get(yr_tier, yr_tier)}"
         rows = [
             [Button.inline(("• " if dur == m else "") + f"{m}m", data=f"dm_dur:{m}".encode()) for m in (5, 10, 15, 30)],
             [Button.inline(("• " if dl == n else "") + f"{n} files", data=f"dm_dl:{n}".encode()) for n in (1, 2, 3, 5)],
+            [Button.inline(("• " if yr_tier == t else "") + TIER_LABELS[t], data=f"dm_yr:{t}".encode())
+             for t in ("all", "year_1", "year_2")],
+            [Button.inline(("• " if yr_tier == t else "") + TIER_LABELS[t], data=f"dm_yr:{t}".encode())
+             for t in ("year_3", "final_year")],
             [Button.inline(f"▶️ Auto-Start Demo on /start: {auto}", data=b"tog:demo_auto_start")],
             [Button.inline(f"👥 View Demo Users ({len(db.get('demo_sessions', {}))})", data=b"mgmt_demo_users")],
             [Button.inline("🗑️ Clear Expired Demo Sessions", data=b"mgmt_demo_clear")],
@@ -2027,8 +2137,9 @@ def setup_manager_bot_handlers(client):
             f"🧪 **Demo Bot Configuration**\n\n"
             f"• **Trial Duration:** `{dur} minutes`\n"
             f"• **Max Downloads:** `{dl} files`\n"
+            f"• **Demo Year Mode:** `{yr_desc}`\n"
             f"• **Auto-Start:** {auto}\n\n"
-            "Adjust demo trial parameters below:",
+            "💡 *Tip: Keep 'All Years' selected so students can pick 1st/2nd/3rd/Final Year themselves, or tap a specific year to lock the Demo Bot to that year:*",
             rows
         )
 
@@ -2048,6 +2159,17 @@ def setup_manager_bot_handlers(client):
         save_db(db)
         await cb_demo_panel(event)
 
+    @client.on(events.CallbackQuery(pattern=rb"^dm_yr:(\w+)$"))
+    async def cb_dm_yr(event):
+        if not admin_only(event):
+            return
+        yr = event.pattern_match.group(1).decode()
+        if yr in TIER_LABELS:
+            db["settings"]["demo_year_tier"] = yr
+            save_db(db)
+            await event.answer(f"Demo Year set to: {TIER_LABELS[yr]}", alert=True)
+        await cb_demo_panel(event)
+
     @client.on(events.CallbackQuery(data=b"mgmt_demo_clear"))
     async def cb_demo_clear(event):
         if not admin_only(event):
@@ -2056,6 +2178,7 @@ def setup_manager_bot_handlers(client):
         for u in list(db.get("demo_sessions", {}).keys()):
             if check_demo_status(u)[0] == "expired":
                 db["demo_sessions"].pop(u, None)
+                user_demo_years.pop(int(u), None)
                 removed += 1
         _write_db(db)
         await event.answer(f"Cleared {removed} expired demo sessions!", alert=True)
@@ -2074,13 +2197,37 @@ def setup_manager_bot_handlers(client):
         for uid_str, sess in sessions[-8:]:
             st, rem, used, mx = check_demo_status(uid_str)
             name = display_name(uid_str)
-            msg += f"• **{esc(name)}** (`{uid_str}`) — `{st}` ({fmt_secs(rem)} left, {used}/{mx} dl)\n"
+            yr_lbl = TIER_SHORT.get(sess.get("year_tier", "all"), "All")
+            msg += f"• **{esc(name)}** (`{uid_str}`) — `{yr_lbl}` | `{st}` ({fmt_secs(rem)} left, {used}/{mx} dl)\n"
             buttons.append([
-                Button.inline(f"🔄 Reset {name[:10]}", data=f"dm_rst:{uid_str}".encode()),
-                Button.inline("⚡ Approve Full", data=f"adm_app_full:{uid_str}".encode()),
+                Button.inline(f"🔄 Reset {name[:8]}", data=f"dm_rst:{uid_str}".encode()),
+                Button.inline("⏱ +5m", data=f"dm_ext:{uid_str}:t".encode()),
+                Button.inline("📥 +1dl", data=f"dm_ext:{uid_str}:d".encode()),
+                Button.inline("⚡ Full", data=f"adm_app_full:{uid_str}".encode()),
             ])
         buttons.append([Button.inline("⬅️ Back to Demo Settings", data=b"mgmt_demo")])
         await edit(event, msg, buttons)
+
+    @client.on(events.CallbackQuery(pattern=rb"^dm_ext:(\d+):([td])$"))
+    async def cb_dm_ext(event):
+        if not admin_only(event):
+            return
+        uid_str = event.pattern_match.group(1).decode()
+        mode = event.pattern_match.group(2).decode()
+        sess = db.get("demo_sessions", {}).get(uid_str)
+        if sess:
+            if mode == "t":
+                if check_demo_status(uid_str)[0] == "expired":
+                    sess["start_time"] = time.time()
+                    sess["duration_mins"] = 5
+                else:
+                    sess["duration_mins"] = sess.get("duration_mins", 10) + 5
+                await event.answer("Added +5 minutes to demo!", alert=True)
+            else:
+                sess["max_downloads"] = sess.get("max_downloads", 2) + 1
+                await event.answer("Added +1 file download to demo!", alert=True)
+            _write_db(db)
+        await cb_demo_users(event)
 
     @client.on(events.CallbackQuery(pattern=rb"^dm_rst:(\d+)$"))
     async def cb_dm_rst(event):
@@ -2088,6 +2235,7 @@ def setup_manager_bot_handlers(client):
             return
         uid = event.pattern_match.group(1).decode()
         db["demo_sessions"].pop(uid, None)
+        user_demo_years.pop(int(uid), None)
         _write_db(db)
         await send_via_any(int(uid), "🎁 **Your free demo has been reset by the admin!** Send /start to begin again.", pref="demo")
         await event.answer("Demo reset!", alert=True)
@@ -2188,7 +2336,6 @@ def setup_manager_bot_handlers(client):
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
         await edit(event, msg, buttons)
 
-    # ---------- 1-Tap Grant / Custom Plan / Modify / Revoke / Ban ----------
     @client.on(events.CallbackQuery(pattern=rb"^adm_app_full:(\d+)$"))
     async def cb_app_full(event):
         if not admin_only(event):
@@ -2452,182 +2599,6 @@ def setup_manager_bot_handlers(client):
                 "to improve lecture delivery speeds. Services will be back shortly. Thank you!",
                 "Maintenance"
             )
-
-    # ---------- Admin Text Commands (Both v1 & v2 Supported) ----------
-    @client.on(events.NewMessage(pattern=r"^/users$"))
-    async def cmd_users(event):
-        if not admin_only(event):
-            return
-        users = db.get("users", {})
-        if not users:
-            await event.respond("ℹ️ No registered users found.")
-            return
-        msg = f"👥 **Registered Students ({len(users)}) — last 25:**\n\n"
-        for uid_str, d in list(users.items())[-25:]:
-            name = f"{d.get('first_name', '')} {d.get('last_name', '')}".strip() or "Student"
-            uname = f"@{d['username']}" if d.get("username") else "No username"
-            approved = int(uid_str) in db.get("approved", [])
-            tier = db["approved_details"].get(uid_str, {}).get("content_tier", "none") if approved else "Unverified"
-            msg += f"• `{uid_str}`: **{esc(name)}** ({esc(uname)})\n  └ Plan: `{tier}` | Joined: `{d.get('joined_at', '-')}`\n"
-        await event.respond(msg)
-
-    @client.on(events.NewMessage(pattern=r"^/approved$"))
-    async def cmd_approved(event):
-        if not admin_only(event):
-            return
-        paid = [u for u in db.get("approved", []) if u != ADMIN_ID]
-        if not paid:
-            await event.respond("ℹ️ No verified paid members yet.")
-            return
-        msg = f"💎 **Verified Paid Members ({len(paid)}):**\n\n"
-        for uid in paid[:35]:
-            det = db["approved_details"].get(str(uid), {})
-            tier = det.get("content_tier", "lectures_only")
-            login = f"ID: `{det.get('qbank_id')}` | Pass: `{det.get('qbank_pass')}`" if tier == "full" else "no Q-Bank login"
-            msg += f"👤 **{esc(display_name(uid))}** (`{uid}`)\n  └ Plan: **{tier.upper()}** | {login}\n\n"
-        await event.respond(msg)
-
-    @client.on(events.NewMessage(pattern=r"^/grant_qbank (\d+)$"))
-    async def cmd_grant_qbank(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        grant_plan(target, "full")
-        qid, qpass = get_or_create_qbank_creds(target)
-        await event.respond(f"✅ User `{target}` granted **Full Access**!\n🆔 `{qid}` | 🔑 `{qpass}`")
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.NewMessage(pattern=r"^/grant_lectures (\d+)$"))
-    async def cmd_grant_lectures(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        grant_plan(target, "lectures_only")
-        await event.respond(f"✅ User `{target}` granted **Lectures & Notes Only**.")
-        await reconcile_now()
-        await trigger_cloud_backup()
-
-    @client.on(events.NewMessage(pattern=r"^/approve (\d+)(?:\s+(\w+))?(?:\s+(\w+))?(?:\s+(\d+))?$"))
-    async def cmd_approve_custom(event):
-        if not admin_only(event):
-            return
-        target = int(event.pattern_match.group(1))
-        yr = event.pattern_match.group(2) or "all"
-        if yr not in TIER_LABELS:
-            yr = "all"
-        c_raw = (event.pattern_match.group(3) or "full").lower()
-        content = "lectures_only" if c_raw.startswith("l") else "full"
-        days = int(event.pattern_match.group(4) or 0)
-        grant_plan(target, content_tier=content, tier=yr, days=days)
-        await reconcile_now()
-        text, buttons = make_student_profile_view(target)
-        await event.respond(f"✅ **Approved `{target}`!**\n\n{text}", buttons=buttons)
-
-    @client.on(events.NewMessage(pattern=r"^/user (\d+)$"))
-    async def cmd_user(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        text, buttons = make_student_profile_view(uid)
-        await event.respond(text, buttons=buttons)
-
-    @client.on(events.NewMessage(pattern=r"^/extend (\d+)\s+(\d+)$"))
-    async def cmd_extend(event):
-        if not admin_only(event):
-            return
-        uid, days = int(event.pattern_match.group(1)), int(event.pattern_match.group(2))
-        det = db["approved_details"].setdefault(str(uid), {})
-        base = datetime.now().date()
-        if det.get("expiry"):
-            try:
-                base = max(base, datetime.strptime(det["expiry"], "%Y-%m-%d").date())
-            except Exception:
-                pass
-        det["expiry"] = (base + timedelta(days=days)).strftime("%Y-%m-%d")
-        if uid not in db["approved"]:
-            db["approved"].append(uid)
-        save_db(db)
-        await event.respond(f"📅 Extended `{uid}` until **{det['expiry']}**.")
-
-    @client.on(events.NewMessage(pattern=r"^/remove (\d+)$"))
-    async def cmd_remove(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        if uid in db["approved"] and uid != ADMIN_ID:
-            db["approved"].remove(uid)
-            save_db(db)
-            await reconcile_now()
-        await event.respond(f"🔒 Removed paid access for `{uid}`.")
-
-    @client.on(events.NewMessage(pattern=r"^/ban (\d+)$"))
-    async def cmd_ban(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        if uid != ADMIN_ID and uid not in db["banned"]:
-            db["banned"].append(uid)
-        if uid in db["approved"] and uid != ADMIN_ID:
-            db["approved"].remove(uid)
-        save_db(db)
-        await reconcile_now()
-        await event.respond(f"⛔ Banned `{uid}`.")
-
-    @client.on(events.NewMessage(pattern=r"^/unban (\d+)$"))
-    async def cmd_unban(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        if uid in db["banned"]:
-            db["banned"].remove(uid)
-            save_db(db)
-        await event.respond(f"✅ Unbanned `{uid}`.")
-
-    @client.on(events.NewMessage(pattern=r"^/reset_pass (\d+)$"))
-    async def cmd_reset_pass(event):
-        if not admin_only(event):
-            return
-        uid = int(event.pattern_match.group(1))
-        if not has_qbank(uid):
-            await event.respond("⚠️ That user is not on the Full plan.")
-            return
-        get_or_create_qbank_creds(uid)
-        det = db["approved_details"][str(uid)]
-        det["qbank_pass"] = _pick(8)
-        det["qb_state"] = None
-        det["creds_sent"] = False
-        _write_db(db)
-        await reconcile_now()
-        await event.respond(f"✅ New password generated and sent to `{uid}`.")
-
-    @client.on(events.NewMessage(pattern=r"^/sync_students$"))
-    async def cmd_sync(event):
-        if not admin_only(event):
-            return
-        for det in db["approved_details"].values():
-            det["qb_state"] = None
-        _write_db(db)
-        await reconcile_now()
-        live = sum(1 for d in db["approved_details"].values() if str(d.get("qb_state", "")).startswith("on"))
-        await event.respond(f"✅ Synced with the portal database. Live Q-Bank logins: `{live}`")
-
-    @client.on(events.NewMessage(pattern=r"^/demo(?:\s+(\d+))?$"))
-    async def cmd_demo(event):
-        if not admin_only(event):
-            return
-        days = max(1, min(int(event.pattern_match.group(1) or 3), 60))
-        qid, pw = "DEMO-" + _pick(4), _pick(6)
-        try:
-            exp = (datetime.utcnow() + timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            await supabase_upsert_student(qid, pw, "Demo Trial", True, exp, is_demo=True)
-        except Exception as e:
-            await event.respond(f"❌ Could not create demo login: `{e}`")
-            return
-        await event.respond(
-            f"🧪 **Demo trial login created** ({days} day(s), max 10 questions per test)\n\n"
-            f"🆔 `{qid}`\n🔑 `{pw}`\n\n🌐 {CBT_WEBAPP_BASE_URL}?uid={quote(qid)}&key={quote(pw)}"
-        )
 
 
 # ============================================================
