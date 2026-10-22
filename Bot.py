@@ -6,13 +6,14 @@
 #  - One-time Lifetime payment flow with Dynamic UPI QR & Screenshot verification
 #  - Discount & Coupon code management system
 #  - Multimodal Gemini AI Medical Doubt Solver (Text + Image support)
-#  - Supabase Cloud DB persistence + Telegram Chat Auto-Restore fallback
+#  - Supabase Cloud DB persistence + 1-Tap Telegram Restore & File Upload Restore
 #  - Fast, 1-Tap Button-Driven Admin Control Center:
 #    * 💎 Verified Members (List, Edit Tiers, Extend, Revoke, Ban)
 #    * 📢 Broadcast Center (Global & Targeted Announcements)
 #    * 💳 Pending Payments & Sales
 #    * 🤖 AI Doubt Solver Settings & Limits
 #    * 🧪 Demo Trial Controls
+#    * 🔄 Instant Database Restore Engine
 # ============================================================
 
 import asyncio
@@ -822,20 +823,41 @@ def create_order(uid, year, content, bot_key, coupon=None):
     _write_db(db)
     return order
 
-def build_upi_qr(order):
+async def build_upi_qr(order):
+    """Generates dynamic UPI QR with local qrcode or falls back to free Web QR API."""
     if not UPI_ID:
         return None
+    
+    link = f"upi://pay?pa={quote(UPI_ID)}&pn={quote(UPI_NAME)}&am={order['amount']}&cu=INR&tn={quote(order['id'])}"
+    
+    # Attempt 1: Local qrcode module
     try:
         import qrcode
-    except ImportError:
-        return None
-    link = f"upi://pay?pa={quote(UPI_ID)}&pn={quote(UPI_NAME)}&am={order['amount']}&cu=INR&tn={quote(order['id'])}"
-    img = qrcode.make(link)
-    bio = io.BytesIO()
-    img.save(bio, format="PNG")
-    bio.seek(0)
-    bio.name = "upi_qr.png"
-    return bio
+        img = qrcode.make(link)
+        bio = io.BytesIO()
+        img.save(bio, format="PNG")
+        bio.seek(0)
+        bio.name = "upi_qr.png"
+        return bio
+    except Exception:
+        pass
+
+    # Attempt 2: Zero-dependency web QR fallback
+    try:
+        qr_api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=450x450&data={quote(link)}"
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(qr_api_url) as resp:
+                if resp.status == 200:
+                    data = await resp.read()
+                    bio = io.BytesIO(data)
+                    bio.seek(0)
+                    bio.name = "upi_qr.png"
+                    return bio
+    except Exception:
+        logging.exception("Web QR generator failed")
+
+    return None
 
 async def send_payment_qr(bot_client, chat_id, order):
     oid = order["id"]
@@ -857,14 +879,16 @@ async def send_payment_qr(bot_client, chat_id, order):
         [Button.inline("🏷️ Apply Discount Coupon", data=f"buy_cpn:{oid}".encode())],
         [Button.inline("❌ Cancel Order", data=f"buy_cancel:{oid}".encode())]
     ]
-    qr = build_upi_qr(order)
+    
+    qr = await build_upi_qr(order)
     if qr is None and os.path.exists(PAYMENT_QR_PATH):
         qr = PAYMENT_QR_PATH
+
     if qr is not None:
         await bot_client.send_file(chat_id, qr, caption=caption, buttons=buttons)
     else:
         await bot_client.send_message(
-            chat_id, caption + f"\n\n⚠️ QR not uploaded. Please contact {OWNER_CONTACT} for UPI payment.",
+            chat_id, caption + f"\n\n⚠️ QR not configured. Please set UPI_ID in .env or put payment_qr.png in the folder. Contact {OWNER_CONTACT} for UPI details.",
             buttons=buttons)
 
 def order_summary(o):
@@ -878,7 +902,7 @@ def pending_orders():
     return [o for o in db.get("orders", {}).values() if o.get("status") == "pending_review"]
 
 # ============================================================
-# CLOUD BACKUP & TELEGRAM RESTORE
+# CLOUD BACKUP & TELEGRAM RESTORE SYSTEM
 # ============================================================
 
 async def trigger_cloud_backup(force=False):
@@ -892,27 +916,41 @@ async def trigger_cloud_backup(force=False):
                 caption=("☁️ **Auto-Sync Cloud Backup**\n"
                          f"📅 Date: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
                          f"👥 Registered: `{len(db.get('users', {}))}` | 💎 Paid: `{len(db.get('approved', []))}`\n"
-                         "💡 *Send this file back with caption `/restore` to restore anytime.*"))
+                         "💡 *Reply to this file with `/restore` or tap Restore in the panel anytime.*"))
     except Exception:
         logging.exception("Cloud backup failed")
+
+async def execute_restore_from_file_bytes(raw_bytes):
+    global db
+    try:
+        new_data = json.loads(raw_bytes.decode("utf-8"))
+        norm = normalize_db(new_data)
+        db.clear()
+        db.update(norm)
+        ensure_admin()
+        _write_local(db)
+        await cloud_save_db()
+        await reconcile_now()
+        return True, len(db.get("users", {})), len(db.get("approved", []))
+    except Exception as e:
+        logging.exception("Restore parsing failed")
+        return False, 0, str(e)
 
 async def auto_restore_from_telegram():
     global db
     if not manager_bot_client:
-        return
+        return False
     try:
-        if len(db.get("users", {})) <= 1 and len(db.get("approved", [])) <= 1:
-            async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=30):
-                if msg.file and (msg.file.name == "bot_database.json" or (msg.text and "Cloud Backup" in msg.text)):
-                    await msg.download_media(file=DB_FILE)
-                    db.clear()
-                    db.update(load_db())
-                    ensure_admin()
-                    _write_db(db)
-                    await manager_bot_client.send_message(ADMIN_ID, "🔄 **Database Auto-Restored from Telegram Chat!**")
-                    break
+        async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=50):
+            if msg.file and (msg.file.name == "bot_database.json" or (msg.text and "Cloud Backup" in msg.text)):
+                raw = await msg.download_media(file=bytes)
+                if raw:
+                    ok, u_cnt, a_cnt = await execute_restore_from_file_bytes(raw)
+                    if ok:
+                        return True, u_cnt, a_cnt
     except Exception:
-        pass
+        logging.exception("Auto-restore from chat failed")
+    return False, 0, 0
 
 async def notify_manager_new_request(user, bot_type):
     if not manager_bot_client or not user:
@@ -1296,7 +1334,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             buttons=menu_for(uid)
         )
 
-    # ---------- Purchase Flow Handlers ----------
+    # Purchase Flow Handlers
     @bot_client.on(events.CallbackQuery(data=b"req_access"))
     async def cb_req_access(event):
         sender = await event.get_sender()
@@ -1342,7 +1380,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 
         order = create_order(uid, yr, content, bot_key)
         await event.answer()
-        await edit(event, f"🧾 Order `{order['id']}` created. Scanning QR...")
+        await edit(event, f"🧾 Order `{order['id']}` created. Generating QR...")
         await send_payment_qr(bot_client, event.chat_id, order)
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^buy_paid:([A-Z0-9\-]+)$"))
@@ -1885,7 +1923,8 @@ def make_manager_menu():
          Button.inline("🔍 Find Student", data=b"mgmt_find")],
         [Button.inline("👥 Registered Users", data=b"mgmt_users_p:0"),
          Button.inline("☁️ Cloud Backup", data=b"mgmt_do_backup")],
-        [Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home")]
+        [Button.inline("🔄 Restore Database", data=b"mgmt_restore_menu"),
+         Button.inline("🔄 Refresh Dashboard", data=b"mgmt_home")]
     ]
 
 def dashboard_text():
@@ -2385,12 +2424,93 @@ def setup_manager_bot_handlers(client):
         ]
         await edit(event, "⚙️ **System Feature Controls**", rows)
 
-    # General Admin Text Listener (Coupons, Prices, Search, Broadcast)
+    # 10. Dedicated Database Restore Menu & Actions
+    @client.on(events.CallbackQuery(data=b"mgmt_restore_menu"))
+    async def cb_restore_menu(event):
+        if not admin_only(event):
+            return
+        text = (
+            "🔄 **Database Restore Center**\n\n"
+            "Restore all verified students, settings, and orders.\n\n"
+            "Choose a method:\n"
+            "1️⃣ **Instant Restore:** Scan chat for latest backup and apply.\n"
+            "2️⃣ **Send File:** Upload your `bot_database.json` directly here.\n"
+            "3️⃣ **Reply:** Reply to any backup message with `/restore`."
+        )
+        buttons = [
+            [Button.inline("⚡ Instant Restore from Chat History", data=b"mgmt_do_chat_restore")],
+            [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
+        ]
+        await edit(event, text, buttons)
+
+    @client.on(events.CallbackQuery(data=b"mgmt_do_chat_restore"))
+    async def cb_do_chat_restore(event):
+        if not admin_only(event):
+            return
+        await event.answer("Scanning chat for backups...")
+        ok, u_cnt, a_cnt = await auto_restore_from_telegram()
+        if ok:
+            await edit(
+                event,
+                f"✅ **Database Restored from Chat Backup!**\n\n"
+                f"👥 Total Students: `{u_cnt}`\n"
+                f"💎 Verified Paid: `{a_cnt}`\n\n"
+                "Everything has been synced with Supabase and local cache.",
+                [[Button.inline("⬅️ Return to Dashboard", data=b"mgmt_home")]]
+            )
+        else:
+            await edit(
+                event,
+                "⚠️ **No valid backup file found in recent messages.**\n\n"
+                "Please drag-and-drop or upload your `bot_database.json` file directly into this chat to restore it.",
+                [[Button.inline("⬅️ Back", data=b"mgmt_restore_menu")]]
+            )
+
+    # General Admin Listener (Coupons, Prices, Search, Broadcast, and File/Reply Restore)
     @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
     async def admin_input_listener(event):
         if not admin_only(event):
             return
         text = (event.raw_text or "").strip()
+
+        # Handle restore via Document upload or caption
+        if event.file and (event.file.name == "bot_database.json" or "restore" in text.lower()):
+            status = await event.respond("⏳ **Analyzing and restoring database file...**")
+            raw = await event.download_media(file=bytes)
+            if raw:
+                ok, u_cnt, a_cnt = await execute_restore_from_file_bytes(raw)
+                if ok:
+                    await status.edit(
+                        f"✅ **Database File Restored Successfully!**\n\n"
+                        f"👥 Total Students: `{u_cnt}`\n"
+                        f"💎 Verified Paid: `{a_cnt}`",
+                        buttons=[[Button.inline("🎛️ Open Dashboard", data=b"mgmt_home")]]
+                    )
+                    return
+                else:
+                    await status.edit(f"❌ Restore failed: Invalid JSON or corrupted file (`{a_cnt}`).")
+                    return
+
+        # Handle reply with /restore to a previously sent backup
+        if text.lower() == "/restore" and event.is_reply:
+            reply_msg = await event.get_reply_message()
+            if reply_msg and reply_msg.file:
+                status = await event.respond("⏳ **Restoring from replied backup file...**")
+                raw = await reply_msg.download_media(file=bytes)
+                if raw:
+                    ok, u_cnt, a_cnt = await execute_restore_from_file_bytes(raw)
+                    if ok:
+                        await status.edit(
+                            f"✅ **Database Restored Successfully!**\n\n"
+                            f"👥 Total Students: `{u_cnt}`\n"
+                            f"💎 Verified Paid: `{a_cnt}`",
+                            buttons=[[Button.inline("🎛️ Open Dashboard", data=b"mgmt_home")]]
+                        )
+                        return
+                    else:
+                        await status.edit(f"❌ Restore failed: `{a_cnt}`")
+                        return
+
         state = ADMIN_STATES.get(ADMIN_ID, "")
 
         if state == "WAITING_COUPON":
@@ -2575,6 +2695,7 @@ async def main():
                 "• 💎 Verified Members & Broadcast: Active\n"
                 "• 🤖 Gemini AI Doubt Solver: Active\n"
                 "• 💳 Payment Orders & Coupons: Active\n"
+                "• 🔄 Database Restore System: Armed & Active\n"
                 "• 🌐 Supabase Sync: Online",
                 buttons=make_manager_menu()
             )
