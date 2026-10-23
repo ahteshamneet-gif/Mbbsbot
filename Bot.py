@@ -1,19 +1,17 @@
+
 #!/usr/bin/env python3
 # ============================================================
 # MBBS Lecture & CBT Q-Bank Bot — Unified Production Engine
-#  - Demo-Exclusive Purchase Funnel (Expiry -> Year/Plan Select -> UPI QR -> Screenshot)
+#  - Clean Demo Experience (Timer + Download counter only; no messy raw IDs)
+#  - Demo-Exclusive Purchase Funnel (Expiry -> Year/Plan Select -> QR -> Screenshot)
+#  - Dual Payment Mode: Auto Dynamic QR OR Admin Custom Uploaded QR
+#  - Direct Admin-to-Student Resolution Messaging via Manager Bot
 #  - Single-Use Expiring Bot Access Links (Demo -> Purchased Year Bot)
 #  - Self-Disappearing Activation Links with "Thanks for purchasing" confirmation
 #  - Strict Year-Wise Bot Access (Directs unapproved visitors to Demo Bot)
 #  - Multimodal Gemini AI Medical Doubt Solver (Text + Image support)
 #  - Supabase Cloud DB persistence + 1-Tap Telegram Restore & File Upload Restore
-#  - Fast Button-Driven Manager Bot:
-#    * 💎 Verified Members Management
-#    * 📢 Broadcast Center
-#    * 💳 Pending Payments & 1-Tap Approvals
-#    * 🏷️ Dynamic Coupon Engine
-#    * 🤖 AI Medical Doubt Solver Limits
-#    * 🔄 Instant Database Restore Engine
+#  - Fast Button-Driven Manager Bot Control Center
 # ============================================================
 
 import asyncio
@@ -48,10 +46,11 @@ OWNER_CONTACT = os.getenv("OWNER_CONTACT", "@Nothing_0786")
 # Google Gemini API Key for Medical Doubt Solver
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 
-# Manual payment (UPI)
+# Payment Configuration
 UPI_ID = os.getenv("UPI_ID", "").strip()
 UPI_NAME = os.getenv("UPI_NAME", "MBBS Lectures").strip()
 PAYMENT_QR_PATH = os.getenv("PAYMENT_QR_PATH", "payment_qr.png")
+CUSTOM_QR_FILE = "custom_uploaded_qr.jpg"
 
 # CBT student portal (GitHub Pages) & Supabase
 CBT_WEBAPP_BASE_URL = os.getenv("CBT_WEBAPP_BASE_URL", "https://ahteshamneet-gif.github.io/Mbbsbot/index.html")
@@ -144,6 +143,7 @@ DEFAULT_SETTINGS = {
     "default_content": "full",
     "default_days": 0,
     "purchase_enabled": True,
+    "payment_mode": "auto",  # 'auto' (dynamic generated QR) or 'manual' (admin custom uploaded QR)
     "price_full": 1000,
     "price_lec": 700,
     "ai_enabled": True,
@@ -341,6 +341,12 @@ def esc(s):
 def display_name(uid):
     u = db.get("users", {}).get(str(uid), {})
     return (f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get("username") or f"Candidate {uid}")
+
+def student_link_html(uid):
+    u = db.get("users", {}).get(str(uid), {})
+    if u.get("username"):
+        return f"@{u['username']}"
+    return f"tg://user?id={uid}"
 
 def fmt_secs(sec):
     sec = max(0, int(sec))
@@ -872,15 +878,30 @@ async def send_payment_qr(bot_client, chat_id, order):
         [Button.inline("❌ Cancel Order", data=f"buy_cancel:{oid}".encode())]
     ]
     
-    qr = await build_upi_qr(order)
-    if qr is None and os.path.exists(PAYMENT_QR_PATH):
-        qr = PAYMENT_QR_PATH
+    pay_mode = db["settings"].get("payment_mode", "auto")
+    qr = None
+
+    if pay_mode == "manual":
+        # Prefer admin uploaded custom QR image
+        if os.path.exists(CUSTOM_QR_FILE):
+            qr = CUSTOM_QR_FILE
+        elif os.path.exists(PAYMENT_QR_PATH):
+            qr = PAYMENT_QR_PATH
+        else:
+            qr = await build_upi_qr(order)
+    else:
+        # Auto dynamic QR
+        qr = await build_upi_qr(order)
+        if qr is None and os.path.exists(CUSTOM_QR_FILE):
+            qr = CUSTOM_QR_FILE
+        elif qr is None and os.path.exists(PAYMENT_QR_PATH):
+            qr = PAYMENT_QR_PATH
 
     if qr is not None:
         await bot_client.send_file(chat_id, qr, caption=caption, buttons=buttons)
     else:
         await bot_client.send_message(
-            chat_id, caption + f"\n\n⚠️ QR not configured. Please set UPI_ID in .env or put payment_qr.png in the folder. Contact {OWNER_CONTACT} for UPI details.",
+            chat_id, caption + f"\n\n⚠️ QR not configured. Please contact {OWNER_CONTACT} for UPI payment details.",
             buttons=buttons)
 
 def order_summary(o):
@@ -1162,7 +1183,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     def demo_banner(uid):
         st, rem, used, mx = check_demo_status(uid)
-        return f"\n🎓 **Year:** `{demo_year_label(uid)}` | ⏱ **Time Left:** `{fmt_secs(rem)}` | 📥 **Files:** `{used}/{mx}`"
+        return f"\n🎓 **Year:** `{demo_year_label(uid)}` | ⏱ **Time Left:** `{fmt_secs(rem)}` | 📥 **Files Left:** `{max(0, mx - used)}/{mx}`"
 
     async def say(event, text, alert=True):
         try:
@@ -1299,7 +1320,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.respond("⛔ You are restricted from using this service.")
             return
 
-        # DEMO BOT EXPERIENCE
+        # DEMO BOT EXPERIENCE (Clean — No internal database IDs displayed to students)
         if is_demo_bot:
             if is_demo_user(uid):
                 st, _, _, _ = check_demo_status(uid)
@@ -1312,7 +1333,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 if get_demo_topics(uid) is None:
                     await event.respond(
                         f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
-                        f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
                         "👇 **Select your MBBS Year to explore lectures, notes & MCQs:**",
                         buttons=make_demo_year_picker(uid, True)
                     )
@@ -1320,7 +1340,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
                 await event.respond(
                     f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
-                    f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
                     "Select a subject below to begin:",
                     buttons=menu_for(uid)
                 )
@@ -1381,7 +1400,11 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             sender = await event.get_sender()
             track_user(sender, bot_key)
             if manager_bot_client:
-                await manager_bot_client.send_message(ADMIN_ID, f"🔔 Student `{event.sender_id}` requested assistance for purchasing.")
+                await manager_bot_client.send_message(
+                    ADMIN_ID,
+                    f"🔔 Student {display_name(event.sender_id)} (`{event.sender_id}`) requested assistance for purchasing.",
+                    buttons=[[Button.inline("💬 Message Student", data=f"adm_msg:{event.sender_id}".encode())]]
+                )
             await event.answer("✅ Request forwarded to Admin!", alert=True)
             await event.respond(f"📨 **Access request sent!** For instant activation, message {OWNER_CONTACT}.")
 
@@ -1412,7 +1435,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                     
             order = create_order(uid, yr, content, bot_key)
             await event.answer()
-            await edit(event, f"🧾 Order `{order['id']}` created. Generating QR...")
+            await edit(event, f"🧾 Order `{order['id']}` created. Loading payment details...")
             await send_payment_qr(bot_client, event.chat_id, order)
 
         @bot_client.on(events.CallbackQuery(pattern=rb"^buy_paid:([A-Z0-9\-]+)$"))
@@ -1491,11 +1514,19 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 raw = await event.download_media(file=bytes)
                 f = io.BytesIO(raw)
                 f.name = "proof.jpg"
-                cap = ("💳 **New Payment Proof Submission**\n\n" + order_summary(o))
+                cap = (
+                    "💳 **New Payment Proof Submission**\n\n"
+                    + order_summary(o)
+                    + f"\n🔗 Student Contact: {student_link_html(uid)}"
+                )
                 await manager_bot_client.send_file(
                     ADMIN_ID, f, caption=cap,
-                    buttons=[[Button.inline("✅ Approve & Send Access", data=f"ord_ok:{oid}".encode()),
-                              Button.inline("❌ Reject", data=f"ord_no:{oid}".encode())]]
+                    buttons=[
+                        [Button.inline("✅ Approve & Send Access", data=f"ord_ok:{oid}".encode()),
+                         Button.inline("❌ Reject", data=f"ord_no:{oid}".encode())],
+                        [Button.inline("💬 Message Student", data=f"ord_msg:{oid}".encode()),
+                         Button.inline("👤 View Student", data=f"adm_tier_opt:{uid}".encode())]
+                    ]
                 )
                 o["status"] = "pending_review"
                 user_pay_state.pop(uid, None)
@@ -1504,7 +1535,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             except Exception:
                 await event.respond(f"❌ Failed to submit screenshot. Please message {OWNER_CONTACT}.")
 
-    # Text router (Coupons, Search, AI doubts)
+    # Text router (Coupons, Search, AI doubts, Student Responses)
     @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and not (e.raw_text or "").startswith("/") and not e.media))
     async def student_text_router(event):
         uid = event.sender_id
@@ -1939,13 +1970,14 @@ def paid_counts():
 def make_manager_menu():
     pend_orders = len(pending_orders())
     paid_total, _, _ = paid_counts()
+    demo_count = len(db.get("demo_sessions", {}))
     return [
         [Button.inline(f"💎 Verified Members ({paid_total})", data=b"mgmt_approved_p:0"),
          Button.inline(f"💳 Payments ({pend_orders})", data=b"mgmt_orders")],
         [Button.inline("📢 Broadcast Center", data=b"mgmt_announce"),
-         Button.inline("💰 Sales, Prices & Coupons", data=b"mgmt_sales")],
+         Button.inline("💰 Sales, Prices & QR", data=b"mgmt_sales")],
         [Button.inline("🤖 AI Tutor Settings", data=b"mgmt_ai_settings"),
-         Button.inline("🧪 Demo Control", data=b"mgmt_demo")],
+         Button.inline(f"🧪 Demo Control ({demo_count})", data=b"mgmt_demo")],
         [Button.inline("⚙️ Feature Toggles", data=b"mgmt_toggles"),
          Button.inline("🔍 Find Student", data=b"mgmt_find")],
         [Button.inline("👥 Registered Users", data=b"mgmt_users_p:0"),
@@ -1957,6 +1989,7 @@ def make_manager_menu():
 def dashboard_text():
     n, rev = sales_totals()
     paid_total, qb, lec = paid_counts()
+    pay_mode = "⚡ Dynamic UPI QR" if db["settings"].get("payment_mode") == "auto" else "🖼️ Custom Uploaded QR"
     return (
         "🎛️ **MBBS Management Control Center**\n\n"
         f"🤖 **Managed Bots:** `{len(active_bots)}` online\n"
@@ -1964,6 +1997,7 @@ def dashboard_text():
         f"💎 **Verified Paid Members:** `{paid_total}` (🩺 Full: `{qb}` | 📚 Lec: `{lec}`)\n"
         f"💳 **Approved Sales:** `{n}` | 💵 **Total Revenue:** **₹{rev}**\n"
         f"⏳ **Pending Verifications:** `{len(pending_orders())}`\n"
+        f"🖼️ **Active Payment Mode:** `{pay_mode}`\n"
         f"🤖 **AI Doubt Engine:** `{'🟢 Active' if db['settings'].get('ai_enabled') else '🔴 Disabled'}`\n\n"
         "Select an action below:"
     )
@@ -2011,6 +2045,7 @@ def make_student_profile_view(uid):
         [Button.inline("➕ +30 Days", data=f"ex:{uid}:30".encode()),
          Button.inline("➕ +90 Days", data=f"ex:{uid}:90".encode()),
          Button.inline("♾ Lifetime", data=f"ex:{uid}:0".encode())],
+        [Button.inline("💬 Send Message to Student", data=f"adm_msg:{uid}".encode())],
     ]
     if ctier == "full":
         buttons.append([Button.inline("🔑 Send Login Card", data=f"adm_send_cred:{uid}".encode())])
@@ -2214,7 +2249,7 @@ def setup_manager_bot_handlers(client):
             [[Button.inline("❌ Cancel Broadcast", data=b"mgmt_home")]]
         )
 
-    # 3. Payments Approval (Generates One-Time Access Link)
+    # 3. Payments Approval (Generates One-Time Access Link & Direct Chat)
     @client.on(events.CallbackQuery(data=b"mgmt_orders"))
     async def cb_orders(event):
         if not admin_only(event):
@@ -2228,10 +2263,45 @@ def setup_manager_bot_handlers(client):
         rows = []
         for o in pend[-6:]:
             msg += f"• `{o['id']}` — {esc(display_name(o['uid']))} — ₹{o['amount']} ({TIER_SHORT.get(o['year'])})\n"
-            rows.append([Button.inline(f"✅ Approve {o['id']}", data=f"ord_ok:{o['id']}".encode()),
-                         Button.inline(f"❌ Reject", data=f"ord_no:{o['id']}".encode())])
+            rows.append([
+                Button.inline(f"✅ Approve {o['id']}", data=f"ord_ok:{o['id']}".encode()),
+                Button.inline(f"❌ Reject", data=f"ord_no:{o['id']}".encode()),
+                Button.inline(f"💬 Chat", data=f"ord_msg:{o['id']}".encode())
+            ])
         rows.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
         await edit(event, msg, rows)
+
+    @client.on(events.CallbackQuery(pattern=rb"^ord_msg:([A-Z0-9\-]+)$"))
+    async def cb_order_message(event):
+        if not admin_only(event):
+            return
+        oid = event.pattern_match.group(1).decode()
+        o = db["orders"].get(oid)
+        if not o:
+            await event.answer("Order not found.", alert=True)
+            return
+        uid = o["uid"]
+        ADMIN_STATES[ADMIN_ID] = f"WAITING_STUDENT_MSG:{uid}:{oid}"
+        await edit(
+            event,
+            f"💬 **Message Student regarding Order `{oid}`**\n\n"
+            f"👤 Student: **{esc(display_name(uid))}** (`{uid}`)\n\n"
+            "Send the message you want to deliver to the student (e.g. asking for clearer screenshot, UTR ID clarification, etc.):",
+            [[Button.inline("❌ Cancel", data=b"mgmt_orders")]]
+        )
+
+    @client.on(events.CallbackQuery(pattern=rb"^adm_msg:(\d+)$"))
+    async def cb_admin_direct_msg(event):
+        if not admin_only(event):
+            return
+        uid = int(event.pattern_match.group(1))
+        ADMIN_STATES[ADMIN_ID] = f"WAITING_DIRECT_MSG:{uid}"
+        await edit(
+            event,
+            f"💬 **Send Message to {esc(display_name(uid))} (`{uid}`)**\n\n"
+            "Send the text message you want to deliver directly to this student:",
+            [[Button.inline("❌ Cancel", data=f"adm_tier_opt:{uid}".encode())]]
+        )
 
     @client.on(events.CallbackQuery(pattern=rb"^ord_ok:([A-Z0-9\-]+)$"))
     async def cb_order_ok(event):
@@ -2296,30 +2366,65 @@ def setup_manager_bot_handlers(client):
             _write_db(db)
             demo_bot = active_bots.get("demo")
             if demo_bot:
-                await demo_bot.send_message(o["uid"], f"❌ Payment could not be verified (Order `{oid}`). Please message {OWNER_CONTACT}.")
+                await demo_bot.send_message(
+                    o["uid"],
+                    f"❌ **Payment verification update (Order `{oid}`):**\n"
+                    "We could not verify your payment screenshot. Please message our support desk directly: "
+                    f"{OWNER_CONTACT}",
+                    buttons=[[Button.inline("💬 Reply to Admin", data=b"req_notify")]]
+                )
         await event.answer("Rejected.", alert=True)
         await edit(event, f"❌ Order `{oid}` rejected.", [[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
-    # 4. Sales, Prices & Coupons
+    # 4. Sales, Prices, QR Mode & Coupons
     @client.on(events.CallbackQuery(data=b"mgmt_sales"))
     async def cb_sales(event):
         if not admin_only(event):
             return
         n, rev = sales_totals()
         s = db["settings"]
+        pmode = s.get("payment_mode", "auto")
+        mode_btn = "⚡ Mode: Dynamic UPI QR" if pmode == "auto" else "🖼️ Mode: Custom Uploaded QR"
         rows = [
+            [Button.inline(mode_btn, data=b"tog_pay_mode")],
+            [Button.inline("📤 Upload New Custom QR Image", data=b"mgmt_upload_qr")],
             [Button.inline(f"✏️ Price Full: ₹{s.get('price_full', 1000)}", data=b"price_set:f"),
              Button.inline(f"✏️ Price Lec: ₹{s.get('price_lec', 700)}", data=b"price_set:l")],
             [Button.inline(f"🏷️ Manage Coupons ({len(db.get('coupons', {}))})", data=b"mgmt_coupons")],
             [Button.inline(f"🛒 Toggle Purchase: {'🟢 ON' if s.get('purchase_enabled') else '🔴 OFF'}", data=b"tog:purchase_enabled")],
             [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
         ]
+        has_custom = "✅ Uploaded (`custom_uploaded_qr.jpg`)" if os.path.exists(CUSTOM_QR_FILE) else "❌ Not uploaded"
         await edit(
             event,
-            f"💰 **Sales, Pricing & Coupons**\n\n"
-            f"• **Approved Orders:** `{n}`\n"
-            f"• **Total Revenue:** **₹{rev}**\n\n"
-            "Tap any item to edit:", rows
+            f"💰 **Sales, Payment QR & Pricing Controls**\n\n"
+            f"• **Current QR Mode:** `{pmode.upper()}`\n"
+            f"• **Custom QR Status:** {has_custom}\n"
+            f"• **Approved Orders:** `{n}` | **Total Revenue:** **₹{rev}**\n\n"
+            "Tap any item to edit or switch mode:", rows
+        )
+
+    @client.on(events.CallbackQuery(data=b"tog_pay_mode"))
+    async def cb_tog_pay_mode(event):
+        if not admin_only(event):
+            return
+        cur = db["settings"].get("payment_mode", "auto")
+        new_mode = "manual" if cur == "auto" else "auto"
+        db["settings"]["payment_mode"] = new_mode
+        save_db(db)
+        await event.answer(f"Switched to {new_mode.upper()} QR mode!", alert=True)
+        await cb_sales(event)
+
+    @client.on(events.CallbackQuery(data=b"mgmt_upload_qr"))
+    async def cb_mgmt_upload_qr(event):
+        if not admin_only(event):
+            return
+        ADMIN_STATES[ADMIN_ID] = "WAITING_QR_PHOTO"
+        await edit(
+            event,
+            "🖼️ **Upload Custom Payment QR Image**\n\n"
+            "Please send the image of your QR code (from PhonePe, Google Pay, Paytm, or your bank) right now in this chat:",
+            [[Button.inline("❌ Cancel", data=b"mgmt_sales")]]
         )
 
     @client.on(events.CallbackQuery(data=b"mgmt_coupons"))
@@ -2389,7 +2494,7 @@ def setup_manager_bot_handlers(client):
         save_db(db)
         await cb_ai_settings(event)
 
-    # 6. Demo Control Panel
+    # 6. Demo Control Panel (Duration, Downloads, and Demo Users Inspector)
     @client.on(events.CallbackQuery(data=b"mgmt_demo"))
     async def cb_demo(event):
         if not admin_only(event):
@@ -2397,13 +2502,67 @@ def setup_manager_bot_handlers(client):
         s = db["settings"]
         dur = s.get("demo_duration_mins", 10)
         dl = s.get("demo_max_downloads", 2)
+        sess_cnt = len(db.get("demo_sessions", {}))
         rows = [
+            [Button.inline(f"👥 View Demo Users ({sess_cnt})", data=b"mgmt_demo_users_p:0")],
             [Button.inline(("• " if dur == m else "") + f"{m}m", data=f"dm_dur:{m}".encode()) for m in (5, 10, 15, 30)],
             [Button.inline(("• " if dl == n else "") + f"{n} files", data=f"dm_dl:{n}".encode()) for n in (1, 2, 3, 5)],
             [Button.inline(f"Auto-Start: {'🟢 ON' if s.get('demo_auto_start') else '🔴 OFF'}", data=b"tog:demo_auto_start")],
             [Button.inline("⬅️ Back to Menu", data=b"mgmt_home")]
         ]
-        await edit(event, f"🧪 **Demo Trial Controls**\n\n• Duration: `{dur}m` | Max Files: `{dl}`", rows)
+        await edit(event, f"🧪 **Demo Trial Controls**\n\n• Duration: `{dur}m` | Max Files: `{dl}` | Active Sessions: `{sess_cnt}`", rows)
+
+    @client.on(events.CallbackQuery(pattern=rb"^mgmt_demo_users_p:(\d+)$"))
+    async def cb_demo_users_page(event):
+        if not admin_only(event):
+            return
+        sessions = list(db.get("demo_sessions", {}).items())
+        if not sessions:
+            await edit(event, "ℹ️ **No students in demo trial right now.**", [[Button.inline("⬅️ Back", data=b"mgmt_demo")]])
+            return
+        per = 5
+        pages = max(1, (len(sessions) + per - 1) // per)
+        page = max(0, min(int(event.pattern_match.group(1)), pages - 1))
+        msg = f"🧪 **Demo Students ({len(sessions)}) — Page {page + 1}/{pages}:**\n\n"
+        rows = []
+        for uid_str, sess in sessions[page * per:(page + 1) * per]:
+            st, rem, used, mx = check_demo_status(uid_str)
+            name = display_name(uid_str)
+            u = db.get("users", {}).get(uid_str, {})
+            uname = f"@{u['username']}" if u.get("username") else "No username"
+            yr = TIER_SHORT.get(sess.get("year_tier"), "None")
+            status_badge = "🟢 Active" if st == "active" else ("⏰ Expired" if st == "expired" else "📥 Limit Reached")
+            msg += (
+                f"• **{esc(name)}** ({esc(uname)})\n"
+                f"  └ ID: `{uid_str}` | Yr: `{yr}` | Status: `{status_badge}`\n"
+                f"  └ Left: `{fmt_secs(rem)}` | Files: `{used}/{mx}` | AI: `{sess.get('ai_queries_used', 0)}`\n\n"
+            )
+            rows.append([
+                Button.inline(f"💬 Chat", data=f"adm_msg:{uid_str}".encode()),
+                Button.inline(f"🔄 Reset Demo", data=f"dm_reset_one:{uid_str}".encode()),
+                Button.inline(f"⚡ Full Pass", data=f"adm_set_tier:{uid_str}:full".encode())
+            ])
+        nav = []
+        if page > 0:
+            nav.append(Button.inline("◀ Prev", data=f"mgmt_demo_users_p:{page - 1}".encode()))
+        if page < pages - 1:
+            nav.append(Button.inline("Next ▶", data=f"mgmt_demo_users_p:{page + 1}".encode()))
+        if nav:
+            rows.append(nav)
+        rows.append([Button.inline("⬅️ Back to Demo Settings", data=b"mgmt_demo")])
+        await edit(event, msg, rows)
+
+    @client.on(events.CallbackQuery(pattern=rb"^dm_reset_one:(\d+)$"))
+    async def cb_dm_reset_one(event):
+        if not admin_only(event):
+            return
+        uid_str = event.pattern_match.group(1).decode()
+        db["demo_sessions"].pop(uid_str, None)
+        user_demo_years.pop(int(uid_str), None)
+        save_db(db)
+        await event.answer("Demo session reset for student!", alert=True)
+        await send_via_any(int(uid_str), "🎁 **Your MBBS Demo Trial has been renewed!** Send /start to begin.", pref="demo")
+        await cb_demo(event)
 
     @client.on(events.CallbackQuery(pattern=rb"^dm_dur:(\d+)$"))
     async def cb_dm_dur(event):
@@ -2520,12 +2679,31 @@ def setup_manager_bot_handlers(client):
                 [[Button.inline("⬅️ Back", data=b"mgmt_restore_menu")]]
             )
 
-    # General Admin Listener
+    # General Admin Listener (Uploads, Direct Messages, Prices, Coupons, Finding)
     @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
     async def admin_input_listener(event):
         if not admin_only(event):
             return
         text = (event.raw_text or "").strip()
+
+        # Custom QR photo upload
+        state = ADMIN_STATES.get(ADMIN_ID, "")
+        if state == "WAITING_QR_PHOTO" and bool(event.photo):
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            status = await event.respond("⏳ **Saving custom payment QR image...**")
+            try:
+                await event.download_media(file=CUSTOM_QR_FILE)
+                db["settings"]["payment_mode"] = "manual"
+                save_db(db)
+                await status.edit(
+                    "✅ **Custom QR Image Saved Successfully!**\n\n"
+                    "• Payment Mode switched to: **🖼️ Custom Uploaded QR**\n"
+                    "• Students initiating purchases will now receive this exact QR code image.",
+                    buttons=[[Button.inline("💰 View Sales & QR Settings", data=b"mgmt_sales")]]
+                )
+            except Exception:
+                await status.edit("❌ Failed to save QR image. Please try again.")
+            return
 
         # Document upload restore
         if event.file and (event.file.name == "bot_database.json" or "restore" in text.lower()):
@@ -2565,7 +2743,48 @@ def setup_manager_bot_handlers(client):
                         await status.edit(f"❌ Restore failed: `{a_cnt}`")
                         return
 
-        state = ADMIN_STATES.get(ADMIN_ID, "")
+        # Direct Chat with Student Regarding Payment Order
+        if state.startswith("WAITING_STUDENT_MSG:"):
+            parts = state.split(":")
+            uid, oid = int(parts[1]), parts[2]
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            demo_bot = active_bots.get("demo")
+            if demo_bot:
+                student_msg = (
+                    f"📩 **Message from Admin regarding Order `{oid}`:**\n\n"
+                    f"{text}\n\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━\n"
+                    "👉 *If requested, you can send your new screenshot or reply directly by typing below.*"
+                )
+                try:
+                    await demo_bot.send_message(uid, student_msg)
+                    await event.respond(
+                        f"✅ **Message delivered to {esc(display_name(uid))} (`{uid}`)!**",
+                        buttons=[[Button.inline("💳 Return to Payments", data=b"mgmt_orders")]]
+                    )
+                    return
+                except Exception:
+                    pass
+            await event.respond("❌ Could not deliver message to student.", buttons=[[Button.inline("💳 Payments", data=b"mgmt_orders")]])
+            return
+
+        # Direct Chat with Any Registered Student
+        if state.startswith("WAITING_DIRECT_MSG:"):
+            uid = int(state.split(":")[1])
+            ADMIN_STATES.pop(ADMIN_ID, None)
+            delivered = await send_via_any(
+                uid,
+                f"📩 **Direct Message from MBBS Admin:**\n\n{text}\n\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"Contact: {OWNER_CONTACT}"
+            )
+            if delivered:
+                await event.respond(f"✅ **Message delivered to {esc(display_name(uid))}!**",
+                                    buttons=[[Button.inline("👤 View Student", data=f"adm_tier_opt:{uid}".encode())]])
+            else:
+                await event.respond("❌ Could not reach student.",
+                                    buttons=[[Button.inline("👤 View Student", data=f"adm_tier_opt:{uid}".encode())]])
+            return
 
         if state == "WAITING_COUPON":
             ADMIN_STATES.pop(ADMIN_ID, None)
@@ -2681,6 +2900,7 @@ async def health_check(request):
         "status": "MBBS Bot Engine Online 24/7",
         "uptime": int(time.time() - START_TIME),
         "ai_active": bool(GEMINI_API_KEY) and db["settings"].get("ai_enabled", True),
+        "payment_mode": db["settings"].get("payment_mode", "auto"),
     })
 
 async def start_web_server():
@@ -2748,12 +2968,12 @@ async def main():
             await manager_bot_client.send_message(
                 ADMIN_ID,
                 "🟢 **MBBS Multi-Bot Ecosystem Online!**\n\n"
-                "• 🧪 Demo-Exclusive Purchase Funnel: Active\n"
+                "• 🧪 Clean Demo Experience: Active\n"
+                "• 🖼️ Dual Payment Mode (Auto QR / Custom Uploaded QR): Active\n"
+                "• 💬 Direct Admin-to-Student Chat Engine: Active\n"
                 "• 🚀 Single-Use Disappearing Activation Links: Active\n"
-                "• 💎 Verified Members & Broadcast: Active\n"
-                "• 🤖 Gemini AI Doubt Solver: Active\n"
-                "• 💳 Payment Orders & Coupons: Active\n"
-                "• 🔄 Database Restore System: Active",
+                "• 🤖 Gemini AI Medical Doubt Solver: Active\n"
+                "• 🔄 Cloud Database Restore System: Active",
                 buttons=make_manager_menu()
             )
         except Exception:
