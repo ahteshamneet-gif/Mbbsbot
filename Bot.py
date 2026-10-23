@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # ============================================================
 # MBBS Lecture & CBT Q-Bank Bot — Unified Production Engine
-#  - Student Experience (Subject -> Lectures / Notes / MCQ Hub / Ask AI)
-#  - Free Demo Bot with instant expiry funnel ("Demo ended. Full access lena hai?")
-#  - One-time Lifetime payment flow with Dynamic UPI QR & Screenshot verification
-#  - Discount & Coupon code management system
+#  - Demo-Exclusive Purchase Funnel (Expiry -> Year/Plan Select -> UPI QR -> Screenshot)
+#  - Single-Use Expiring Bot Access Links (Demo -> Purchased Year Bot)
+#  - Self-Disappearing Activation Links with "Thanks for purchasing" confirmation
+#  - Strict Year-Wise Bot Access (Directs unapproved visitors to Demo Bot)
 #  - Multimodal Gemini AI Medical Doubt Solver (Text + Image support)
 #  - Supabase Cloud DB persistence + 1-Tap Telegram Restore & File Upload Restore
-#  - Fast, 1-Tap Button-Driven Admin Control Center:
-#    * 💎 Verified Members (List, Edit Tiers, Extend, Revoke, Ban)
-#    * 📢 Broadcast Center (Global & Targeted Announcements)
-#    * 💳 Pending Payments & Sales
-#    * 🤖 AI Doubt Solver Settings & Limits
-#    * 🧪 Demo Trial Controls
+#  - Fast Button-Driven Manager Bot:
+#    * 💎 Verified Members Management
+#    * 📢 Broadcast Center
+#    * 💳 Pending Payments & 1-Tap Approvals
+#    * 🏷️ Dynamic Coupon Engine
+#    * 🤖 AI Medical Doubt Solver Limits
 #    * 🔄 Instant Database Restore Engine
 # ============================================================
 
@@ -133,7 +133,7 @@ logging.getLogger("telethon").setLevel(logging.WARNING)
 DB_FILE = "bot_database.json"
 DEFAULT_SETTINGS = {
     "expiry_enabled": False,
-    "tier_access_enabled": False,
+    "tier_access_enabled": True,
     "daily_limit_enabled": False,
     "daily_limit_max": 30,
     "cloud_backup_enabled": True,
@@ -158,6 +158,7 @@ def _empty_db():
         "demo_sessions": {}, "pending": {}, "orders": {},
         "coupons": {"SAVE100": 100, "SAVE200": 200},
         "daily_ai_queries": {},
+        "activation_tokens": {},
     }
 
 def normalize_db(data):
@@ -168,7 +169,7 @@ def normalize_db(data):
         base["settings"] = {}
     for k, v in DEFAULT_SETTINGS.items():
         base["settings"].setdefault(k, v)
-    for key in ("users", "approved_details", "daily_downloads", "demo_sessions", "pending", "orders", "coupons", "daily_ai_queries"):
+    for key in ("users", "approved_details", "daily_downloads", "demo_sessions", "pending", "orders", "coupons", "daily_ai_queries", "activation_tokens"):
         if not isinstance(base.get(key), dict):
             base[key] = {}
     for key in ("banned", "approved"):
@@ -223,7 +224,6 @@ def load_db():
                         data["approved"].append(int(uid))
                 for uid, val in env.get("approved_details", {}).items():
                     data["approved_details"].setdefault(str(uid), val)
-                logging.info("Merged paid users from backup.")
         except Exception:
             logging.exception("Failed parsing backup")
     return normalize_db(data)
@@ -327,7 +327,7 @@ ensure_admin()
 _write_local(db)
 
 # ============================================================
-# HELPERS & CREDENTIALS
+# HELPERS & GLOBALS
 # ============================================================
 
 _ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -424,8 +424,6 @@ async def ask_gemini_ai(prompt_text, image_bytes=None, mime_type="image/jpeg"):
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload) as resp:
                 if resp.status != 200:
-                    err = await resp.text()
-                    logging.error(f"Gemini API error: {err}")
                     return "❌ Could not process doubt. Please try again in a few moments."
                 result = await resp.json()
                 return result["candidates"][0]["content"]["parts"][0]["text"]
@@ -436,10 +434,8 @@ async def ask_gemini_ai(prompt_text, image_bytes=None, mime_type="image/jpeg"):
 def check_ai_limit(uid, is_demo):
     if int(uid) == ADMIN_ID:
         return True, 0, 9999
-    
     if not db["settings"].get("ai_enabled", True):
         return False, 0, 0
-    
     if is_demo:
         session = db["demo_sessions"].get(str(uid), {})
         used = session.get("ai_queries_used", 0)
@@ -499,6 +495,7 @@ def _make_user_client():
 
 user_client = _make_user_client()
 active_bots = {}
+BOT_USERNAMES = {}
 manager_bot_client = None
 USER_CLIENT_ID = None
 START_TIME = time.time()
@@ -534,7 +531,7 @@ async def send_via_any(chat_id, text, buttons=None, pref=None):
             continue
     return False
 
-async def send_login_card(chat_id, user_id, title="🎉 **Your CBT Q-Bank login is ready!**"):
+async def send_login_card(chat_id, user_id, title="🎉 **Your CBT Q-Bank login is ready!**", pref=None):
     qid, pw = get_or_create_qbank_creds(user_id)
     text = (
         f"{title}\n\n━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -543,7 +540,7 @@ async def send_login_card(chat_id, user_id, title="🎉 **Your CBT Q-Bank login 
         "Send /mylogin any time to see this again."
     )
     buttons = [[Button.url("🌐 Launch MBBS CBT Q-Bank", generate_webapp_launch_url(user_id))]]
-    return await send_via_any(chat_id, text, buttons)
+    return await send_via_any(chat_id, text, buttons, pref=pref)
 
 async def reconcile_now():
     global _reconcile_lock, _reconcile_pending
@@ -588,7 +585,8 @@ async def reconcile_now():
             det["qb_state"] = want
             changed = True
             if want != "off" and not det.get("creds_sent"):
-                if await send_login_card(uid, uid):
+                user_bot = db.get("users", {}).get(str(uid), {}).get("bot_used")
+                if await send_login_card(uid, uid, pref=user_bot):
                     det["creds_sent"] = True
         if changed:
             _write_db(db)
@@ -745,7 +743,7 @@ def check_access(user_id, bot_key):
                     return False, "expired"
             except Exception:
                 pass
-    if db["settings"].get("tier_access_enabled", False):
+    if db["settings"].get("tier_access_enabled", True):
         user_tier = details.get("tier", "all")
         if user_tier != "all" and user_tier != bot_key and bot_key != "demo":
             return False, f"tier_mismatch:{user_tier}"
@@ -788,7 +786,7 @@ def grant_plan(target_id, content_tier="full", tier=None, days=None):
     if days is not None:
         det["expiry"] = (datetime.now() + timedelta(days=int(days))).strftime("%Y-%m-%d") if int(days) > 0 else None
     else:
-        det["expiry"] = None  # One-time lifetime purchase by default
+        det["expiry"] = None
     det.setdefault("added_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     if content_tier == "full":
@@ -824,13 +822,9 @@ def create_order(uid, year, content, bot_key, coupon=None):
     return order
 
 async def build_upi_qr(order):
-    """Generates dynamic UPI QR with local qrcode or falls back to free Web QR API."""
     if not UPI_ID:
         return None
-    
     link = f"upi://pay?pa={quote(UPI_ID)}&pn={quote(UPI_NAME)}&am={order['amount']}&cu=INR&tn={quote(order['id'])}"
-    
-    # Attempt 1: Local qrcode module
     try:
         import qrcode
         img = qrcode.make(link)
@@ -842,7 +836,6 @@ async def build_upi_qr(order):
     except Exception:
         pass
 
-    # Attempt 2: Zero-dependency web QR fallback
     try:
         qr_api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=450x450&data={quote(link)}"
         timeout = aiohttp.ClientTimeout(total=10)
@@ -855,8 +848,7 @@ async def build_upi_qr(order):
                     bio.name = "upi_qr.png"
                     return bio
     except Exception:
-        logging.exception("Web QR generator failed")
-
+        pass
     return None
 
 async def send_payment_qr(bot_client, chat_id, order):
@@ -871,7 +863,7 @@ async def send_payment_qr(bot_client, chat_id, order):
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"1️⃣ QR scan karke pay karein (**exactly ₹{order['amount']}**)\n"
         f"2️⃣ Niche diye gaye button par tap karke **Payment Screenshot** bhejein\n"
-        f"3️⃣ Admin approve karte hi access turant activate ho jayega!"
+        f"3️⃣ Admin approve karte hi aapko aapke **{TIER_LABELS.get(order['year'])} Bot** ka one-time link mil jayega!"
         + (f"\n\n🏦 **UPI ID:** `{UPI_ID}`" if UPI_ID else "")
     )
     buttons = [
@@ -933,7 +925,6 @@ async def execute_restore_from_file_bytes(raw_bytes):
         await reconcile_now()
         return True, len(db.get("users", {})), len(db.get("approved", []))
     except Exception as e:
-        logging.exception("Restore parsing failed")
         return False, 0, str(e)
 
 async def auto_restore_from_telegram():
@@ -949,39 +940,8 @@ async def auto_restore_from_telegram():
                     if ok:
                         return True, u_cnt, a_cnt
     except Exception:
-        logging.exception("Auto-restore from chat failed")
-    return False, 0, 0
-
-async def notify_manager_new_request(user, bot_type):
-    if not manager_bot_client or not user:
-        return
-    try:
-        uid = user.id
-        s_uid = str(uid)
-        p = db["pending"].get(s_uid)
-        if p and time.time() - p.get("last_ping", 0) < 600:
-            return
-        db["pending"][s_uid] = {
-            "requested_at": (p or {}).get("requested_at", datetime.now().strftime("%Y-%m-%d %H:%M")),
-            "bot": bot_type,
-            "last_ping": time.time(),
-        }
-        _write_db(db)
-        name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Student"
-        username = f"@{user.username}" if user.username else "No username"
-        text = (f"🔔 **New Student Access Request!**\n\n"
-                f"👤 **Student:** {esc(name)} ({esc(username)})\n"
-                f"🆔 **User ID:** `{uid}`\n"
-                f"🤖 **Bot Selected:** `{bot_type}` ({BOT_TITLES_MAP.get(bot_type, bot_type)})\n")
-        buttons = [
-            [Button.inline("⚡ Full (Lec + Notes + Q-Bank)", data=f"adm_app_full:{uid}".encode()),
-             Button.inline("📚 Lectures Only", data=f"adm_app_lec:{uid}".encode())],
-            [Button.inline("❌ Reject", data=f"rj:{uid}".encode()),
-             Button.inline("⛔ Ban", data=f"adm_ban:{uid}".encode())],
-        ]
-        await manager_bot_client.send_message(ADMIN_ID, text, buttons=buttons)
-    except Exception:
         pass
+    return False, 0, 0
 
 # ============================================================
 # TOPIC FETCHER & FAST LECTURE DELIVERY
@@ -1235,29 +1195,38 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await say(event, "⛔ You are restricted from using this service.")
             return False
 
-        if is_demo_user(uid):
-            st, rem, used, mx = check_demo_status(uid)
-            if st in ("new", "expired"):
-                await say(event, "⏰ Demo ended. Full access lena hai?")
-                await event.respond(buy_intro(), buttons=buy_year_buttons())
-                return False
-            if check_limit and st == "download_limit_reached":
-                await say(event, f"📥 Demo limit reached ({used}/{mx} files)!")
-                await event.respond(buy_intro(), buttons=buy_year_buttons())
+        if is_demo_bot:
+            if is_demo_user(uid):
+                st, rem, used, mx = check_demo_status(uid)
+                if st in ("new", "expired"):
+                    await say(event, "⏰ Demo ended. Full access lena hai?")
+                    await event.respond(buy_intro(), buttons=buy_year_buttons())
+                    return False
+                if check_limit and st == "download_limit_reached":
+                    await say(event, f"📥 Demo limit reached ({used}/{mx} files)!")
+                    await event.respond(buy_intro(), buttons=buy_year_buttons())
+                    return False
+            if need_year and get_demo_topics(uid) is None:
+                await event.respond("🎓 **Select your MBBS Year to see its subjects:**",
+                                    buttons=make_demo_year_picker(uid, is_demo_user(uid)))
                 return False
         else:
-            allowed, _ = check_access(uid, bot_key)
+            # Year-wise bots: MUST BE VERIFIED / PURCHASED
+            allowed, reason = check_access(uid, bot_key)
             if not allowed:
+                demo_user = BOT_USERNAMES.get("demo", "")
+                demo_link = f"https://t.me/{demo_user}" if demo_user else "the Demo Bot"
                 await say(event, "🔒 Paid access only.")
+                await event.respond(
+                    f"🔒 **Access Restricted — {bot_title}**\n\n"
+                    "This bot is exclusively for verified enrolled students.\n\n"
+                    "👉 **Please use our Demo Bot to try the trial and purchase your access:**",
+                    buttons=[[Button.url("🧪 Open MBBS Demo Bot", demo_link)]] if demo_user else None
+                )
                 return False
             if check_limit and not check_daily_limit(uid)[0]:
                 await say(event, "⚠️ Daily download limit reached!")
                 return False
-
-        if need_year and is_demo_bot and get_demo_topics(uid) is None:
-            await event.respond("🎓 **Select your MBBS Year to see its subjects:**",
-                                buttons=make_demo_year_picker(uid, is_demo_user(uid)))
-            return False
         return True
 
     @bot_client.on(events.CallbackQuery(data=b"noop"))
@@ -1271,7 +1240,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             if fut and not fut.done():
                 fut.set_result(event.message)
 
-    @bot_client.on(events.NewMessage(pattern=r"^/(start|help|menu)(?:\s.*)?$"))
+    @bot_client.on(events.NewMessage(pattern=r"^/(start|help|menu)(?:\s+(.*))?$"))
     async def start_handler(event):
         sender = await event.get_sender()
         track_user(sender, bot_key)
@@ -1280,45 +1249,106 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         user_ai_state.pop(uid, None)
         user_coupon_state.pop(uid, None)
 
+        start_arg = (event.pattern_match.group(2) or "").strip()
+
+        # Check for 1-Time Activation Link on Year Bots
+        if not is_demo_bot and start_arg:
+            token = start_arg
+            token_data = db.get("activation_tokens", {}).get(token)
+            if token_data:
+                if token_data.get("used"):
+                    await event.respond("❌ **This activation link has already been used and expired.**")
+                    return
+                if int(token_data.get("uid", 0)) != uid:
+                    await event.respond("❌ **This one-time access link belongs to another student account.**")
+                    return
+
+                # Mark token used immediately so it self-destructs
+                token_data["used"] = True
+                token_data["used_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                # Activate in database
+                grant_plan(uid, content_tier=token_data.get("content", "full"), tier=bot_key, days=0)
+                _write_db(db)
+
+                # Edit message in Demo Bot: make the link disappear & show confirmation
+                demo_msg_id = token_data.get("demo_msg_id")
+                demo_bot = active_bots.get("demo")
+                if demo_bot and demo_msg_id:
+                    try:
+                        await demo_bot.edit_message(
+                            uid, demo_msg_id,
+                            f"✅ **Thanks for purchasing the bot!**\n\n"
+                            f"You have successfully logged into your **{BOT_TITLES_MAP.get(bot_key, bot_key)}**.\n"
+                            "Happy studying! 🩺",
+                            buttons=None
+                        )
+                    except Exception:
+                        pass
+
+                await event.respond(
+                    f"🎉 **Welcome to {bot_title}!**\n\n"
+                    "Thank you for purchasing the bot! Your lifetime enrollment is confirmed and activated.\n\n"
+                    "Select a subject below to begin studying:",
+                    buttons=menu_for(uid)
+                )
+                await reconcile_now()
+                return
+
         if is_banned(uid):
             await event.respond("⛔ You are restricted from using this service.")
             return
 
-        if is_demo_user(uid):
-            st, _, _, _ = check_demo_status(uid)
-            sess = get_or_start_demo_session(uid)
-            await ensure_demo_cbt_synced(uid, display_name(uid))
-            if st == "expired":
-                await event.respond(buy_intro(), buttons=buy_year_buttons())
+        # DEMO BOT EXPERIENCE
+        if is_demo_bot:
+            if is_demo_user(uid):
+                st, _, _, _ = check_demo_status(uid)
+                sess = get_or_start_demo_session(uid)
+                await ensure_demo_cbt_synced(uid, display_name(uid))
+                if st == "expired":
+                    await event.respond(buy_intro(), buttons=buy_year_buttons())
+                    return
+
+                if get_demo_topics(uid) is None:
+                    await event.respond(
+                        f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+                        f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+                        "👇 **Select your MBBS Year to explore lectures, notes & MCQs:**",
+                        buttons=make_demo_year_picker(uid, True)
+                    )
+                    return
+
+                await event.respond(
+                    f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
+                    f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
+                    "Select a subject below to begin:",
+                    buttons=menu_for(uid)
+                )
                 return
 
             if get_demo_topics(uid) is None:
                 await event.respond(
-                    f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
-                    f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
-                    "👇 **Select your MBBS Year to explore lectures, notes & MCQs:**",
-                    buttons=make_demo_year_picker(uid, True)
+                    f"🎓 **{bot_title}**\n\n👇 **Select your MBBS Year to see its subjects:**",
+                    buttons=make_demo_year_picker(uid, False)
                 )
                 return
 
             await event.respond(
-                f"🎓 **{bot_title}**{demo_banner(uid)}\n\n"
-                f"🆔 **Demo CBT ID:** `{sess['cbt_id']}` | 🔑 **Pass:** `{sess['cbt_pass']}`\n\n"
-                "Select a subject below to begin:",
+                f"🎓 **{bot_title}**\n\nSelect a subject below to begin studying:",
                 buttons=menu_for(uid)
             )
             return
 
-        allowed, _ = check_access(uid, bot_key)
+        # YEAR BOTS ACCESS (Paid / Enrolled Only)
+        allowed, reason = check_access(uid, bot_key)
         if not allowed:
-            await event.respond(buy_intro(), buttons=buy_year_buttons())
-            await notify_manager_new_request(sender, bot_key)
-            return
-
-        if is_demo_bot and get_demo_topics(uid) is None:
+            demo_user = BOT_USERNAMES.get("demo", "")
+            demo_link = f"https://t.me/{demo_user}" if demo_user else "the Demo Bot"
             await event.respond(
-                f"🎓 **{bot_title}**\n\n👇 **Select your MBBS Year to see its subjects:**",
-                buttons=make_demo_year_picker(uid, False)
+                f"🔒 **Access Restricted — {bot_title}**\n\n"
+                "This bot is only for verified enrolled students.\n\n"
+                "👉 **Start our Demo Bot to try the free demo and purchase your access:**",
+                buttons=[[Button.url("🧪 Open MBBS Demo Bot", demo_link)]] if demo_user else None
             )
             return
 
@@ -1334,153 +1364,154 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             buttons=menu_for(uid)
         )
 
-    # Purchase Flow Handlers
-    @bot_client.on(events.CallbackQuery(data=b"req_access"))
-    async def cb_req_access(event):
-        sender = await event.get_sender()
-        track_user(sender, bot_key)
-        if is_banned(event.sender_id):
-            await event.answer("⛔ Restricted.", alert=True)
-            return
-        await event.answer()
-        await event.respond(buy_intro(), buttons=buy_year_buttons())
+    # PURCHASE FLOW (ONLY ON DEMO BOT)
+    if is_demo_bot:
+        @bot_client.on(events.CallbackQuery(data=b"req_access"))
+        async def cb_req_access(event):
+            sender = await event.get_sender()
+            track_user(sender, bot_key)
+            if is_banned(event.sender_id):
+                await event.answer("⛔ Restricted.", alert=True)
+                return
+            await event.answer()
+            await event.respond(buy_intro(), buttons=buy_year_buttons())
 
-    @bot_client.on(events.CallbackQuery(data=b"req_notify"))
-    async def cb_req_notify(event):
-        sender = await event.get_sender()
-        track_user(sender, bot_key)
-        await notify_manager_new_request(sender, bot_key)
-        await event.answer("✅ Request forwarded to Admin!", alert=True)
-        await event.respond(f"📨 **Access request sent!** For instant activation, message {OWNER_CONTACT}.")
+        @bot_client.on(events.CallbackQuery(data=b"req_notify"))
+        async def cb_req_notify(event):
+            sender = await event.get_sender()
+            track_user(sender, bot_key)
+            if manager_bot_client:
+                await manager_bot_client.send_message(ADMIN_ID, f"🔔 Student `{event.sender_id}` requested assistance for purchasing.")
+            await event.answer("✅ Request forwarded to Admin!", alert=True)
+            await event.respond(f"📨 **Access request sent!** For instant activation, message {OWNER_CONTACT}.")
 
-    @bot_client.on(events.CallbackQuery(data=b"buy_back"))
-    async def cb_buy_back(event):
-        await edit(event, buy_intro(), buy_year_buttons())
+        @bot_client.on(events.CallbackQuery(data=b"buy_back"))
+        async def cb_buy_back(event):
+            await edit(event, buy_intro(), buy_year_buttons())
 
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_y:(\w+)$"))
-    async def cb_buy_year(event):
-        yr = event.pattern_match.group(1).decode()
-        s = db["settings"]
-        rows = [
-            [Button.inline(f"🩺 Lecture + Notes + MCQ — ₹{s.get('price_full', 1000)}", data=f"buy_p:{yr}:f".encode())],
-            [Button.inline(f"📚 Lecture + Notes Only — ₹{s.get('price_lec', 700)}", data=f"buy_p:{yr}:l".encode())],
-            [Button.inline("⬅️ Back", data=b"buy_back")],
-        ]
-        await edit(event, f"🎓 **{TIER_LABELS[yr]} Plan Selection**\n\nChoose your study package (One-Time Lifetime Access):", rows)
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_y:(\w+)$"))
+        async def cb_buy_year(event):
+            yr = event.pattern_match.group(1).decode()
+            s = db["settings"]
+            rows = [
+                [Button.inline(f"🩺 Lecture + Notes + MCQ — ₹{s.get('price_full', 1000)}", data=f"buy_p:{yr}:f".encode())],
+                [Button.inline(f"📚 Lecture + Notes Only — ₹{s.get('price_lec', 700)}", data=f"buy_p:{yr}:l".encode())],
+                [Button.inline("⬅️ Back", data=b"buy_back")],
+            ]
+            await edit(event, f"🎓 **{TIER_LABELS[yr]} Plan Selection**\n\nChoose your study package (One-Time Lifetime Access):", rows)
 
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_p:(\w+):([fl])$"))
-    async def cb_buy_plan(event):
-        uid = event.sender_id
-        yr = event.pattern_match.group(1).decode()
-        content = "full" if event.pattern_match.group(2).decode() == "f" else "lectures_only"
-        
-        for o in db["orders"].values():
-            if o["uid"] == uid and o["status"] == "awaiting_payment":
-                o["status"] = "cancelled"
-                
-        order = create_order(uid, yr, content, bot_key)
-        await event.answer()
-        await edit(event, f"🧾 Order `{order['id']}` created. Generating QR...")
-        await send_payment_qr(bot_client, event.chat_id, order)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_paid:([A-Z0-9\-]+)$"))
-    async def cb_buy_paid(event):
-        uid = event.sender_id
-        oid = event.pattern_match.group(1).decode()
-        o = db["orders"].get(oid)
-        if not o or o["uid"] != uid or o["status"] != "awaiting_payment":
-            await event.answer("Order is no longer active.", alert=True)
-            return
-        user_pay_state[uid] = oid
-        await event.answer()
-        await event.respond(
-            f"📤 **Send your Payment Screenshot now** (Order: `{oid}`, Amount: ₹{o['amount']}).\n"
-            "Make sure the UTR / Transaction ID is clearly visible.",
-            buttons=[[Button.inline("❌ Cancel Order", data=f"buy_cancel:{oid}".encode())]]
-        )
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cpn:([A-Z0-9\-]+)$"))
-    async def cb_buy_coupon(event):
-        uid = event.sender_id
-        oid = event.pattern_match.group(1).decode()
-        user_coupon_state[uid] = oid
-        await event.answer()
-        await event.respond(
-            "🏷️ **Enter Discount Coupon Code:**\n\nSend the promo/coupon code as a text message:",
-            buttons=[[Button.inline("❌ Cancel", data=f"buy_cpn_cancel:{oid}".encode())]]
-        )
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cpn_cancel:([A-Z0-9\-]+)$"))
-    async def cb_buy_cpn_cancel(event):
-        uid = event.sender_id
-        user_coupon_state.pop(uid, None)
-        oid = event.pattern_match.group(1).decode()
-        o = db["orders"].get(oid)
-        if o:
-            await send_payment_qr(bot_client, event.chat_id, o)
-
-    @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cancel:([A-Z0-9\-]+)$"))
-    async def cb_buy_cancel(event):
-        uid = event.sender_id
-        oid = event.pattern_match.group(1).decode()
-        o = db["orders"].get(oid)
-        if o and o["uid"] == uid and o["status"] == "awaiting_payment":
-            o["status"] = "cancelled"
-            _write_db(db)
-        user_pay_state.pop(uid, None)
-        user_coupon_state.pop(uid, None)
-        await event.answer("Order cancelled.")
-        await edit(event, f"❌ Order `{oid}` cancelled. Send /start to begin again.")
-
-    # Screenshot listener
-    @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and bool(e.media)))
-    async def payment_proof_listener(event):
-        uid = event.sender_id
-        if uid in user_ai_state and not user_pay_state.get(uid):
-            return
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_p:(\w+):([fl])$"))
+        async def cb_buy_plan(event):
+            uid = event.sender_id
+            yr = event.pattern_match.group(1).decode()
+            content = "full" if event.pattern_match.group(2).decode() == "f" else "lectures_only"
             
-        oid = user_pay_state.get(uid)
-        if not oid:
-            return
-        o = db["orders"].get(oid)
-        if not o or o["uid"] != uid or o["status"] != "awaiting_payment":
-            user_pay_state.pop(uid, None)
-            return
+            for o in db["orders"].values():
+                if o["uid"] == uid and o["status"] == "awaiting_payment":
+                    o["status"] = "cancelled"
+                    
+            order = create_order(uid, yr, content, bot_key)
+            await event.answer()
+            await edit(event, f"🧾 Order `{order['id']}` created. Generating QR...")
+            await send_payment_qr(bot_client, event.chat_id, order)
 
-        is_image = bool(event.photo) or (event.document and (event.document.mime_type or "").startswith("image/"))
-        if not is_image:
-            await event.respond("⚠️ Please send the payment **screenshot** as an image.")
-            return
-
-        if not manager_bot_client:
-            await event.respond(f"⚠️ Payment desk is offline. Contact {OWNER_CONTACT}.")
-            return
-
-        try:
-            raw = await event.download_media(file=bytes)
-            f = io.BytesIO(raw)
-            f.name = "proof.jpg"
-            cap = ("💳 **New Payment Proof Submission**\n\n" + order_summary(o))
-            await manager_bot_client.send_file(
-                ADMIN_ID, f, caption=cap,
-                buttons=[[Button.inline("✅ Approve & Activate", data=f"ord_ok:{oid}".encode()),
-                          Button.inline("❌ Reject", data=f"ord_no:{oid}".encode())]]
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_paid:([A-Z0-9\-]+)$"))
+        async def cb_buy_paid(event):
+            uid = event.sender_id
+            oid = event.pattern_match.group(1).decode()
+            o = db["orders"].get(oid)
+            if not o or o["uid"] != uid or o["status"] != "awaiting_payment":
+                await event.answer("Order is no longer active.", alert=True)
+                return
+            user_pay_state[uid] = oid
+            await event.answer()
+            await event.respond(
+                f"📤 **Send your Payment Screenshot now** (Order: `{oid}`, Amount: ₹{o['amount']}).\n"
+                "Make sure the UTR / Transaction ID is clearly visible.",
+                buttons=[[Button.inline("❌ Cancel Order", data=f"buy_cancel:{oid}".encode())]]
             )
-            o["status"] = "pending_review"
-            user_pay_state.pop(uid, None)
-            _write_db(db)
-            await event.respond("✅ **Screenshot submitted!** Admin verify karte hi access activate ho jayega.")
-        except Exception:
-            await event.respond(f"❌ Failed to submit screenshot. Please message {OWNER_CONTACT}.")
 
-    # Text listener (Coupons, Search, AI doubts)
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cpn:([A-Z0-9\-]+)$"))
+        async def cb_buy_coupon(event):
+            uid = event.sender_id
+            oid = event.pattern_match.group(1).decode()
+            user_coupon_state[uid] = oid
+            await event.answer()
+            await event.respond(
+                "🏷️ **Enter Discount Coupon Code:**\n\nSend the promo/coupon code as a text message:",
+                buttons=[[Button.inline("❌ Cancel", data=f"buy_cpn_cancel:{oid}".encode())]]
+            )
+
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cpn_cancel:([A-Z0-9\-]+)$"))
+        async def cb_buy_cpn_cancel(event):
+            uid = event.sender_id
+            user_coupon_state.pop(uid, None)
+            oid = event.pattern_match.group(1).decode()
+            o = db["orders"].get(oid)
+            if o:
+                await send_payment_qr(bot_client, event.chat_id, o)
+
+        @bot_client.on(events.CallbackQuery(pattern=rb"^buy_cancel:([A-Z0-9\-]+)$"))
+        async def cb_buy_cancel(event):
+            uid = event.sender_id
+            oid = event.pattern_match.group(1).decode()
+            o = db["orders"].get(oid)
+            if o and o["uid"] == uid and o["status"] == "awaiting_payment":
+                o["status"] = "cancelled"
+                _write_db(db)
+            user_pay_state.pop(uid, None)
+            user_coupon_state.pop(uid, None)
+            await event.answer("Order cancelled.")
+            await edit(event, f"❌ Order `{oid}` cancelled. Send /start to begin again.")
+
+        @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and bool(e.media)))
+        async def payment_proof_listener(event):
+            uid = event.sender_id
+            if uid in user_ai_state and not user_pay_state.get(uid):
+                return
+                
+            oid = user_pay_state.get(uid)
+            if not oid:
+                return
+            o = db["orders"].get(oid)
+            if not o or o["uid"] != uid or o["status"] != "awaiting_payment":
+                user_pay_state.pop(uid, None)
+                return
+
+            is_image = bool(event.photo) or (event.document and (event.document.mime_type or "").startswith("image/"))
+            if not is_image:
+                await event.respond("⚠️ Please send the payment **screenshot** as an image.")
+                return
+
+            if not manager_bot_client:
+                await event.respond(f"⚠️ Payment desk is offline. Contact {OWNER_CONTACT}.")
+                return
+
+            try:
+                raw = await event.download_media(file=bytes)
+                f = io.BytesIO(raw)
+                f.name = "proof.jpg"
+                cap = ("💳 **New Payment Proof Submission**\n\n" + order_summary(o))
+                await manager_bot_client.send_file(
+                    ADMIN_ID, f, caption=cap,
+                    buttons=[[Button.inline("✅ Approve & Send Access", data=f"ord_ok:{oid}".encode()),
+                              Button.inline("❌ Reject", data=f"ord_no:{oid}".encode())]]
+                )
+                o["status"] = "pending_review"
+                user_pay_state.pop(uid, None)
+                _write_db(db)
+                await event.respond("✅ **Screenshot submitted!** Admin verify karte hi aapko aapke bot ka exclusive link mil jayega.")
+            except Exception:
+                await event.respond(f"❌ Failed to submit screenshot. Please message {OWNER_CONTACT}.")
+
+    # Text router (Coupons, Search, AI doubts)
     @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and not (e.raw_text or "").startswith("/") and not e.media))
     async def student_text_router(event):
         uid = event.sender_id
         text = (event.raw_text or "").strip()
 
         # 1. Coupon code check
-        if uid in user_coupon_state:
+        if is_demo_bot and uid in user_coupon_state:
             oid = user_coupon_state.pop(uid)
             o = db["orders"].get(oid)
             if not o or o["status"] != "awaiting_payment":
@@ -1535,11 +1566,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             is_demo = is_demo_user(uid)
             allowed, used, max_q = check_ai_limit(uid, is_demo)
             if not allowed:
-                await event.respond(
-                    f"⚠️ **AI Query Limit Reached ({used}/{max_q})**\n\nUpgrade to full access for daily doubt solving!",
-                    buttons=[[Button.inline("🛒 Buy Full Access", data=b"req_access"),
-                              Button.inline("⬅️ Back", data=b"sub_back")]]
-                )
+                btn = [[Button.inline("🛒 Buy Full Access", data=b"req_access")]] if is_demo_bot else []
+                await event.respond(f"⚠️ **AI Query Limit Reached ({used}/{max_q})**", buttons=btn)
                 user_ai_state.pop(uid, None)
                 return
 
@@ -1567,7 +1595,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         is_demo = is_demo_user(uid)
         allowed, used, max_q = check_ai_limit(uid, is_demo)
         if not allowed:
-            await event.respond("⚠️ AI Query Limit Reached.", buttons=[[Button.inline("🛒 Buy Full Access", data=b"req_access")]])
+            await event.respond("⚠️ AI Query Limit Reached.")
             user_ai_state.pop(uid, None)
             return
 
@@ -1585,7 +1613,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         ]
         await event.respond(f"🩺 **AI Image Analysis ({subj})**\n\n{answer}", buttons=buttons)
 
-    # Subject Navigation & AI buttons
+    # Subject Navigation
     @bot_client.on(events.CallbackQuery(data=b"ask_ai_init"))
     async def cb_ask_ai_init(event):
         uid = event.sender_id
@@ -1595,11 +1623,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         
         if not allowed:
             await event.answer("AI Query Limit Reached!", alert=True)
-            await event.respond(
-                f"⚠️ **AI Limit Reached ({used}/{max_q} questions)**\n\n"
-                "To get daily AI doubts and full access, purchase a plan:",
-                buttons=[[Button.inline("🛒 Buy Full Access", data=b"req_access")]]
-            )
             return
 
         user_ai_state[uid] = {"subject": subj}
@@ -1802,6 +1825,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(pattern=rb"^demo_yr:(\w+)$"))
     async def cb_demo_set_year(event):
+        if not is_demo_bot:
+            return
         uid = event.sender_id
         yr = event.pattern_match.group(1).decode()
         set_demo_year(uid, yr)
@@ -1809,6 +1834,8 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
     @bot_client.on(events.CallbackQuery(data=b"demo_pick_year"))
     async def cb_demo_pick_year(event):
+        if not is_demo_bot:
+            return
         uid = event.sender_id
         await edit(event, f"🎓 **{bot_title}**\n\n👇 Select which MBBS Year you want to open:",
                    make_demo_year_picker(uid, is_demo_user(uid)))
@@ -1863,7 +1890,7 @@ async def execute_broadcast(payload, target="everyone", is_raw_event=False):
             elif payload.photo:
                 media_name = "photo.jpg"
         except Exception:
-            logging.exception("Failed downloading broadcast media")
+            pass
 
     for target_uid in audience:
         udata = db.get("users", {}).get(str(target_uid), {})
@@ -1897,7 +1924,7 @@ async def execute_broadcast(payload, target="everyone", is_raw_event=False):
     return sent, failed, len(audience)
 
 # ============================================================
-# MANAGER BOT HANDLERS & ADMIN DASHBOARD
+# MANAGER BOT & ADMIN DASHBOARD
 # ============================================================
 
 def sales_totals():
@@ -2109,7 +2136,8 @@ def setup_manager_bot_handlers(client):
         if not admin_only(event):
             return
         uid = int(event.pattern_match.group(1))
-        ok = await send_login_card(uid, uid)
+        user_bot = db.get("users", {}).get(str(uid), {}).get("bot_used")
+        ok = await send_login_card(uid, uid, pref=user_bot)
         await event.answer("Login card sent!" if ok else "Could not reach user.", alert=True)
 
     @client.on(events.CallbackQuery(pattern=rb"^adm_rev:(\d+)$"))
@@ -2186,7 +2214,7 @@ def setup_manager_bot_handlers(client):
             [[Button.inline("❌ Cancel Broadcast", data=b"mgmt_home")]]
         )
 
-    # 3. Payments Approval
+    # 3. Payments Approval (Generates One-Time Access Link)
     @client.on(events.CallbackQuery(data=b"mgmt_orders"))
     async def cb_orders(event):
         if not admin_only(event):
@@ -2215,22 +2243,46 @@ def setup_manager_bot_handlers(client):
             await event.answer("Order not pending.", alert=True)
             return
         uid = o["uid"]
-        grant_plan(uid, o["content"], tier=o["year"], days=0)
-        set_demo_year(uid, o["year"])
+        target_year = o["year"]
+        
+        # Generate 1-time activation token
+        token = "ACT-" + _pick(12)
+        target_bot_username = BOT_USERNAMES.get(target_year)
+        
+        # Save token details in db
+        db.setdefault("activation_tokens", {})[token] = {
+            "token": token,
+            "uid": uid,
+            "year": target_year,
+            "content": o["content"],
+            "used": False,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "demo_msg_id": None
+        }
+
         o["status"] = "approved"
         _write_db(db)
-        await event.answer("✅ Approved & Activated!", alert=True)
+        await event.answer("✅ Approved! Activation link sent to Demo Bot.", alert=True)
         await edit(event, order_summary(o) + "\n\n✅ **APPROVED**", [[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
-        await send_via_any(
-            uid,
-            f"🎉 **Payment Verified Successfully!**\n\n"
-            f"🎓 **Year:** {TIER_LABELS.get(o['year'])}\n"
-            f"📦 **Plan:** {CONTENT_LABELS.get(o['content'])}\n"
-            f"📅 **Validity:** Lifetime Access\n\n"
-            "Send /start to open your complete MBBS library!",
-            pref=o.get("bot")
-        )
-        await reconcile_now()
+
+        # Deliver One-Time Access Card inside Demo Bot
+        demo_bot = active_bots.get("demo")
+        if demo_bot and target_bot_username:
+            link = f"https://t.me/{target_bot_username}?start={token}"
+            access_msg = (
+                f"🎉 **Payment Verified Successfully!**\n\n"
+                f"🎓 **Enrolled Year:** {TIER_LABELS.get(target_year)}\n"
+                f"📦 **Plan:** {CONTENT_LABELS.get(o['content'])}\n"
+                f"📅 **Validity:** Lifetime Access\n\n"
+                f"👇 **Tap the button below to claim and activate your {TIER_LABELS.get(target_year)} Bot:**\n"
+                "*(This is a secure 1-time activation link exclusively for your account)*"
+            )
+            buttons = [[Button.url(f"🚀 Open & Claim {TIER_LABELS.get(target_year)} Bot", link)]]
+            sent_msg = await demo_bot.send_message(uid, access_msg, buttons=buttons)
+            if sent_msg:
+                db["activation_tokens"][token]["demo_msg_id"] = sent_msg.id
+                _write_db(db)
+
         await trigger_cloud_backup()
 
     @client.on(events.CallbackQuery(pattern=rb"^ord_no:([A-Z0-9\-]+)$"))
@@ -2242,7 +2294,9 @@ def setup_manager_bot_handlers(client):
         if o:
             o["status"] = "rejected"
             _write_db(db)
-            await send_via_any(o["uid"], f"❌ Payment could not be verified (Order `{oid}`). Contact {OWNER_CONTACT}.")
+            demo_bot = active_bots.get("demo")
+            if demo_bot:
+                await demo_bot.send_message(o["uid"], f"❌ Payment could not be verified (Order `{oid}`). Please message {OWNER_CONTACT}.")
         await event.answer("Rejected.", alert=True)
         await edit(event, f"❌ Order `{oid}` rejected.", [[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
@@ -2424,7 +2478,7 @@ def setup_manager_bot_handlers(client):
         ]
         await edit(event, "⚙️ **System Feature Controls**", rows)
 
-    # 10. Dedicated Database Restore Menu & Actions
+    # 10. Database Restore Menu
     @client.on(events.CallbackQuery(data=b"mgmt_restore_menu"))
     async def cb_restore_menu(event):
         if not admin_only(event):
@@ -2462,18 +2516,18 @@ def setup_manager_bot_handlers(client):
             await edit(
                 event,
                 "⚠️ **No valid backup file found in recent messages.**\n\n"
-                "Please drag-and-drop or upload your `bot_database.json` file directly into this chat to restore it.",
+                "Please upload your `bot_database.json` file directly into this chat to restore it.",
                 [[Button.inline("⬅️ Back", data=b"mgmt_restore_menu")]]
             )
 
-    # General Admin Listener (Coupons, Prices, Search, Broadcast, and File/Reply Restore)
+    # General Admin Listener
     @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
     async def admin_input_listener(event):
         if not admin_only(event):
             return
         text = (event.raw_text or "").strip()
 
-        # Handle restore via Document upload or caption
+        # Document upload restore
         if event.file and (event.file.name == "bot_database.json" or "restore" in text.lower()):
             status = await event.respond("⏳ **Analyzing and restoring database file...**")
             raw = await event.download_media(file=bytes)
@@ -2488,10 +2542,10 @@ def setup_manager_bot_handlers(client):
                     )
                     return
                 else:
-                    await status.edit(f"❌ Restore failed: Invalid JSON or corrupted file (`{a_cnt}`).")
+                    await status.edit(f"❌ Restore failed: `{a_cnt}`")
                     return
 
-        # Handle reply with /restore to a previously sent backup
+        # Reply with /restore
         if text.lower() == "/restore" and event.is_reply:
             reply_msg = await event.get_reply_message()
             if reply_msg and reply_msg.file:
@@ -2665,13 +2719,15 @@ async def main():
             client = TelegramClient(f"bot_session_{key}", API_ID, API_HASH)
             await client.start(bot_token=token)
 
+            bot_me = await client.get_me()
+            BOT_USERNAMES[key] = bot_me.username
+
             if key == "manager":
                 manager_bot_client = client
                 setup_manager_bot_handlers(client)
                 runners.append(client.run_until_disconnected())
                 continue
 
-            bot_me = await client.get_me()
             entity = None
             try:
                 entity = await user_client.get_entity(bot_me.username)
@@ -2691,12 +2747,13 @@ async def main():
         try:
             await manager_bot_client.send_message(
                 ADMIN_ID,
-                "🟢 **MBBS Production Engine Online!**\n\n"
+                "🟢 **MBBS Multi-Bot Ecosystem Online!**\n\n"
+                "• 🧪 Demo-Exclusive Purchase Funnel: Active\n"
+                "• 🚀 Single-Use Disappearing Activation Links: Active\n"
                 "• 💎 Verified Members & Broadcast: Active\n"
                 "• 🤖 Gemini AI Doubt Solver: Active\n"
                 "• 💳 Payment Orders & Coupons: Active\n"
-                "• 🔄 Database Restore System: Armed & Active\n"
-                "• 🌐 Supabase Sync: Online",
+                "• 🔄 Database Restore System: Active",
                 buttons=make_manager_menu()
             )
         except Exception:
