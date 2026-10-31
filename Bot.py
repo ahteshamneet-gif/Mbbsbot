@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 # ============================================================
 # MBBS Lecture & CBT Q-Bank Bot — Unified Production Engine
@@ -12,6 +11,7 @@
 #  - Multimodal Gemini AI Medical Doubt Solver (Text + Image support)
 #  - Supabase Cloud DB persistence + 1-Tap Telegram Restore & File Upload Restore
 #  - Fast Button-Driven Manager Bot Control Center
+#  - Admin can set any student's Year (1st / 2nd / 3rd / Final / All) from profile
 # ============================================================
 
 import asyncio
@@ -405,9 +405,9 @@ SYSTEM_PROMPT = (
 async def ask_gemini_ai(prompt_text, image_bytes=None, mime_type="image/jpeg"):
     if not GEMINI_API_KEY:
         return "⚠️ AI Doubt Solver is currently offline (API key not configured by admin)."
-    
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    
+
     parts = []
     if prompt_text:
         parts.append({"text": prompt_text})
@@ -418,13 +418,13 @@ async def ask_gemini_ai(prompt_text, image_bytes=None, mime_type="image/jpeg"):
                 "data": base64.b64encode(image_bytes).decode("utf-8")
             }
         })
-        
+
     payload = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": [{"parts": parts}],
         "generationConfig": {"temperature": 0.2, "maxOutputTokens": 800}
     }
-    
+
     try:
         timeout = aiohttp.ClientTimeout(total=30)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -792,7 +792,8 @@ def grant_plan(target_id, content_tier="full", tier=None, days=None):
     if days is not None:
         det["expiry"] = (datetime.now() + timedelta(days=int(days))).strftime("%Y-%m-%d") if int(days) > 0 else None
     else:
-        det["expiry"] = None
+        # Keep any existing expiry (admin plan change must not reset it)
+        det.setdefault("expiry", None)
     det.setdefault("added_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     if content_tier == "full":
@@ -808,12 +809,12 @@ def create_order(uid, year, content, bot_key, coupon=None):
     oid = "ORD-" + _pick(6)
     while oid in db["orders"]:
         oid = "ORD-" + _pick(6)
-    
+
     base_amount = plan_price(content)
     discount = 0
     if coupon and coupon in db.get("coupons", {}):
         discount = db["coupons"][coupon]
-    
+
     final_amount = max(0, base_amount - discount)
 
     order = {
@@ -877,7 +878,7 @@ async def send_payment_qr(bot_client, chat_id, order):
         [Button.inline("🏷️ Apply Discount Coupon", data=f"buy_cpn:{oid}".encode())],
         [Button.inline("❌ Cancel Order", data=f"buy_cancel:{oid}".encode())]
     ]
-    
+
     pay_mode = db["settings"].get("payment_mode", "auto")
     qr = None
 
@@ -951,7 +952,7 @@ async def execute_restore_from_file_bytes(raw_bytes):
 async def auto_restore_from_telegram():
     global db
     if not manager_bot_client:
-        return False
+        return False, 0, 0
     try:
         async for msg in manager_bot_client.iter_messages(ADMIN_ID, limit=50):
             if msg.file and (msg.file.name == "bot_database.json" or (msg.text and "Cloud Backup" in msg.text)):
@@ -1287,7 +1288,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 # Mark token used immediately so it self-destructs
                 token_data["used"] = True
                 token_data["used_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                
+
                 # Activate in database
                 grant_plan(uid, content_tier=token_data.get("content", "full"), tier=bot_key, days=0)
                 _write_db(db)
@@ -1428,11 +1429,11 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             uid = event.sender_id
             yr = event.pattern_match.group(1).decode()
             content = "full" if event.pattern_match.group(2).decode() == "f" else "lectures_only"
-            
+
             for o in db["orders"].values():
                 if o["uid"] == uid and o["status"] == "awaiting_payment":
                     o["status"] = "cancelled"
-                    
+
             order = create_order(uid, yr, content, bot_key)
             await event.answer()
             await edit(event, f"🧾 Order `{order['id']}` created. Loading payment details...")
@@ -1492,7 +1493,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             uid = event.sender_id
             if uid in user_ai_state and not user_pay_state.get(uid):
                 return
-                
+
             oid = user_pay_state.get(uid)
             if not oid:
                 return
@@ -1606,7 +1607,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             prompt = f"Subject: {subj}\nStudent Question: {text}"
             answer = await ask_gemini_ai(prompt)
             record_ai_query(uid, is_demo)
-            
+
             await wait_msg.delete()
             buttons = [
                 [Button.inline("❓ Ask Another Doubt", data=b"ask_ai_init")],
@@ -1636,7 +1637,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         prompt = f"Subject: {subj}\nClinical Query: {cap}"
         answer = await ask_gemini_ai(prompt, image_bytes=raw, mime_type="image/jpeg")
         record_ai_query(uid, is_demo)
-        
+
         await wait_msg.delete()
         buttons = [
             [Button.inline("❓ Ask Another Doubt", data=b"ask_ai_init")],
@@ -1651,7 +1652,7 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         subj = user_subjects.get(uid, "General MBBS")
         is_demo = is_demo_user(uid)
         allowed, used, max_q = check_ai_limit(uid, is_demo)
-        
+
         if not allowed:
             await event.answer("AI Query Limit Reached!", alert=True)
             return
@@ -2025,9 +2026,10 @@ def make_student_profile_view(uid):
     qid = det.get("qbank_id", "—") if ctier == "full" else "—"
     qpass = det.get("qbank_pass", "—") if ctier == "full" else "—"
 
+    sep = "━━━━━━━━━━━━━━"
     text = (
         f"👤 **Student Profile — {esc(name)}**\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{sep}\n"
         f"🆔 **User ID:** `{uid}`\n"
         f"🔗 **Username:** {esc(uname)}\n"
         f"📌 **Status:** **{status_str}**\n"
@@ -2036,12 +2038,18 @@ def make_student_profile_view(uid):
         f"📦 **Content Plan:** **{CONTENT_LABELS.get(ctier, ctier)}**\n"
         f"📅 **Valid Till:** `{expiry}`\n"
         f"🔑 **Q-Bank Login:** `{qid}` | Pass: `{qpass}`\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━"
+        f"{sep}"
     )
 
+    def yb(label, key):
+        mark = "✅ " if (approved and tier == key) else ""
+        return Button.inline(f"{mark}{label}", data=f"adm_set_year:{uid}:{key}".encode())
+
     buttons = [
-        [Button.inline("🩺 Set Full (Lec+Notes+QBank)", data=f"adm_set_tier:{uid}:full".encode()),
+        [Button.inline("🩺 Set Full Plan", data=f"adm_set_tier:{uid}:full".encode()),
          Button.inline("📚 Set Lectures Only", data=f"adm_set_tier:{uid}:lectures_only".encode())],
+        [yb("1️⃣ 1st", "year_1"), yb("2️⃣ 2nd", "year_2"), yb("3️⃣ 3rd", "year_3")],
+        [yb("4️⃣ Final", "final_year"), yb("🌐 All Years", "all")],
         [Button.inline("➕ +30 Days", data=f"ex:{uid}:30".encode()),
          Button.inline("➕ +90 Days", data=f"ex:{uid}:90".encode()),
          Button.inline("♾ Lifetime", data=f"ex:{uid}:0".encode())],
@@ -2136,6 +2144,27 @@ def setup_manager_bot_handlers(client):
         grant_plan(uid, tier)
         await event.answer("✅ Plan updated!", alert=True)
         await reconcile_now()
+        text, buttons = make_student_profile_view(uid)
+        await edit(event, text, buttons)
+        await trigger_cloud_backup()
+
+    # NEW: Admin selects Year Tier (1st / 2nd / 3rd / Final / All)
+    @client.on(events.CallbackQuery(pattern=rb"^adm_set_year:(\d+):(all|year_1|year_2|year_3|final_year)$"))
+    async def cb_set_year(event):
+        if not admin_only(event):
+            return
+        uid = int(event.pattern_match.group(1))
+        yr = event.pattern_match.group(2).decode()
+        if uid not in db.get("approved", []):
+            await event.answer("⚠️ Student is not paid yet. Set a plan (Full / Lectures Only) first.", alert=True)
+            return
+        det = db["approved_details"].setdefault(str(uid), {})
+        if det.get("tier") == yr:
+            await event.answer(f"Already set to {TIER_LABELS.get(yr)}.")
+            return
+        det["tier"] = yr
+        save_db(db)
+        await event.answer(f"✅ Year set to {TIER_LABELS.get(yr)}!", alert=True)
         text, buttons = make_student_profile_view(uid)
         await edit(event, text, buttons)
         await trigger_cloud_backup()
@@ -2314,11 +2343,11 @@ def setup_manager_bot_handlers(client):
             return
         uid = o["uid"]
         target_year = o["year"]
-        
+
         # Generate 1-time activation token
         token = "ACT-" + _pick(12)
         target_bot_username = BOT_USERNAMES.get(target_year)
-        
+
         # Save token details in db
         db.setdefault("activation_tokens", {})[token] = {
             "token": token,
@@ -2919,7 +2948,7 @@ async def main():
     global USER_CLIENT_ID, manager_bot_client
     if not API_ID or not API_HASH:
         raise SystemExit("API_ID or API_HASH missing.")
-    
+
     os.makedirs("downloads", exist_ok=True)
     await start_web_server()
 
@@ -2972,6 +3001,7 @@ async def main():
                 "• 🖼️ Dual Payment Mode (Auto QR / Custom Uploaded QR): Active\n"
                 "• 💬 Direct Admin-to-Student Chat Engine: Active\n"
                 "• 🚀 Single-Use Disappearing Activation Links: Active\n"
+                "• 🎓 Admin Year Selector (1st/2nd/3rd/Final/All): Active\n"
                 "• 🤖 Gemini AI Medical Doubt Solver: Active\n"
                 "• 🔄 Cloud Database Restore System: Active",
                 buttons=make_manager_menu()
