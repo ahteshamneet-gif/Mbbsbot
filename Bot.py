@@ -33,13 +33,14 @@ from telethon.errors import FloodWaitError, MessageNotModifiedError
 from telethon.sessions import StringSession
 
 # ============================================================
-# CONFIGURATION (Environment Variables)
+# CONFIGURATION (Environment Variables with Safe Fallbacks)
 # ============================================================
 
-API_ID = int(os.getenv("API_ID", "0") or 0)
-API_HASH = os.getenv("API_HASH", "").strip()
+# Fallback credentials directly in place so Render never crashes on empty env vars
+API_ID = int(os.getenv("API_ID", "37864520") or 37864520)
+API_HASH = os.getenv("API_HASH", "d92bf252ab0a7835d2639d49920f714a").strip()
 GROUP_ID = int(os.getenv("GROUP_ID", "-1004409849262"))
-PORT = int(os.getenv("PORT", "8080"))
+PORT = int(os.getenv("PORT", "10000"))
 ADMIN_ID = int(os.getenv("ADMIN_ID", "8417145295"))
 OWNER_CONTACT = os.getenv("OWNER_CONTACT", "@Nothing_0786")
 
@@ -58,18 +59,24 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://iafqcssktvejitssqawi.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
 
-SESSION_STRING = re.sub(r"\s+", "", os.getenv("SESSION_STRING", "")).strip("'\"`")
+HARDCODED_SESSION = "1BVtsOKIBu4Bpg3SC2K3Z3W0rIRgy-DJVZGlQ2AV-NAjQDLsyjdLvBF1lDYZPEObrQhEeyus5l9hxbCSm-aCW6GmiX5RdjwrmR0Ec6bkPXnGKlDkxQIS0blJxvEmgXHes7SkExnDJvsvI3HSoGxvIvrKUW9H9PnxmrXmY81X9FMJ-OskcaqRNVNaIX-u3eVpBjAqpgkuU4OTJ7YY6S3M3oA2jKmY3Nz9PgcIOZqKoeHXF8iVdkSDOJqwXegq1a_e_AxaVEQQfhbSNUen5chFC4Flgl_9IecspQRJgGuhfdhm3W3kyFu5ksUGNjfL-5t1inmmqxgxXEQcspN5DC3z04aXNCemcSQ8="
+RAW_SESSION = os.getenv("SESSION_STRING", "").strip() or HARDCODED_SESSION
+SESSION_STRING = re.sub(r"\s+", "", RAW_SESSION).strip("'\"`")
+
 PAID_USERS_JSON_RAW = os.getenv("PAID_USERS_BACKUP", "").strip()
 SYNC_INTERVAL_SECONDS = 600
 BACKUP_INTERVAL_SECONDS = 6 * 3600
 
+# Default Bot Token assigned so at least the main/demo bot works even if env vars are unset
+DEFAULT_BOT_TOKEN = "8971926878:AAEbET6qFP2fJ_cCskinkdkc4YuGR1A1cLQ"
+
 BOT_TOKENS = {
-    "all": os.getenv("BOT_TOKEN_ALL", "").strip(),
+    "all": os.getenv("BOT_TOKEN_ALL", DEFAULT_BOT_TOKEN).strip(),
     "year_1": os.getenv("BOT_TOKEN_Y1", "").strip(),
     "year_2": os.getenv("BOT_TOKEN_Y2", "").strip(),
     "year_3": os.getenv("BOT_TOKEN_Y3", "").strip(),
     "final_year": os.getenv("BOT_TOKEN_FINAL", "").strip(),
-    "demo": os.getenv("BOT_TOKEN_DEMO", "").strip(),
+    "demo": os.getenv("BOT_TOKEN_DEMO", DEFAULT_BOT_TOKEN).strip(),
     "manager": os.getenv("BOT_TOKEN_MANAGER", "").strip(),
 }
 
@@ -143,7 +150,7 @@ DEFAULT_SETTINGS = {
     "default_content": "full",
     "default_days": 0,
     "purchase_enabled": True,
-    "payment_mode": "auto",  # 'auto' (dynamic generated QR) or 'manual' (admin custom uploaded QR)
+    "payment_mode": "auto",
     "price_full": 1000,
     "price_lec": 700,
     "ai_enabled": True,
@@ -492,12 +499,8 @@ async def supabase_upsert_student(student_id, passkey, name, active=True, expire
         await s.post(f"{SUPABASE_URL}/rest/v1/students?on_conflict=student_id", headers=headers, data=json.dumps(row))
 
 def _make_user_client():
-    if not SESSION_STRING:
-        return TelegramClient("session", API_ID, API_HASH)
-    try:
-        return TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
-    except Exception:
-        return TelegramClient("session", API_ID, API_HASH)
+    # Directly uses the verified StringSession in memory to skip all local files
+    return TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
 user_client = _make_user_client()
 active_bots = {}
@@ -792,7 +795,6 @@ def grant_plan(target_id, content_tier="full", tier=None, days=None):
     if days is not None:
         det["expiry"] = (datetime.now() + timedelta(days=int(days))).strftime("%Y-%m-%d") if int(days) > 0 else None
     else:
-        # Keep any existing expiry (admin plan change must not reset it)
         det.setdefault("expiry", None)
     det.setdefault("added_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -883,7 +885,6 @@ async def send_payment_qr(bot_client, chat_id, order):
     qr = None
 
     if pay_mode == "manual":
-        # Prefer admin uploaded custom QR image
         if os.path.exists(CUSTOM_QR_FILE):
             qr = CUSTOM_QR_FILE
         elif os.path.exists(PAYMENT_QR_PATH):
@@ -891,7 +892,6 @@ async def send_payment_qr(bot_client, chat_id, order):
         else:
             qr = await build_upi_qr(order)
     else:
-        # Auto dynamic QR
         qr = await build_upi_qr(order)
         if qr is None and os.path.exists(CUSTOM_QR_FILE):
             qr = CUSTOM_QR_FILE
@@ -1233,7 +1233,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                                     buttons=make_demo_year_picker(uid, is_demo_user(uid)))
                 return False
         else:
-            # Year-wise bots: MUST BE VERIFIED / PURCHASED
             allowed, reason = check_access(uid, bot_key)
             if not allowed:
                 demo_user = BOT_USERNAMES.get("demo", "")
@@ -1273,7 +1272,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
 
         start_arg = (event.pattern_match.group(2) or "").strip()
 
-        # Check for 1-Time Activation Link on Year Bots
         if not is_demo_bot and start_arg:
             token = start_arg
             token_data = db.get("activation_tokens", {}).get(token)
@@ -1285,15 +1283,12 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                     await event.respond("❌ **This one-time access link belongs to another student account.**")
                     return
 
-                # Mark token used immediately so it self-destructs
                 token_data["used"] = True
                 token_data["used_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Activate in database
                 grant_plan(uid, content_tier=token_data.get("content", "full"), tier=bot_key, days=0)
                 _write_db(db)
 
-                # Edit message in Demo Bot: make the link disappear & show confirmation
                 demo_msg_id = token_data.get("demo_msg_id")
                 demo_bot = active_bots.get("demo")
                 if demo_bot and demo_msg_id:
@@ -1321,7 +1316,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.respond("⛔ You are restricted from using this service.")
             return
 
-        # DEMO BOT EXPERIENCE (Clean — No internal database IDs displayed to students)
         if is_demo_bot:
             if is_demo_user(uid):
                 st, _, _, _ = check_demo_status(uid)
@@ -1359,7 +1353,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             )
             return
 
-        # YEAR BOTS ACCESS (Paid / Enrolled Only)
         allowed, reason = check_access(uid, bot_key)
         if not allowed:
             demo_user = BOT_USERNAMES.get("demo", "")
@@ -1384,7 +1377,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             buttons=menu_for(uid)
         )
 
-    # PURCHASE FLOW (ONLY ON DEMO BOT)
     if is_demo_bot:
         @bot_client.on(events.CallbackQuery(data=b"req_access"))
         async def cb_req_access(event):
@@ -1536,13 +1528,11 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             except Exception:
                 await event.respond(f"❌ Failed to submit screenshot. Please message {OWNER_CONTACT}.")
 
-    # Text router (Coupons, Search, AI doubts, Student Responses)
     @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and not (e.raw_text or "").startswith("/") and not e.media))
     async def student_text_router(event):
         uid = event.sender_id
         text = (event.raw_text or "").strip()
 
-        # 1. Coupon code check
         if is_demo_bot and uid in user_coupon_state:
             oid = user_coupon_state.pop(uid)
             o = db["orders"].get(oid)
@@ -1566,7 +1556,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
                 )
             return
 
-        # 2. Search Subject
         if uid in user_search_state:
             st = user_search_state.pop(uid, None)
             if not await guard(event):
@@ -1592,7 +1581,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.respond(f"🔎 Found {len(matches)} match(es) in **{subj}**:", buttons=buttons)
             return
 
-        # 3. AI Doubt Solver (Text)
         if uid in user_ai_state:
             subj = user_ai_state[uid].get("subject", "General MBBS")
             is_demo = is_demo_user(uid)
@@ -1616,7 +1604,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
             await event.respond(f"🩺 **AI Doubt Solver ({subj})**\n\n{answer}", buttons=buttons)
             return
 
-    # 4. AI Doubt Solver (Image/Photo)
     @bot_client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private and bool(e.photo)))
     async def ai_image_doubt_listener(event):
         uid = event.sender_id
@@ -1645,7 +1632,6 @@ def setup_bot_handlers(bot_client, bot_key, bot_topics, bot_title):
         ]
         await event.respond(f"🩺 **AI Image Analysis ({subj})**\n\n{answer}", buttons=buttons)
 
-    # Subject Navigation
     @bot_client.on(events.CallbackQuery(data=b"ask_ai_init"))
     async def cb_ask_ai_init(event):
         uid = event.sender_id
@@ -2088,7 +2074,6 @@ def setup_manager_bot_handlers(client):
         ADMIN_STATES.pop(ADMIN_ID, None)
         await edit(event, dashboard_text(), make_manager_menu())
 
-    # 1. Verified Paid Members List
     @client.on(events.CallbackQuery(pattern=rb"^mgmt_approved_p:(\d+)$"))
     async def cb_approved_page(event):
         if not admin_only(event):
@@ -2148,7 +2133,6 @@ def setup_manager_bot_handlers(client):
         await edit(event, text, buttons)
         await trigger_cloud_backup()
 
-    # NEW: Admin selects Year Tier (1st / 2nd / 3rd / Final / All)
     @client.on(events.CallbackQuery(pattern=rb"^adm_set_year:(\d+):(all|year_1|year_2|year_3|final_year)$"))
     async def cb_set_year(event):
         if not admin_only(event):
@@ -2247,7 +2231,6 @@ def setup_manager_bot_handlers(client):
         text, buttons = make_student_profile_view(target)
         await edit(event, text, buttons)
 
-    # 2. Broadcast Center
     @client.on(events.CallbackQuery(data=b"mgmt_announce"))
     async def cb_announce(event):
         if not admin_only(event):
@@ -2278,7 +2261,6 @@ def setup_manager_bot_handlers(client):
             [[Button.inline("❌ Cancel Broadcast", data=b"mgmt_home")]]
         )
 
-    # 3. Payments Approval (Generates One-Time Access Link & Direct Chat)
     @client.on(events.CallbackQuery(data=b"mgmt_orders"))
     async def cb_orders(event):
         if not admin_only(event):
@@ -2344,11 +2326,9 @@ def setup_manager_bot_handlers(client):
         uid = o["uid"]
         target_year = o["year"]
 
-        # Generate 1-time activation token
         token = "ACT-" + _pick(12)
         target_bot_username = BOT_USERNAMES.get(target_year)
 
-        # Save token details in db
         db.setdefault("activation_tokens", {})[token] = {
             "token": token,
             "uid": uid,
@@ -2364,7 +2344,6 @@ def setup_manager_bot_handlers(client):
         await event.answer("✅ Approved! Activation link sent to Demo Bot.", alert=True)
         await edit(event, order_summary(o) + "\n\n✅ **APPROVED**", [[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
-        # Deliver One-Time Access Card inside Demo Bot
         demo_bot = active_bots.get("demo")
         if demo_bot and target_bot_username:
             link = f"https://t.me/{target_bot_username}?start={token}"
@@ -2405,7 +2384,6 @@ def setup_manager_bot_handlers(client):
         await event.answer("Rejected.", alert=True)
         await edit(event, f"❌ Order `{oid}` rejected.", [[Button.inline("⬅️ Menu", data=b"mgmt_home")]])
 
-    # 4. Sales, Prices, QR Mode & Coupons
     @client.on(events.CallbackQuery(data=b"mgmt_sales"))
     async def cb_sales(event):
         if not admin_only(event):
@@ -2488,7 +2466,6 @@ def setup_manager_bot_handlers(client):
         await edit(event, "🏷️ Send new coupon name and discount separated by a space.\nExample: `NEET2026 250`",
                    [[Button.inline("❌ Cancel", data=b"mgmt_coupons")]])
 
-    # 5. AI Settings
     @client.on(events.CallbackQuery(data=b"mgmt_ai_settings"))
     async def cb_ai_settings(event):
         if not admin_only(event):
@@ -2523,7 +2500,6 @@ def setup_manager_bot_handlers(client):
         save_db(db)
         await cb_ai_settings(event)
 
-    # 6. Demo Control Panel (Duration, Downloads, and Demo Users Inspector)
     @client.on(events.CallbackQuery(data=b"mgmt_demo"))
     async def cb_demo(event):
         if not admin_only(event):
@@ -2609,7 +2585,6 @@ def setup_manager_bot_handlers(client):
         save_db(db)
         await cb_demo(event)
 
-    # 7. Find / Search Student
     @client.on(events.CallbackQuery(data=b"mgmt_find"))
     async def cb_find(event):
         if not admin_only(event):
@@ -2618,7 +2593,6 @@ def setup_manager_bot_handlers(client):
         await edit(event, "🔍 **Search Student**\n\nSend Telegram ID, Name, or @username:",
                    [[Button.inline("❌ Cancel", data=b"mgmt_home")]])
 
-    # 8. Registered Users Viewer
     @client.on(events.CallbackQuery(pattern=rb"^mgmt_users_p:(\d+)$"))
     async def cb_users_page(event):
         if not admin_only(event):
@@ -2650,7 +2624,6 @@ def setup_manager_bot_handlers(client):
         buttons.append([Button.inline("⬅️ Back to Menu", data=b"mgmt_home")])
         await edit(event, msg, buttons)
 
-    # 9. Feature Toggles
     @client.on(events.CallbackQuery(data=b"mgmt_toggles"))
     async def cb_toggles(event):
         if not admin_only(event):
@@ -2666,7 +2639,6 @@ def setup_manager_bot_handlers(client):
         ]
         await edit(event, "⚙️ **System Feature Controls**", rows)
 
-    # 10. Database Restore Menu
     @client.on(events.CallbackQuery(data=b"mgmt_restore_menu"))
     async def cb_restore_menu(event):
         if not admin_only(event):
@@ -2708,14 +2680,12 @@ def setup_manager_bot_handlers(client):
                 [[Button.inline("⬅️ Back", data=b"mgmt_restore_menu")]]
             )
 
-    # General Admin Listener (Uploads, Direct Messages, Prices, Coupons, Finding)
     @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
     async def admin_input_listener(event):
         if not admin_only(event):
             return
         text = (event.raw_text or "").strip()
 
-        # Custom QR photo upload
         state = ADMIN_STATES.get(ADMIN_ID, "")
         if state == "WAITING_QR_PHOTO" and bool(event.photo):
             ADMIN_STATES.pop(ADMIN_ID, None)
@@ -2734,7 +2704,6 @@ def setup_manager_bot_handlers(client):
                 await status.edit("❌ Failed to save QR image. Please try again.")
             return
 
-        # Document upload restore
         if event.file and (event.file.name == "bot_database.json" or "restore" in text.lower()):
             status = await event.respond("⏳ **Analyzing and restoring database file...**")
             raw = await event.download_media(file=bytes)
@@ -2752,7 +2721,6 @@ def setup_manager_bot_handlers(client):
                     await status.edit(f"❌ Restore failed: `{a_cnt}`")
                     return
 
-        # Reply with /restore
         if text.lower() == "/restore" and event.is_reply:
             reply_msg = await event.get_reply_message()
             if reply_msg and reply_msg.file:
@@ -2772,7 +2740,6 @@ def setup_manager_bot_handlers(client):
                         await status.edit(f"❌ Restore failed: `{a_cnt}`")
                         return
 
-        # Direct Chat with Student Regarding Payment Order
         if state.startswith("WAITING_STUDENT_MSG:"):
             parts = state.split(":")
             uid, oid = int(parts[1]), parts[2]
@@ -2797,7 +2764,6 @@ def setup_manager_bot_handlers(client):
             await event.respond("❌ Could not deliver message to student.", buttons=[[Button.inline("💳 Payments", data=b"mgmt_orders")]])
             return
 
-        # Direct Chat with Any Registered Student
         if state.startswith("WAITING_DIRECT_MSG:"):
             uid = int(state.split(":")[1])
             ADMIN_STATES.pop(ADMIN_ID, None)
@@ -2946,8 +2912,6 @@ async def start_web_server():
 
 async def main():
     global USER_CLIENT_ID, manager_bot_client
-    if not API_ID or not API_HASH:
-        raise SystemExit("API_ID or API_HASH missing.")
 
     os.makedirs("downloads", exist_ok=True)
     await start_web_server()
@@ -2956,20 +2920,32 @@ async def main():
         await restore_db_from_cloud()
     ensure_admin()
 
-    await user_client.start()
+    # 1. CONNECT USER CLIENT SILENTLY (No interactive console input)
+    logging.info("Connecting user client using StringSession...")
+    await user_client.connect()
+    
+    if not await user_client.is_user_authorized():
+        logging.error("CRITICAL: User session not authorized! Verify SESSION_STRING.")
+        raise SystemExit("Unauthorized user session.")
+
     me = await user_client.get_me()
     USER_CLIENT_ID = me.id
+    logging.info(f"✅ User client authorized as: {me.first_name} (@{me.username})")
+
     runners = [user_client.run_until_disconnected()]
 
+    # 2. START BOT TOKEN INSTANCES
     for key, token in BOT_TOKENS.items():
         if not token:
             continue
         try:
             client = TelegramClient(f"bot_session_{key}", API_ID, API_HASH)
+            # PASSING bot_token DIRECTLY PREVENTS ANY TERMINAL INPUT PROMPT
             await client.start(bot_token=token)
 
             bot_me = await client.get_me()
             BOT_USERNAMES[key] = bot_me.username
+            logging.info(f"✅ Bot '{key}' connected as @{bot_me.username}")
 
             if key == "manager":
                 manager_bot_client = client
@@ -3011,6 +2987,7 @@ async def main():
 
     asyncio.create_task(background_loop())
     schedule_reconcile()
+    logging.info("🚀 All services started. Running main loop...")
     await asyncio.gather(*runners)
 
 if __name__ == "__main__":
